@@ -1,0 +1,20 @@
+{
+  "security.allowedUNCHosts": [
+      "wsl.localhost"
+  ],
+  "latex-workshop.latex.tools": [
+      {
+          "name": "latexmk",
+          "command": "wsl",
+          "args": ["latexmk", "-synctex=1", "-interaction=nonstopmode", "-file-line-error", "${file}"]
+      }
+  ],
+  "latex-workshop.latex.recipes": [
+      {
+          "name": "latexmk",
+          "tools": ["latexmk"]
+      }
+  ],
+  "latex-workshop.view.pdf.viewer": "tab",
+  "files.autoSave": "afterDelay"
+}
