@@ -1,0 +1,3 @@
+/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/build/CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir
+/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/build/CMakeFiles/edit_cache.dir
+/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/build/CMakeFiles/rebuild_cache.dir
