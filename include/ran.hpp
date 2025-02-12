@@ -28,7 +28,7 @@ Eigen::Matrix3d eulerang(double phi, double theta, double psi);
 Eigen::Matrix3d Rzyx(double phi, double theta, double psi);
 
 // Function to compute dynamics (ran)
-void otter(const Eigen::VectorXd &x, const Eigen::VectorXd &n_input,
+void ran(const Eigen::VectorXd &x, const Eigen::VectorXd &n_input,
            double mp, const Eigen::Vector3d &rp,
            double V_c, double beta_c,
            Eigen::VectorXd &xdot, double &U,

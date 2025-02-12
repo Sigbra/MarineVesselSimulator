@@ -1839,9 +1839,7 @@ Optimal-Constraint-Thruster-Allocation: /lib/x86_64-linux-gnu/libc.so.6 \
   CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ALOSpsi.cpp.o \
   CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_method.cpp.o \
   CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/crosstrack_hermite.cpp.o \
-  CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/guidance.cpp.o \
   CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/hermite_spline.cpp.o \
-  CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/integrators.cpp.o \
   CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/los_observer.cpp.o \
   CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/main.cpp.o \
   CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ran.cpp.o \
@@ -1852,8 +1850,6 @@ Optimal-Constraint-Thruster-Allocation: /lib/x86_64-linux-gnu/libc.so.6 \
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ref_model.cpp.o:
 
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/main.cpp.o:
-
-CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/integrators.cpp.o:
 
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/hermite_spline.cpp.o:
 
@@ -2566,8 +2562,6 @@ CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/utilities.cpp.o:
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/DenseCoeffsBase.h:
 
 /usr/include/c++/13/bits/stl_construct.h:
-
-CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/guidance.cpp.o:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/arch/Default/Settings.h:
 

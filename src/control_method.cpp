@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <limits>
 
 class ControlMethod {
     public:
@@ -24,10 +25,17 @@ class ControlMethod {
         while (true) {
             std::cout << "Enter the number of your choice: ";
             std::cin >> choice;
-            if (choice > 0 && choice <= static_cast<int>(methods.size())) {
+            if (std::cin.fail()) {
+                std::cin.clear();
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                std::cout << "Invalid input. Please enter a number." << std::endl;
+            }
+            else if (choice > 0 && choice <= static_cast<int>(methods.size())) {
                 break;
             }
-            std::cout << "Invalid choice. Please try again." << std::endl;
+            else {
+                std::cout << "Invalid choice. Please try again." << std::endl;
+            }
         }
         return choice;
     }

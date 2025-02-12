@@ -399,6 +399,5 @@ void ran(const Eigen::VectorXd &x, const Eigen::VectorXd &n_input,
     M_out = M_sys;
     // If ran() is called with no arguments (n not provided) MATLAB returns B_prop.
     // Here we always compute B_prop as:
-    B_prop_out = k_pos * (Eigen::MatrixXd(2,2) << 1, 1,
-                                                  y_pont, -y_pont).finished();
+    B_prop_out = k_pos * (Eigen::MatrixXd(2,2) << 1, 1, y_pont, -y_pont).finished();
 }

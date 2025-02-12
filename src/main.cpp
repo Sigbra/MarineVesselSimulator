@@ -40,6 +40,9 @@ int main() {
     int idx_start = 1;
     SplineResult spline = hermiteSpline(wpt, Umax, h);
     
+    //PID heading autopilot parameters(Nomoto model: M(6,6)=T/K)
+    
+
     // Reference model parameters
     double wn_d = 1.0;
     double zeta_d = 1.0;

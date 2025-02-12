@@ -1849,9 +1849,7 @@ Optimal-Constraint-Thruster-Allocation
  /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/build/CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ALOSpsi.cpp.o
  /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/build/CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_method.cpp.o
  /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/build/CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/crosstrack_hermite.cpp.o
- /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/build/CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/guidance.cpp.o
  /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/build/CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/hermite_spline.cpp.o
- /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/build/CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/integrators.cpp.o
  /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/build/CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/los_observer.cpp.o
  /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/build/CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/main.cpp.o
  /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/build/CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ran.cpp.o
