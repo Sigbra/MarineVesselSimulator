@@ -1,7 +1,9 @@
 #include <iostream>
 #include <vector>
+#include <array>
 #include <cmath>
 #include "utilities.hpp"
+#include "ran.hpp"
 #include "ref_model.hpp"
 #include "ALOSpsi.hpp"
 #include "hermite_spline.hpp"
@@ -40,14 +42,52 @@ int main() {
     int idx_start = 1;
     SplineResult spline = hermiteSpline(wpt, Umax, h);
     
-    //PID heading autopilot parameters(Nomoto model: M(6,6)=T/K)
+    //Calculating RAN USV input Matrix
+    Eigen::VectorXd x_input = Eigen::VectorXd::Zero(12);  
+    Eigen::VectorXd n_input = Eigen::VectorXd::Zero(2);   
+    double mp_input = 25;                  
+    Eigen::Vector3d rp_input = Eigen::Vector3d::Zero();  
+    Eigen::VectorXd xdot = Eigen::VectorXd::Zero(12); 
+    double U = 0;
+    Eigen::MatrixXd M = Eigen::MatrixXd::Zero(6, 6); 
+    Eigen::MatrixXd B_prop = Eigen::MatrixXd::Zero(3, 3); 
     
+    ran(x_input, n_input, mp_input, rp_input, V_c, beta_c, xdot, U, M, B_prop);
+    //Assuming B_prop can be inverted
+    B_prop = B_prop.inverse();
+    
+    //PID heading autopilot parameters(Nomoto model: M(6,6)=T/K)
+    double T = 1.0;  // Nomoto time constant
+    double K = T / M(5, 5);  // Nomoto gain constant (Note: M(6,6) in MATLAB corresponds to M(5,5) in C++ 0-based indexing)
+
+    double wn = 1.5;  // Closed-loop natural frequency (rad/s)
+    double zeta = 1.0;  // Closed-loop relative damping factor (-)
+    
+    double Kp = M(5, 5) * wn * wn;  // Proportional gain
+    double Kd = M(5, 5) * (2 * zeta * wn - 1 / T);  // Derivative gain
+    double Td = Kd / Kp; // Derivative time constant
+    double Ti = 10 / wn; // Integral time constant
 
     // Reference model parameters
     double wn_d = 1.0;
     double zeta_d = 1.0;
     double r_max = M_PI / 18;
+
+    //Propellar dynamics
+    double T_n = 0.1;  // Propeller time constant (s)
+    Eigen::Vector2d n; // Initial propeller speed, [n_left n_right]'
+    n << 0, 0;  // Initial values for propeller speeds
+
+    // Initial states and variables
+    Eigen::VectorXd x = Eigen::VectorXd::Zero(12);  // x = [u v w p q r xn yn zn phi theta psi]'
+    x(11) = psi0;  // Heading angle (Note: x(12) in MATLAB corresponds to x(11) in C++ 0-based indexing)
+    double z_psi = 0;  // Integral state for heading control
+    double psi_d = psi0;  // Desired heading angle
+    double r_d = 0;  // Desired rate of turn
+    double a_d = 0;  // Desired acceleration
     
+    LOSObserver losObserver(h, K_f);
+
     // Control method selection
     std::vector<std::string> methods = {
         "PID heading autopilot, no path following",
@@ -58,12 +98,16 @@ int main() {
     ControlMethod control(methods);
     int ControlFlag = control.selectMethod();
     
-    // Initialize variables
-    double psi_d = psi0, r_d = 0, a_d = 0;
-    LOSObserver losObserver(h, K_f);
-    
     for (double t = 0; t <= T_final; t += h) {
-        // Guidance and control system
+        
+        //Measurements with noise
+        double r = x(5) + 0.001 * ((double)rand() / RAND_MAX - 0.5);     
+        double xn = x(6) + 0.01 * ((double)rand() / RAND_MAX - 0.5);   
+        double yn = x(7) + 0.01 * ((double)rand() / RAND_MAX - 0.5);     
+        double psi = x(11) + 0.001 * ((double)rand() / RAND_MAX - 0.5);  
+
+
+        //Guidance and control system
         switch (ControlFlag) {
             case 1: {
                 double psi_ref = psi0;
@@ -73,7 +117,7 @@ int main() {
                 break;
             }
             case 2: {
-                auto [psi_ref, _] = ALOSpsi(0, 0, Delta_h, gamma_h, h, R_switch, wpt);
+                auto [psi_ref, _] = ALOSpsi(xn, yn, Delta_h, gamma_h, h, R_switch, wpt);
                 losObserver.update(psi_ref);
                 psi_d = losObserver.getLOSAngle();
                 r_d = losObserver.getLOSRate();

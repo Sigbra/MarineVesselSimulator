@@ -109,8 +109,8 @@ Eigen::Matrix3d Rzyx(double phi, double theta, double psi) {
 //   M_out     - 6x6 system mass matrix (MRB + added mass)
 //   B_prop_out- 2x2 propeller input matrix (if no input arguments, this is returned)
 //-------------------------------------------------------------------
-void ran(const Eigen::VectorXd &x, const Eigen::VectorXd &n_input,
-           double mp, const Eigen::Vector3d &rp,
+void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input,
+           double mp, const Eigen::Vector3d rp,
            double V_c, double beta_c,
            Eigen::VectorXd &xdot, double &U,
            Eigen::MatrixXd &M_out, Eigen::MatrixXd &B_prop_out)
@@ -128,25 +128,24 @@ void ran(const Eigen::VectorXd &x, const Eigen::VectorXd &n_input,
     // ---------------------------
     // Main physical constants
     // ---------------------------
-    double g   = 9.81;         // gravitational acceleration (m/s^2)
-    double rho = 1025.0;       // water density (kg/m^3)
-    double L   = 2.0;          // vessel length (m)
-    double B   = 1.08;         // vessel beam (m)
-    double m   = 55.0;         // vessel mass (kg)
-    Eigen::Vector3d rg_hull;   // center of gravity for hull only
-    rg_hull << 0.2, 0, -0.2;
-    double R44 = 0.4 * B;      // radii of gyration in roll
-    double R55 = 0.25 * L;     // in pitch
-    double R66 = 0.25 * L;     // in yaw
-    double T_sway = 1.0;       // sway time constant (s)
-    double T_yaw  = 1.0;       // yaw time constant (s)
-    double Umax   = 6 * 0.5144; // maximum forward speed (m/s) (6 knots)
+    double g   = 9.81;                        // gravitational acceleration (m/s^2)
+    double rho = 1025.0;                      // water density (kg/m^3)
+    double L   = 2.0;                         // vessel length (m)
+    double B   = 1.08;                        // vessel beam (m)
+    double m   = 55.0;                        // vessel mass (kg)
+    Eigen::Vector3d rg_hull(0.2, 0.0, -0.2);  // center of gravity for hull only
+    double R44 = 0.4 * B;                     // radii of gyration in roll
+    double R55 = 0.25 * L;                    // in pitch
+    double R66 = 0.25 * L;                    // in yaw
+    double T_sway = 1.0;                      // sway time constant (s)
+    double T_yaw  = 1.0;                      // yaw time constant (s)
+    double Umax   = 6 * 0.5144;               // maximum forward speed (m/s) (6 knots)
     
     // Data for one pontoon
-    double B_pont  = 0.25;     // pontoon beam (m)
-    double y_pont  = 0.395;    // lateral offset from centerline (m)
-    double Cw_pont = 0.75;     // waterline area coefficient
-    double Cb_pont = 0.4;      // block coefficient
+    double B_pont  = 0.25;                    // pontoon beam (m)
+    double y_pont  = 0.395;                   // lateral offset from centerline (m)
+    double Cw_pont = 0.75;                    // waterline area coefficient
+    double Cb_pont = 0.4;                     // block coefficient
     
     // ---------------------------
     // State extraction
@@ -210,30 +209,6 @@ void ran(const Eigen::VectorXd &x, const Eigen::VectorXd &n_input,
     double k_neg = 0.01289 / 2.0;
     double n_max = std::sqrt((0.5 * 24.4 * g) / k_pos);
     double n_min = -std::sqrt((0.5 * 13.6 * g) / k_neg);
-    
-    // Copy and saturate propeller speeds
-    Eigen::VectorXd n = n_input;
-    for (int i = 0; i < 2; i++) {
-        if (n(i) > n_max)
-            n(i) = n_max;
-        else if (n(i) < n_min)
-            n(i) = n_min;
-    }
-    
-    // Compute thrust for each propeller
-    Eigen::Vector2d Thrust;
-    for (int i = 0; i < 2; i++) {
-        if (n(i) > 0)
-            Thrust(i) = k_pos * n(i) * std::abs(n(i));
-        else
-            Thrust(i) = k_neg * n(i) * std::abs(n(i));
-    }
-    
-    // Compute control forces/moments from propellers:
-    // tau = [Thrust_left + Thrust_right; 0; 0; 0; 0; -l1*Thrust_left - l2*Thrust_right]
-    Eigen::VectorXd tau = Eigen::VectorXd::Zero(6);
-    tau(0) = Thrust(0) + Thrust(1);
-    tau(5) = -l1 * Thrust(0) - l2 * Thrust(1);
     
     // ---------------------------
     // Rigid-body (MRB) and Coriolis (CRB) matrices at the CG
@@ -313,7 +288,7 @@ void ran(const Eigen::VectorXd &x, const Eigen::VectorXd &n_input,
     Eigen::Vector3d LCF_vec; LCF_vec << -0.2, 0, 0;
     Eigen::MatrixXd H2 = Hmtrx(LCF_vec);
     Eigen::MatrixXd G = H2.transpose() * G_CF * H2;
-    
+
     // ---------------------------
     // Natural frequencies (for damping design)
     // ---------------------------
@@ -331,6 +306,32 @@ void ran(const Eigen::VectorXd &x, const Eigen::VectorXd &n_input,
     double Mq_damp = -2 * 0.4 * w5 * M_sys(4,4);
     double Nr = -M_sys(5,5) / T_yaw;
     
+
+    // Copy and saturate propeller speeds
+    Eigen::VectorXd n = n_input;
+    for (int i = 0; i < 2; i++) {
+        if (n(i) > n_max)
+            n(i) = n_max;
+        else if (n(i) < n_min)
+            n(i) = n_min;
+    }
+    
+    // Control forces and moments, with saturated propeller speed
+    Eigen::Vector2d Thrust;
+    for (int i = 0; i < 2; i++) {
+        if (n(i) > 0)
+            Thrust(i) = k_pos * n(i) * std::abs(n(i));
+        else
+            Thrust(i) = k_neg * n(i) * std::abs(n(i));
+    }
+
+    // Control forces and moments
+    // tau = [Thrust_left + Thrust_right; 0; 0; 0; 0; -l1*Thrust_left - l2*Thrust_right]
+    Eigen::VectorXd tau = Eigen::VectorXd::Zero(6);
+    tau(0) = Thrust(0) + Thrust(1);
+    tau(5) = -l1 * Thrust(0) - l2 * Thrust(1);
+
+    //Linear damping using relative velocities + nonlinear yaw dampning
     double Xh = Xu * nu_r(0);
     double Yh = Yv * nu_r(1);
     double Zh = Zw * nu_r(2);
@@ -338,6 +339,7 @@ void ran(const Eigen::VectorXd &x, const Eigen::VectorXd &n_input,
     double Mh = Mq_damp * nu_r(4);
     double Nh = Nr * (1 + 10 * std::abs(nu_r(5))) * nu_r(5);
     Eigen::VectorXd tau_damp(6);
+
     tau_damp << Xh, Yh, Zh, Kh, Mh, Nh;
     
     // ---------------------------
@@ -353,7 +355,6 @@ void ran(const Eigen::VectorXd &x, const Eigen::VectorXd &n_input,
     double theta = eta(4);
     Eigen::Matrix3d Rzyx_mat = Rzyx(phi, theta, psi);
     Eigen::Vector3d f_payload = Rzyx_mat.transpose() * (Eigen::Vector3d() << 0, 0, mp * g).finished();
-    // m_payload = Smtrx(rp) * f_payload
     Eigen::Vector3d m_payload = Smtrx(rp) * f_payload;
     Eigen::VectorXd g_0(6);
     g_0 << f_payload, m_payload;
@@ -381,17 +382,30 @@ void ran(const Eigen::VectorXd &x, const Eigen::VectorXd &n_input,
     // ---------------------------
     // Assemble state derivative (xdot)
     // ---------------------------
-    // The derivative of the velocity part is:
-    //   nu_c_dot + M_sys^{-1}*(tau + tau_damp + tau_crossflow - C_sys*nu_r - G*eta)
+    // Debugging: Print dimensions and values of involved matrices and vectors
+    std::cout << "tau: " << tau.transpose() << std::endl;
+    std::cout << "tau_damp: " << tau_damp.transpose() << std::endl;
+    std::cout << "tau_crossflow: " << tau_crossflow.transpose() << std::endl;
+    std::cout << "C_sys * nu_r: " << (C_sys * nu_r).transpose() << std::endl;
+    std::cout << "G * eta: " << (G * eta).transpose() << std::endl;
+
     Eigen::VectorXd force_term = tau + tau_damp + tau_crossflow - C_sys * nu_r - G * eta;
+    std::cout << "force_term: " << force_term.transpose() << std::endl;
+
     Eigen::VectorXd acceleration = M_sys.fullPivLu().solve(force_term);
+    std::cout << "acceleration: " << acceleration.transpose() << std::endl;
+
     Eigen::VectorXd xdot_vel = nu_c_dot + acceleration;
-    // The derivative of the position part is J * (nu1), where nu1 = [u; v; w]
+    std::cout << "xdot_vel: " << xdot_vel.transpose() << std::endl;
+
     Eigen::VectorXd xdot_pos = J * nu.head(3);
-    
+    std::cout << "xdot_pos: " << xdot_pos.transpose() << std::endl;
+
     // Assemble full 12x1 state derivative
     xdot.resize(12);
-    xdot << xdot_vel, xdot_pos;
+    xdot << xdot_vel, Eigen::VectorXd::Zero(3), xdot_pos;
+    std::cout << "xdot: " << xdot.transpose() << std::endl;
+
     
     // ---------------------------
     // Set output mass matrix and B_prop matrix
