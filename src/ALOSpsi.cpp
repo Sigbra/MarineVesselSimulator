@@ -1,5 +1,5 @@
 #include "ALOSpsi.hpp"
-#include "utilities.hpp"  // Assumes ssa(double) is declared here.
+#include "utilities.hpp" 
 #include <cmath>
 #include <iostream>
 #include <stdexcept>

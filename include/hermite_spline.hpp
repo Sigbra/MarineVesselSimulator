@@ -1,12 +1,7 @@
 #ifndef HERMITE_SPLINE_HPP
 #define HERMITE_SPLINE_HPP
 
-#include "waypoints.hpp"
-
-struct Waypoints {
-    std::vector<double> x;
-    std::vector<double> y;
-};
+#include "utilities.hpp"
 
 struct SplineResult {
     std::vector<double> w_path, x_path, y_path, dx_path, dy_path, pi_h;

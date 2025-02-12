@@ -5,9 +5,9 @@
 #include "ref_model.hpp"
 #include "ALOSpsi.hpp"
 #include "hermite_spline.hpp"
-#include "crosstrack_Hermite.hpp"
+#include "crosstrack_hermite.hpp"
 #include "los_observer.hpp"
-#include "control_method_selector.hpp"
+#include "control_method.hpp"
 
 int main() {
     // USER INPUTS

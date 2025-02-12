@@ -2,7 +2,7 @@
 #define ALOSSPI_HPP
 
 #include <utility>
-#include "Waypoints.hpp"  // Defines: struct Waypoints { std::vector<double> x; std::vector<double> y; };
+#include "utilities.hpp"  // Defines: struct Waypoints { std::vector<double> x; std::vector<double> y; };
 
 /// \brief Computes the desired LOS heading and cross-track error using the adaptive LOS (ALOS) guidance law.
 /// 

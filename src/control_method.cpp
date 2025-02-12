@@ -2,19 +2,19 @@
 #include <vector>
 #include <string>
 
-class ControlMethodSelector {
+class ControlMethod {
     public:
-        ControlMethodSelector(const std::vector<std::string>& methods);
+        ControlMethod(const std::vector<std::string>& methods);
         int selectMethod();
     
     private:
         std::vector<std::string> methods;
     };
     
-    ControlMethodSelector::ControlMethodSelector(const std::vector<std::string>& methods)
+    ControlMethod::ControlMethod(const std::vector<std::string>& methods)
         : methods(methods) {}
     
-    int ControlMethodSelector::selectMethod() {
+    int ControlMethod::selectMethod() {
         std::cout << "Choose Control Method:" << std::endl;
         for (size_t i = 0; i < methods.size(); ++i) {
             std::cout << i + 1 << ". " << methods[i] << std::endl;

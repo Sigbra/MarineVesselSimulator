@@ -9,11 +9,16 @@ source ~/anaconda3/bin/activate
 conda --version
 conda env create -f environment.yml
 conda activate cpp_env
+conda activate cpp_env
+mkdir build && cd build
+cmake ..
+make
 '''
 
 ## Usage of conda environment
 Do this when new terminal is used;
 '''
+source ~/anaconda3/bin/activate
 conda activate thrust_alloc_cpp_env
 '''
 

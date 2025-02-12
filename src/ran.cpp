@@ -1,5 +1,5 @@
 // ran.cpp
-#include "ran.hpp"       // Declaration of otter() in dynamics.hpp
+#include "ran.hpp"       // Declaration of ran() in dynamics.hpp
 #include "utilities.hpp"      // For prototypes of helper functions (see below)
 #include <Eigen/Dense>
 #include <cmath>
@@ -94,7 +94,7 @@ Eigen::Matrix3d Rzyx(double phi, double theta, double psi) {
 }
 
 //-------------------------------------------------------------------
-// The otter() function
+// The ran() function
 //
 // Inputs:
 //   x      - 12x1 state vector: [u, v, w, p, q, r, x, y, z, phi, theta, psi]'
@@ -109,7 +109,7 @@ Eigen::Matrix3d Rzyx(double phi, double theta, double psi) {
 //   M_out     - 6x6 system mass matrix (MRB + added mass)
 //   B_prop_out- 2x2 propeller input matrix (if no input arguments, this is returned)
 //-------------------------------------------------------------------
-void otter(const Eigen::VectorXd &x, const Eigen::VectorXd &n_input,
+void ran(const Eigen::VectorXd &x, const Eigen::VectorXd &n_input,
            double mp, const Eigen::Vector3d &rp,
            double V_c, double beta_c,
            Eigen::VectorXd &xdot, double &U,
@@ -397,7 +397,7 @@ void otter(const Eigen::VectorXd &x, const Eigen::VectorXd &n_input,
     // Set output mass matrix and B_prop matrix
     // ---------------------------
     M_out = M_sys;
-    // If otter() is called with no arguments (n not provided) MATLAB returns B_prop.
+    // If ran() is called with no arguments (n not provided) MATLAB returns B_prop.
     // Here we always compute B_prop as:
     B_prop_out = k_pos * (Eigen::MatrixXd(2,2) << 1, 1,
                                                   y_pont, -y_pont).finished();

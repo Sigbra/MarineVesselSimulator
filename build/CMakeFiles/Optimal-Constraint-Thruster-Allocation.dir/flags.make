@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include
+CXX_INCLUDES = -I/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include -I/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3
 
 CXX_FLAGS = -std=gnu++17
 
