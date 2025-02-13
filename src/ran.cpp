@@ -1,6 +1,6 @@
 // ran.cpp
-#include "ran.hpp"       // Declaration of ran() in dynamics.hpp
-#include "utilities.hpp"      // For prototypes of helper functions (see below)
+#include "ran.hpp"       
+#include "utilities.hpp"     
 #include <Eigen/Dense>
 #include <cmath>
 #include <iostream>
@@ -383,35 +383,67 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input,
     // Assemble state derivative (xdot)
     // ---------------------------
     // Debugging: Print dimensions and values of involved matrices and vectors
-    std::cout << "tau: " << tau.transpose() << std::endl;
-    std::cout << "tau_damp: " << tau_damp.transpose() << std::endl;
-    std::cout << "tau_crossflow: " << tau_crossflow.transpose() << std::endl;
-    std::cout << "C_sys * nu_r: " << (C_sys * nu_r).transpose() << std::endl;
-    std::cout << "G * eta: " << (G * eta).transpose() << std::endl;
+    //std::cout << "tau: " << tau.transpose() << std::endl;
+    //std::cout << "tau_damp: " << tau_damp.transpose() << std::endl;
+    //std::cout << "tau_crossflow: " << tau_crossflow.transpose() << std::endl;
+    //std::cout << "C_sys * nu_r: " << (C_sys * nu_r).transpose() << std::endl;
+    //std::cout << "G * eta: " << (G * eta).transpose() << std::endl;
 
     Eigen::VectorXd force_term = tau + tau_damp + tau_crossflow - C_sys * nu_r - G * eta;
-    std::cout << "force_term: " << force_term.transpose() << std::endl;
+    //std::cout << "force_term: " << force_term.transpose() << std::endl;
 
     Eigen::VectorXd acceleration = M_sys.fullPivLu().solve(force_term);
-    std::cout << "acceleration: " << acceleration.transpose() << std::endl;
+    //std::cout << "acceleration: " << acceleration.transpose() << std::endl;
 
     Eigen::VectorXd xdot_vel = nu_c_dot + acceleration;
-    std::cout << "xdot_vel: " << xdot_vel.transpose() << std::endl;
+    //std::cout << "xdot_vel: " << xdot_vel.transpose() << std::endl;
 
     Eigen::VectorXd xdot_pos = J * nu.head(3);
-    std::cout << "xdot_pos: " << xdot_pos.transpose() << std::endl;
+    //std::cout << "xdot_pos: " << xdot_pos.transpose() << std::endl;
 
-    // Assemble full 12x1 state derivative
+    // Assemble full 12x1 state derivative //xdot might be a logical issue
     xdot.resize(12);
     xdot << xdot_vel, Eigen::VectorXd::Zero(3), xdot_pos;
-    std::cout << "xdot: " << xdot.transpose() << std::endl;
+    //std::cout << "xdot: " << xdot.transpose() << std::endl;
 
     
     // ---------------------------
     // Set output mass matrix and B_prop matrix
     // ---------------------------
     M_out = M_sys;
+    //std::cout << "M_out: " << M_out << std::endl;
     // If ran() is called with no arguments (n not provided) MATLAB returns B_prop.
     // Here we always compute B_prop as:
     B_prop_out = k_pos * (Eigen::MatrixXd(2,2) << 1, 1, y_pont, -y_pont).finished();
+}
+
+
+// Specialized RK4 integrator for the RAN model. 
+void rk4_ran_step(Eigen::VectorXd& x, const Eigen::VectorXd& n_input,
+    double mp, const Eigen::Vector3d& rp,
+    double V_c, double beta_c, double h) {
+    // Initialize variables
+    Eigen::VectorXd xdot(12);
+    double U;
+    Eigen::MatrixXd M_out(6, 6);
+    Eigen::MatrixXd B_prop_out(2, 2);
+
+    // Compute k1
+    ran(x, n_input, mp, rp, V_c, beta_c, xdot, U, M_out, B_prop_out);
+    Eigen::VectorXd k1 = h * xdot;
+
+    // Compute k2
+    ran(x + 0.5 * k1, n_input, mp, rp, V_c, beta_c, xdot, U, M_out, B_prop_out);
+    Eigen::VectorXd k2 = h * xdot;
+
+    // Compute k3
+    ran(x + 0.5 * k2, n_input, mp, rp, V_c, beta_c, xdot, U, M_out, B_prop_out);
+    Eigen::VectorXd k3 = h * xdot;
+
+    // Compute k4
+    ran(x + k3, n_input, mp, rp, V_c, beta_c, xdot, U, M_out, B_prop_out);
+    Eigen::VectorXd k4 = h * xdot;
+
+    // Update state vector x
+    x += (k1 + 2 * k2 + 2 * k3 + k4) / 6.0;
 }

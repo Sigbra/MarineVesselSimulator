@@ -2,6 +2,8 @@
 #include <vector>
 #include <array>
 #include <cmath>
+#include <cstdlib> // for getenv
+//#include <boost/numeric/odeint.hpp>
 #include "utilities.hpp"
 #include "ran.hpp"
 #include "ref_model.hpp"
@@ -13,8 +15,12 @@
 
 int main() {
     // USER INPUTS
-    double h = 0.05; // Sampling time [s]
-    double T_final = 1000; // Final simulation time [s]
+    double h = 0.05;            // Sampling time [s]
+    double T_final = 1000;      // Final simulation time [s]
+
+    //Load condition
+    double mp = 0;                  // Payload mass [kg]
+    Eigen::Vector3d rp(1, 0, 0);    // Payload location [m]
     
     // Ocean current
     double V_c = 0.3; // Ocean current speed (m/s)
@@ -44,17 +50,15 @@ int main() {
     
     //Calculating RAN USV input Matrix
     Eigen::VectorXd x_input = Eigen::VectorXd::Zero(12);  
-    Eigen::VectorXd n_input = Eigen::VectorXd::Zero(2);   
-    double mp_input = 25;                  
-    Eigen::Vector3d rp_input = Eigen::Vector3d::Zero();  
+    Eigen::VectorXd n_input = Eigen::VectorXd::Zero(2);                     
     Eigen::VectorXd xdot = Eigen::VectorXd::Zero(12); 
     double U = 0;
     Eigen::MatrixXd M = Eigen::MatrixXd::Zero(6, 6); 
     Eigen::MatrixXd B_prop = Eigen::MatrixXd::Zero(3, 3); 
     
-    ran(x_input, n_input, mp_input, rp_input, V_c, beta_c, xdot, U, M, B_prop);
+    ran(x_input, n_input, mp, rp, V_c, beta_c, xdot, U, M, B_prop);
     //Assuming B_prop can be inverted
-    B_prop = B_prop.inverse();
+    Eigen::MatrixXd Binv = B_prop.inverse();
     
     //PID heading autopilot parameters(Nomoto model: M(6,6)=T/K)
     double T = 1.0;  // Nomoto time constant
@@ -97,8 +101,12 @@ int main() {
     };
     ControlMethod control(methods);
     int ControlFlag = control.selectMethod();
+
+    int num_steps = static_cast<int>(T_final / h) + 1; // Total number of time steps
+    std::vector<double> t(num_steps);                  // Time vector from 0 to T_final
+    Eigen::MatrixXd simdata(num_steps, 12 + 2);        // Simulation data storage
     
-    for (double t = 0; t <= T_final; t += h) {
+    for (int i = 0; i < num_steps; ++i) {
         
         //Measurements with noise
         double r = x(5) + 0.001 * ((double)rand() / RAND_MAX - 0.5);     
@@ -111,8 +119,12 @@ int main() {
         switch (ControlFlag) {
             case 1: {
                 double psi_ref = psi0;
-                if (t > 100) psi_ref = 0;
-                if (t > 500) psi_ref = -M_PI / 2;
+                if (t[i] > 100) {
+                    psi_ref = 0;
+                }
+                if (t[i] > 500) {
+                    psi_ref = -M_PI / 2;
+                }
                 refModel(psi_d, r_d, a_d, psi_ref, r_max, zeta_d, wn_d, h, true);
                 break;
             }
@@ -132,7 +144,37 @@ int main() {
                 break;
             }
         }
-        std::cout << "Time: " << t << " Psi_d: " << psi_d << " R_d: " << r_d << std::endl;
+
+        //PID heading (yaw moment) autopilot and forward thrust
+        double tau_X = 100;
+        double tau_N = (T/K) * a_d + (1/K) * r_d             // Yaw moment control
+                       - Kp * (ssa(psi - psi_d)              // Proportional term
+                       + Td * (r - r_d) + (1/Ti) * z_psi);   // Derivative and integral terms
+
+        //Control Allocation
+        Eigen::Vector2d controlInputs;
+        controlInputs << tau_X, tau_N;
+        Eigen::Vector2d u = Binv * controlInputs;                         // Conpute control inputs for propellers
+        Eigen::Vector2d n_c = u.array().sign() * u.array().abs().sqrt();  // Convert to required propellar speed
+
+        //Storing SIM data
+        simdata(i, Eigen::seq(0, 11)) = x.transpose();  
+        simdata(i, 12) = r_d;                           
+        simdata(i, 13) = psi_d;                         
+
+        //rk4 method for x(k+1)
+        rk4_ran_step(x, n_input, mp, rp, V_c, beta_c, h);
+
+        //Euler's method
+        n = n + h/T_n * (n_c - n);              // Update propeller speeds
+        z_psi = z_psi + h * ssa(psi - psi_d);   // Update integral state for heading control
+
+        std::cout << "Time: " << t[i] << "s, x: " << xn << "m, y: " << yn << "m, psi: " << psi << "rad" << std::endl;
     }
+
+    storeSimulationData(simdata);
+
     return 0;
 }
+
+

@@ -7,16 +7,19 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Include directories
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
-# Find Eigen
+# Find Eigen3
 find_package(Eigen3 REQUIRED NO_DEFAULT_PATH PATHS /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/share/eigen3/cmake)
-
 if(TARGET Eigen3::Eigen)
     message(STATUS "Eigen3 found successfully!")
 else()
     message(FATAL_ERROR "Eigen3 not found!")
 endif()
 
+# Include directories
 include_directories(/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3)
+
+#find_package(Boost REQUIRED)
+#include_directories(${Boost_INCLUDE_DIRS})
 
 
 # Source files

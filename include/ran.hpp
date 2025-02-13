@@ -34,5 +34,8 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input,
            Eigen::VectorXd &xdot, double &U,
            Eigen::MatrixXd &M_out, Eigen::MatrixXd &B_prop_out);
 
-
+void rk4_ran_step(Eigen::VectorXd& x, const Eigen::VectorXd& n_input,
+                    double mp, const Eigen::Vector3d& rp,
+                    double V_c, double beta_c, double h);
+                    
 #endif // RAN_HPP

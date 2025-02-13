@@ -18,8 +18,7 @@ make
 ## Usage of conda environment
 Do this when new terminal is used;
 '''
-source ~/anaconda3/bin/activate
-conda activate thrust_alloc_cpp_env
+source ~/anaconda3/bin/activate thrust_alloc_cpp_env
 '''
 
 When done with terminal, close it or do

@@ -14,6 +14,12 @@
 # EXTERNAL cache entries
 ########################
 
+//The directory containing a CMake configuration file for Boost.
+Boost_DIR:PATH=/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/cmake/Boost-1.82.0
+
+//Path to a file.
+Boost_INCLUDE_DIR:PATH=/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include
+
 //Path to a program.
 CMAKE_ADDR2LINE:FILEPATH=/usr/bin/addr2line
 
@@ -28,7 +34,7 @@ CMAKE_BUILD_TYPE:STRING=
 CMAKE_COLOR_MAKEFILE:BOOL=ON
 
 //CXX compiler
-CMAKE_CXX_COMPILER:FILEPATH=/usr/bin/c++
+CMAKE_CXX_COMPILER:STRING=/usr/bin/c++
 
 //A wrapper around 'ar' adding the appropriate '--plugin' option
 // for the GCC compiler
@@ -54,7 +60,7 @@ CMAKE_CXX_FLAGS_RELEASE:STRING=-O3 -DNDEBUG
 CMAKE_CXX_FLAGS_RELWITHDEBINFO:STRING=-O2 -g -DNDEBUG
 
 //C compiler
-CMAKE_C_COMPILER:FILEPATH=/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/cc
+CMAKE_C_COMPILER:STRING=/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/cc
 
 //A wrapper around 'ar' adding the appropriate '--plugin' option
 // for the GCC compiler
@@ -227,11 +233,16 @@ Optimal-Constraint-Thruster-Allocation_IS_TOP_LEVEL:STATIC=ON
 //Value Computed by CMake
 Optimal-Constraint-Thruster-Allocation_SOURCE_DIR:STATIC=/home/sigurdvb/Optimal-Constraint-Thruster-Allocation
 
+//The directory containing a CMake configuration file for boost_headers.
+boost_headers_DIR:PATH=/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/cmake/boost_headers-1.82.0
+
 
 ########################
 # INTERNAL cache entries
 ########################
 
+//ADVANCED property for variable: Boost_DIR
+Boost_DIR-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_ADDR2LINE
 CMAKE_ADDR2LINE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_AR
@@ -243,7 +254,7 @@ CMAKE_CACHE_MAJOR_VERSION:INTERNAL=3
 //Minor version of cmake used to create the current loaded cache
 CMAKE_CACHE_MINOR_VERSION:INTERNAL=31
 //Patch version of cmake used to create the current loaded cache
-CMAKE_CACHE_PATCH_VERSION:INTERNAL=5
+CMAKE_CACHE_PATCH_VERSION:INTERNAL=2
 //ADVANCED property for variable: CMAKE_COLOR_MAKEFILE
 CMAKE_COLOR_MAKEFILE-ADVANCED:INTERNAL=1
 //Path to CMake executable.
@@ -379,10 +390,14 @@ CMAKE_TAPI-ADVANCED:INTERNAL=1
 CMAKE_UNAME:INTERNAL=/usr/bin/uname
 //ADVANCED property for variable: CMAKE_VERBOSE_MAKEFILE
 CMAKE_VERBOSE_MAKEFILE-ADVANCED:INTERNAL=1
+//Details about finding Boost
+FIND_PACKAGE_MESSAGE_DETAILS_Boost:INTERNAL=[/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/cmake/Boost-1.82.0/BoostConfig.cmake][c ][v1.82.0()]
 //linker supports push/pop state
 _CMAKE_CXX_LINKER_PUSHPOP_STATE_SUPPORTED:INTERNAL=TRUE
 //linker supports push/pop state
 _CMAKE_C_LINKER_PUSHPOP_STATE_SUPPORTED:INTERNAL=TRUE
 //linker supports push/pop state
 _CMAKE_LINKER_PUSHPOP_STATE_SUPPORTED:INTERNAL=TRUE
+//ADVANCED property for variable: boost_headers_DIR
+boost_headers_DIR-ADVANCED:INTERNAL=1
 

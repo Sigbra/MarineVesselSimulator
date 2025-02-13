@@ -8,9 +8,9 @@ set(CMAKE_DEPENDS_GENERATOR "Unix Makefiles")
 set(CMAKE_MAKEFILE_DEPENDS
   "CMakeCache.txt"
   "/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/CMakeLists.txt"
-  "CMakeFiles/3.31.5/CMakeCCompiler.cmake"
-  "CMakeFiles/3.31.5/CMakeCXXCompiler.cmake"
-  "CMakeFiles/3.31.5/CMakeSystem.cmake"
+  "CMakeFiles/3.31.2/CMakeCCompiler.cmake"
+  "CMakeFiles/3.31.2/CMakeCXXCompiler.cmake"
+  "CMakeFiles/3.31.2/CMakeSystem.cmake"
   "/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/share/cmake-3.31/Modules/CMakeCInformation.cmake"
   "/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/share/cmake-3.31/Modules/CMakeCXXInformation.cmake"
   "/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/share/cmake-3.31/Modules/CMakeCommonLanguageInclude.cmake"
