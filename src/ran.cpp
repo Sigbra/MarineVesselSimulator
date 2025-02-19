@@ -431,18 +431,22 @@ void rk4_ran_step(Eigen::VectorXd& x, const Eigen::VectorXd& n_input,
     // Compute k1
     ran(x, n_input, mp, rp, V_c, beta_c, xdot, U, M_out, B_prop_out);
     Eigen::VectorXd k1 = h * xdot;
+    //std::cout << "k1: " << k1.transpose() << std::endl;
 
     // Compute k2
     ran(x + 0.5 * k1, n_input, mp, rp, V_c, beta_c, xdot, U, M_out, B_prop_out);
     Eigen::VectorXd k2 = h * xdot;
+    //std::cout << "k2: " << k2.transpose() << std::endl;
 
     // Compute k3
     ran(x + 0.5 * k2, n_input, mp, rp, V_c, beta_c, xdot, U, M_out, B_prop_out);
     Eigen::VectorXd k3 = h * xdot;
+    //std::cout << "k3: " << k3.transpose() << std::endl;
 
     // Compute k4
     ran(x + k3, n_input, mp, rp, V_c, beta_c, xdot, U, M_out, B_prop_out);
     Eigen::VectorXd k4 = h * xdot;
+    //std::cout << "k4: " << k4.transpose() << std::endl;
 
     // Update state vector x
     x += (k1 + 2 * k2 + 2 * k3 + k4) / 6.0;

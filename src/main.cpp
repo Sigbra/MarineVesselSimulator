@@ -14,6 +14,8 @@
 #include "control_method.hpp"
 
 int main() {
+    srand(time(0)); // Randomize seed
+
     // USER INPUTS
     double h = 0.05;            // Sampling time [s]
     double T_final = 1000;      // Final simulation time [s]
@@ -104,9 +106,11 @@ int main() {
 
     int num_steps = static_cast<int>(T_final / h) + 1; // Total number of time steps
     std::vector<double> t(num_steps);                  // Time vector from 0 to T_final
-    Eigen::MatrixXd simdata(num_steps, 12 + 2);        // Simulation data storage
+    Eigen::MatrixXd simdata(num_steps, 12 + 2);        // Simulation data storage (Does not cause segmentation fault)
+
     
     for (int i = 0; i < num_steps; ++i) {
+        t[i] = i * h;
         
         //Measurements with noise
         double r = x(5) + 0.001 * ((double)rand() / RAND_MAX - 0.5);     
@@ -114,6 +118,10 @@ int main() {
         double yn = x(7) + 0.01 * ((double)rand() / RAND_MAX - 0.5);     
         double psi = x(11) + 0.001 * ((double)rand() / RAND_MAX - 0.5);  
 
+        if (std::isnan(psi)) {
+            std::cerr << "NaN detected for psi at iteration " << i << ", time: " << t[i] << "s\n";
+            break; 
+        }
 
         //Guidance and control system
         switch (ControlFlag) {
@@ -130,9 +138,16 @@ int main() {
             }
             case 2: {
                 auto [psi_ref, _] = ALOSpsi(xn, yn, Delta_h, gamma_h, h, R_switch, wpt);
+                if (std::isnan(psi_ref)) {
+                    std::cout << "NaN detected in ALOSpsi output!" << std::endl;
+                    break;  // Exit or handle the error appropriately
+                }
                 losObserver.update(psi_ref);
+                //std::cout <<"hello2" << std::endl;
                 psi_d = losObserver.getLOSAngle();
+                //std::cout <<"hello3, psi_d: " << psi_d << std::endl;
                 r_d = losObserver.getLOSRate();
+                //std::cout <<"hello4, r_d: " << r_d << std::endl;
                 break;
             }
             case 3: {
@@ -147,31 +162,46 @@ int main() {
 
         //PID heading (yaw moment) autopilot and forward thrust
         double tau_X = 100;
+        //std::cout << "hello5.0" << std::endl;
+        //std::cout<< "psi: " << psi << ", psi_d: " << psi_d << std::endl;
+        //double psi_diff = ssa(psi - psi_d);
+        //std::cout << "hello5.0.1, psi_diff: " << psi_diff << std::endl;
         double tau_N = (T/K) * a_d + (1/K) * r_d             // Yaw moment control
                        - Kp * (ssa(psi - psi_d)              // Proportional term
                        + Td * (r - r_d) + (1/Ti) * z_psi);   // Derivative and integral terms
-
+        //std::cout << "hello5.1" << std::endl;
         //Control Allocation
         Eigen::Vector2d controlInputs;
         controlInputs << tau_X, tau_N;
         Eigen::Vector2d u = Binv * controlInputs;                         // Conpute control inputs for propellers
         Eigen::Vector2d n_c = u.array().sign() * u.array().abs().sqrt();  // Convert to required propellar speed
-
+        //std::cout << "hello6" << std::endl;
+        
         //Storing SIM data
         simdata(i, Eigen::seq(0, 11)) = x.transpose();  
         simdata(i, 12) = r_d;                           
         simdata(i, 13) = psi_d;                         
+        //std::cout << "hello7" << std::endl;
 
         //rk4 method for x(k+1)
+        //std::cout << "size x:       " << x << std::endl;
+        //std::cout << "size n_input: " << n_input.size() << std::endl;
         rk4_ran_step(x, n_input, mp, rp, V_c, beta_c, h);
+        //std::cout << "size x:       " << x << std::endl;
+        //std::cout << "size n_input: " << n_input.size() << std::endl;
 
         //Euler's method
+        if ((n_c - n).isZero()) {
+            std::cout << "Error: Division by zero" << std::endl;
+            break;
+        }
+        
         n = n + h/T_n * (n_c - n);              // Update propeller speeds
         z_psi = z_psi + h * ssa(psi - psi_d);   // Update integral state for heading control
 
-        std::cout << "Time: " << t[i] << "s, x: " << xn << "m, y: " << yn << "m, psi: " << psi << "rad" << std::endl;
+        std::cout << "Iteration: " << i << ", Time: " << t[i] << "s, x: " << xn << "m, y: " << yn << "m, psi: " << psi << "rad" << std::endl;
     }
-
+    std::cout<<"Simulation completed"<<std::endl;
     storeSimulationData(simdata);
 
     return 0;

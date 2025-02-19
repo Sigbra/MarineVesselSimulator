@@ -1,5 +1,5 @@
 #include "ref_model.hpp"
-#include "utilities.hpp"  // Assumes ssa() is declared in utilities.hpp
+#include "utilities.hpp"  
 #include <cmath>        // For std::pow, std::abs, and std::copysign
 
 void refModel(double &x_d, double &v_d, double &a_d,

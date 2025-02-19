@@ -9,6 +9,12 @@
 
 double ssa(double angle)
 {
+    // Check for extremely large or small values
+    if (std::abs(angle) > 360) {
+        std::cerr << "Warning: Unusually large angle value detected: " << angle << std::endl;
+        // Optionally clamp angle if it's too large
+        angle = std::fmod(angle, 2 * M_PI); // Reduce large values by modulo operation
+    }
     while (angle > M_PI)
         angle -= 2 * M_PI;
     while (angle < -M_PI)

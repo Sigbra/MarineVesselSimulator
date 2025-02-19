@@ -82,6 +82,11 @@ std::pair<double, double> ALOSpsi(double x, double y,
 
     // Compute the desired heading angle (psi_ref) using the adaptive LOS (ALOS) guidance law:
     //   psi_ref = pi_h - beta_hat - atan( y_e / Delta_h )
+    if (std::abs(Delta_h) < 1e-9) {
+        std::cerr << "Warning: Delta_h is too small, avoiding division by zero!" << std::endl;
+        Delta_h = 1e-9;  // Set a small positive value to prevent division by zero.
+    }
+        
     double psi_ref = pi_h - beta_hat - std::atan(y_e / Delta_h);
 
     // Propagate the crab angle estimate (beta_hat) to the next time step.
