@@ -22,6 +22,11 @@ double ssa(double angle)
     return angle;
 }
 
+double deg2rad(double degrees) {
+    return degrees * M_PI / 180.0;
+}
+
+
 // Function to get the path to the 'Optimal-Constraint-Thruster-Allocation' repository dynamically
 std::string getRepositoryPath() {
     const char* home = std::getenv("HOME");  // Get the user's home directory

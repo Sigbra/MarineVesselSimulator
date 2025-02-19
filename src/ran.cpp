@@ -3,6 +3,7 @@
 #include "utilities.hpp"     
 #include <Eigen/Dense>
 #include <cmath>
+#include <array>
 #include <iostream>
 
 //-------------------------------------------------------------------
@@ -33,6 +34,24 @@ Eigen::MatrixXd Hmtrx(const Eigen::Vector3d &r) {
 }
 
 //-------------------------------------------------------------------
+// Helper function: Tzyx
+//-------------------------------------------------------------------
+Eigen::Matrix3d Tzyx(double phi, double theta) {
+    Eigen::Matrix3d T;
+
+    double c_phi = std::cos(phi);
+    double s_phi = std::sin(phi);
+    double t_theta = std::tan(theta);
+    double c_theta = std::cos(theta);
+
+    T << 1, s_phi * t_theta, c_phi * t_theta,
+         0, c_phi, -s_phi,
+         0, s_phi / c_theta, c_phi / c_theta;
+
+    return T;
+}
+
+//-------------------------------------------------------------------
 // Helper function: m2c (added-mass to Coriolis matrix)
 // For this stub, we simply return a 6x6 zero matrix.
 //-------------------------------------------------------------------
@@ -45,7 +64,7 @@ Eigen::MatrixXd m2c(const Eigen::MatrixXd &MA, const Eigen::VectorXd & /*nu_r*/)
 // Stub: returns a value proportional to the mass.
 //-------------------------------------------------------------------
 double addedMassSurge(double m, double /*L*/, double /*rho*/) {
-    return 0.1 * m; // Example: 10% of the mass (adjust as needed)
+    return 0.1 * m; 
 }
 
 //-------------------------------------------------------------------
@@ -61,18 +80,16 @@ Eigen::VectorXd crossFlowDrag(double /*L*/, double /*B_pont*/, double /*T*/, con
 // Returns the 3x3 kinematic transformation matrix from body angular
 // rates to Euler angle rates (using the ZYX Euler angle convention).
 //-------------------------------------------------------------------
-Eigen::Matrix3d eulerang(double phi, double theta, double psi) {
-    (void)psi; // psi is not used in this standard formulation
-    Eigen::Matrix3d J;
-    double cosTheta = std::cos(theta);
-    double sinTheta = std::sin(theta);
-    double tanTheta = std::tan(theta);
-    double cosPhi = std::cos(phi);
-    double sinPhi = std::sin(phi);
+Eigen::MatrixXd eulerang(double phi, double theta, double psi) {
+    Eigen::MatrixXd J = Eigen::MatrixXd::Zero(6, 6);
+    Eigen::Matrix3d J1 = Rzyx(phi, theta, psi);
+    Eigen::Matrix3d J2 = Tzyx(phi, theta);
     
-    J << 1, sinPhi * tanTheta, cosPhi * tanTheta,
-         0, cosPhi,           -sinPhi,
-         0, sinPhi / cosTheta, cosPhi / cosTheta;
+
+    J.block<3,3>(0,0) = J1;
+    J.block<3,3>(3,3) = J2;
+    //std::cout << "eulerang, J: \n" << J << std::endl;
+
     return J;
 }
 
@@ -82,14 +99,20 @@ Eigen::Matrix3d eulerang(double phi, double theta, double psi) {
 // inertial frame using the ZYX Euler angle convention.
 //-------------------------------------------------------------------
 Eigen::Matrix3d Rzyx(double phi, double theta, double psi) {
-    double cphi = std::cos(phi),  sphi = std::sin(phi);
-    double ctheta = std::cos(theta), stheta = std::sin(theta);
-    double cpsi = std::cos(psi),   spsi = std::sin(psi);
-    
+    // Compute trigonometric values
+    double cphi = std::cos(phi);
+    double sphi = std::sin(phi);
+    double cth  = std::cos(theta);
+    double sth  = std::sin(theta);
+    double cpsi = std::cos(psi);
+    double spsi = std::sin(psi);
+
+    // Define rotation matrix R
     Eigen::Matrix3d R;
-    R << cpsi * ctheta, cpsi * stheta * sphi - spsi * cphi, cpsi * stheta * cphi + spsi * sphi,
-         spsi * ctheta, spsi * stheta * sphi + cpsi * cphi, spsi * stheta * cphi - cpsi * sphi,
-         -stheta,       ctheta * sphi,                      ctheta * cphi;
+    R <<  cpsi * cth,  -spsi * cphi + cpsi * sth * sphi,  spsi * sphi + cpsi * cphi * sth,
+          spsi * cth,   cpsi * cphi + sphi * sth * spsi,  -cpsi * sphi + sth * spsi * cphi,
+          -sth,         cth * sphi,                       cth * cphi;
+
     return R;
 }
 
@@ -162,12 +185,13 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input,
     // Ocean current and relative velocity
     // ---------------------------
     double psi = eta(5); // vessel yaw angle
+    //std::cout << "ran(), psi: " << psi << std::endl;
     double u_c = V_c * std::cos(beta_c - psi);
     double v_c = V_c * std::sin(beta_c - psi);
     Eigen::VectorXd nu_c = Eigen::VectorXd::Zero(6);
     nu_c(0) = u_c;
     nu_c(1) = v_c;
-    // Relative velocity: nu_r = nu - nu_c
+    // Relative velocity:
     Eigen::VectorXd nu_r = nu - nu_c;
     
     // Split nu into translational (nu1) and rotational (nu2) parts:
@@ -377,8 +401,9 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input,
     // ---------------------------
     // Kinematic transformation for position update
     // ---------------------------
-    Eigen::Matrix3d J = eulerang(phi, theta, psi);
-    
+    Eigen::MatrixXd J = eulerang(phi, theta, psi);
+    //std::cout << "J dimensions: " << J.rows() << "x" << J.cols() << std::endl;
+    //std::cout << "nu.head(6) dimensions: " << nu.head(6).rows() << "x" << nu.head(6).cols() << std::endl;
     // ---------------------------
     // Assemble state derivative (xdot)
     // ---------------------------
@@ -391,20 +416,24 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input,
 
     Eigen::VectorXd force_term = tau + tau_damp + tau_crossflow - C_sys * nu_r - G * eta;
     //std::cout << "force_term: " << force_term.transpose() << std::endl;
+    //std::cout << "force_term dimensions: " << force_term.rows() << "x" << force_term.cols() << std::endl;
 
     Eigen::VectorXd acceleration = M_sys.fullPivLu().solve(force_term);
     //std::cout << "acceleration: " << acceleration.transpose() << std::endl;
-
+    //std::cout << "acceleration dimensions: " << acceleration.rows() << "x" << acceleration.cols() << std::endl;
+    
     Eigen::VectorXd xdot_vel = nu_c_dot + acceleration;
     //std::cout << "xdot_vel: " << xdot_vel.transpose() << std::endl;
+    //std::cout << "xdot_vel dimensions: " << xdot_vel.rows() << "x" << xdot_vel.cols() << std::endl;
 
-    Eigen::VectorXd xdot_pos = J * nu.head(3);
+    Eigen::VectorXd xdot_pos = J * nu.head(6);
     //std::cout << "xdot_pos: " << xdot_pos.transpose() << std::endl;
-
+    
     // Assemble full 12x1 state derivative //xdot might be a logical issue
     xdot.resize(12);
-    xdot << xdot_vel, Eigen::VectorXd::Zero(3), xdot_pos;
+    xdot << xdot_vel, xdot_pos;
     //std::cout << "xdot: " << xdot.transpose() << std::endl;
+    //std::cout << "xdot dimensions: " << xdot.rows() << "x" << xdot.cols() << std::endl;
 
     
     // ---------------------------

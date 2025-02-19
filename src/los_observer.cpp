@@ -1,4 +1,5 @@
 #include "los_observer.hpp"
+#include "utilities.hpp"
 #include <cmath>
 
 LOSObserver::LOSObserver(double h, double K_f)
@@ -9,7 +10,7 @@ LOSObserver::LOSObserver(double h, double K_f)
 
 void LOSObserver::update(double LOScommand) {
     double PHI = std::exp(-h / T_f);
-    LOSangle += h * (LOSrate + K_f * std::atan2(std::sin(LOScommand - LOSangle), std::cos(LOScommand - LOSangle)));
+    LOSangle += h * (LOSrate + K_f * ssa(LOScommand - LOSangle));
     xi = PHI * xi + (1 - PHI) * LOSangle;
     LOSrate = LOSangle - xi;
 }

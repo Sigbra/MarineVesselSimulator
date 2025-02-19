@@ -6,11 +6,15 @@ void refModel(double &x_d, double &v_d, double &a_d,
               double x_ref, double v_max, double zeta_d,
               double w_d, double h, bool eulerAngle)
 {
-    // Compute the error between the current desired position and the commanded position.
-    // If the state is an Euler angle, use the smallest signed angle difference.
-    double e_x = eulerAngle ? ssa(x_d - x_ref) : (x_d - x_ref);
+    // Use smallest signed angle for Euler angle errors
+    double e_x;
+    if(eulerAngle == 1){
+        e_x = ssa(x_d - x_ref);
+    } else {
+        e_x = x_d - x_ref;
+    }
 
-    // Compute the desired jerk (time derivative of acceleration) according to Fossen (2021, Eq. 12.10)
+    // Desired jerk (Fossen 2021, Eq. 12.10)
     double a_d_dot = -std::pow(w_d, 3) * e_x
                      - (2 * zeta_d + 1) * std::pow(w_d, 2) * v_d
                      - (2 * zeta_d + 1) * w_d * a_d;

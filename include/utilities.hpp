@@ -11,6 +11,8 @@ struct Waypoints {
 
 double ssa(double angle);
 
+double deg2rad(double degrees);
+
 std::string getRepositoryPath();
 
 void storeSimulationData(const Eigen::MatrixXd& simdata);

@@ -22,7 +22,7 @@ double addedMassSurge(double m, double L, double rho);
 Eigen::VectorXd crossFlowDrag(double L, double B_pont, double T, const Eigen::VectorXd &nu_r);
 
 // Euler angle to body angular rate transformation matrix
-Eigen::Matrix3d eulerang(double phi, double theta, double psi);
+Eigen::MatrixXd eulerang(double phi, double theta, double psi);
 
 // Rotation matrix from body-fixed frame to inertial frame (ZYX Euler angles)
 Eigen::Matrix3d Rzyx(double phi, double theta, double psi);

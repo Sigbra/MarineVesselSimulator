@@ -26,12 +26,14 @@ int main() {
     
     // Ocean current
     double V_c = 0.3; // Ocean current speed (m/s)
-    double beta_c = M_PI / 6; // Ocean current direction (rad)
+    double beta_c = deg2rad(30.0); // Ocean current direction (rad)
     
     // Waypoints
     Waypoints wpt;
     wpt.x = {0, 0, 150, 150, -100, -100, 200};
     wpt.y = {0, 200, 200, -50, -50, 250, 250};
+
+    //Add intermediate waypoints along the line segments between for better resolution ...
     
     // ALOS and ILOS parameters
     double Delta_h = 10;
@@ -77,7 +79,8 @@ int main() {
     // Reference model parameters
     double wn_d = 1.0;
     double zeta_d = 1.0;
-    double r_max = M_PI / 18;
+    //std::cout << "hello0" << std::endl;
+    double r_max = deg2rad(10.0);  // Maximum rate of turn (rad/s)
 
     //Propellar dynamics
     double T_n = 0.1;  // Propeller time constant (s)
@@ -122,16 +125,16 @@ int main() {
             std::cerr << "NaN detected for psi at iteration " << i << ", time: " << t[i] << "s\n";
             break; 
         }
-
+        //std::cout << "hello1" << std::endl;
         //Guidance and control system
         switch (ControlFlag) {
             case 1: {
                 double psi_ref = psi0;
                 if (t[i] > 100) {
-                    psi_ref = 0;
+                    psi_ref = deg2rad(0.0);
                 }
                 if (t[i] > 500) {
-                    psi_ref = -M_PI / 2;
+                    psi_ref = deg2rad(-90.0);
                 }
                 refModel(psi_d, r_d, a_d, psi_ref, r_max, zeta_d, wn_d, h, true);
                 break;
@@ -159,6 +162,7 @@ int main() {
                 break;
             }
         }
+        //std::cout << "hello4.1" << std::endl;
 
         //PID heading (yaw moment) autopilot and forward thrust
         double tau_X = 100;
