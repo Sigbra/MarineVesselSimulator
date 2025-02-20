@@ -1,13 +1,22 @@
 cmake_minimum_required(VERSION 3.10)
 project(Optimal-Constraint-Thruster-Allocation)
 
-set(CMAKE_CXX_STANDARD 17)  # or the C++ standard you require
+# Set C++ standard to C++17
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Include directories
+# -----------------------------------
+# Directories
+# -----------------------------------
 include_directories(${CMAKE_SOURCE_DIR}/include)
+include_directories(/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3)
+include_directories(${CMAKE_SOURCE_DIR}/external/matplotlib-cpp)
 
-# Find Eigen3
+# -----------------------------------
+# External Dependencies
+# -----------------------------------
+
+# 1. Find Eigen3
 find_package(Eigen3 REQUIRED NO_DEFAULT_PATH PATHS /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/share/eigen3/cmake)
 if(TARGET Eigen3::Eigen)
     message(STATUS "Eigen3 found successfully!")
@@ -15,14 +24,28 @@ else()
     message(FATAL_ERROR "Eigen3 not found!")
 endif()
 
-# Include directories
-include_directories(/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3)
+# 2. FFTW (adjust library name if necessary)
+link_directories(/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib)
 
-#find_package(Boost REQUIRED)
-#include_directories(${Boost_INCLUDE_DIRS})
+# 3. Gnuplot
+set(GNUPlot_EXECUTABLE "/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/gnuplot")
+include(FindGnuplot)
+if(GNUPLOT_EXECUTABLE)
+    message(STATUS "Found Gnuplot at ${GNUPLOT_EXECUTABLE}")
+else()
+    message(FATAL_ERROR "Gnuplot not found!")
+endif()
 
+# -----------------------------------
+# Python and NumPy for matplotlib-cpp
+# -----------------------------------
+find_package(Python3 COMPONENTS Development NumPy REQUIRED)
+message(STATUS "Python3 include dirs: ${Python3_INCLUDE_DIRS}")
+message(STATUS "Python3 NumPy include dirs: ${Python3_NumPy_INCLUDE_DIRS}")
 
-# Source files
+# -----------------------------------
+# Source Files
+# -----------------------------------
 set(SOURCES
     src/main.cpp
     src/ran.cpp
@@ -35,5 +58,19 @@ set(SOURCES
     src/utilities.cpp
 )
 
-add_executable(Optimal-Constraint-Thruster-Allocation ${SOURCES})
+# -----------------------------------
+# Create Executable
+# -----------------------------------
+add_executable(${PROJECT_NAME} ${SOURCES})
 
+# -----------------------------------
+# Link Libraries
+# -----------------------------------
+target_link_libraries(${PROJECT_NAME} PUBLIC fftw3)
+
+# Link Python libraries and include NumPy headers for matplotlib-cpp
+target_include_directories(${PROJECT_NAME} PRIVATE 
+    ${Python3_INCLUDE_DIRS}
+    ${Python3_NumPy_INCLUDE_DIRS}
+)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${Python3_LIBRARIES})

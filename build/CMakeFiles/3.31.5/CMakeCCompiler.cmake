@@ -1,4 +1,4 @@
-set(CMAKE_C_COMPILER "/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/cc")
+set(CMAKE_C_COMPILER "/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/x86_64-conda-linux-gnu-cc")
 set(CMAKE_C_COMPILER_ARG1 "")
 set(CMAKE_C_COMPILER_ID "GNU")
 set(CMAKE_C_COMPILER_VERSION "14.2.0")
@@ -23,11 +23,11 @@ set(CMAKE_C_COMPILER_SYSROOT "/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env
 set(CMAKE_COMPILER_SYSROOT "/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/../x86_64-conda-linux-gnu/sysroot/usr")
 
 
-set(CMAKE_AR "/usr/bin/ar")
-set(CMAKE_C_COMPILER_AR "/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/gcc-ar")
-set(CMAKE_RANLIB "/usr/bin/ranlib")
-set(CMAKE_C_COMPILER_RANLIB "/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/gcc-ranlib")
-set(CMAKE_LINKER "/usr/bin/ld")
+set(CMAKE_AR "/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/x86_64-conda-linux-gnu-ar")
+set(CMAKE_C_COMPILER_AR "/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/x86_64-conda-linux-gnu-gcc-ar")
+set(CMAKE_RANLIB "/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/x86_64-conda-linux-gnu-ranlib")
+set(CMAKE_C_COMPILER_RANLIB "/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/x86_64-conda-linux-gnu-gcc-ranlib")
+set(CMAKE_LINKER "/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/x86_64-conda-linux-gnu-ld")
 set(CMAKE_LINKER_LINK "")
 set(CMAKE_LINKER_LLD "")
 set(CMAKE_C_COMPILER_LINKER "/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/../lib/gcc/x86_64-conda-linux-gnu/14.2.0/../../../../x86_64-conda-linux-gnu/bin/ld")
@@ -76,7 +76,7 @@ endif()
 
 
 
-set(CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES "/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include;/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include-fixed;/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include")
+set(CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES "/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include;/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include;/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include-fixed;/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include")
 set(CMAKE_C_IMPLICIT_LINK_LIBRARIES "gcc;gcc_s;c;gcc;gcc_s")
-set(CMAKE_C_IMPLICIT_LINK_DIRECTORIES "/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0;/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc;/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/lib;/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib;/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/lib;/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/lib")
+set(CMAKE_C_IMPLICIT_LINK_DIRECTORIES "/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib;/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0;/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc;/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/lib;/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/lib;/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/lib")
 set(CMAKE_C_IMPLICIT_LINK_FRAMEWORK_DIRECTORIES "")

@@ -208,6 +208,8 @@ int main() {
     std::cout<<"Simulation completed"<<std::endl;
     storeSimulationData(simdata);
 
+    plotTrajectory();
+
     return 0;
 }
 

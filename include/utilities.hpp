@@ -17,4 +17,6 @@ std::string getRepositoryPath();
 
 void storeSimulationData(const Eigen::MatrixXd& simdata);
 
+void plotTrajectory();
+
 #endif // UTILITIES_HPP

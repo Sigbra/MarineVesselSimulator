@@ -76,127 +76,127 @@ CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/main.cpp.o: CMakeFiles
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/main.cpp.o: /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/main.cpp
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/main.cpp.o: CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/main.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/main.cpp.o -MF CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/main.cpp.o.d -o CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/main.cpp.o -c /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/main.cpp
+	/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/x86_64-conda-linux-gnu-c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/main.cpp.o -MF CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/main.cpp.o.d -o CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/main.cpp.o -c /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/main.cpp
 
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/main.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/main.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/main.cpp > CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/main.cpp.i
+	/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/x86_64-conda-linux-gnu-c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/main.cpp > CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/main.cpp.i
 
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/main.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/main.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/main.cpp -o CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/main.cpp.s
+	/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/x86_64-conda-linux-gnu-c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/main.cpp -o CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/main.cpp.s
 
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ran.cpp.o: CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/flags.make
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ran.cpp.o: /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/ran.cpp
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ran.cpp.o: CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ran.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ran.cpp.o -MF CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ran.cpp.o.d -o CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ran.cpp.o -c /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/ran.cpp
+	/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/x86_64-conda-linux-gnu-c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ran.cpp.o -MF CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ran.cpp.o.d -o CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ran.cpp.o -c /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/ran.cpp
 
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ran.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ran.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/ran.cpp > CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ran.cpp.i
+	/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/x86_64-conda-linux-gnu-c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/ran.cpp > CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ran.cpp.i
 
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ran.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ran.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/ran.cpp -o CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ran.cpp.s
+	/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/x86_64-conda-linux-gnu-c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/ran.cpp -o CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ran.cpp.s
 
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ALOSpsi.cpp.o: CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/flags.make
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ALOSpsi.cpp.o: /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/ALOSpsi.cpp
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ALOSpsi.cpp.o: CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ALOSpsi.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ALOSpsi.cpp.o -MF CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ALOSpsi.cpp.o.d -o CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ALOSpsi.cpp.o -c /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/ALOSpsi.cpp
+	/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/x86_64-conda-linux-gnu-c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ALOSpsi.cpp.o -MF CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ALOSpsi.cpp.o.d -o CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ALOSpsi.cpp.o -c /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/ALOSpsi.cpp
 
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ALOSpsi.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ALOSpsi.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/ALOSpsi.cpp > CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ALOSpsi.cpp.i
+	/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/x86_64-conda-linux-gnu-c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/ALOSpsi.cpp > CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ALOSpsi.cpp.i
 
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ALOSpsi.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ALOSpsi.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/ALOSpsi.cpp -o CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ALOSpsi.cpp.s
+	/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/x86_64-conda-linux-gnu-c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/ALOSpsi.cpp -o CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ALOSpsi.cpp.s
 
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/hermite_spline.cpp.o: CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/flags.make
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/hermite_spline.cpp.o: /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/hermite_spline.cpp
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/hermite_spline.cpp.o: CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/hermite_spline.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/hermite_spline.cpp.o -MF CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/hermite_spline.cpp.o.d -o CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/hermite_spline.cpp.o -c /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/hermite_spline.cpp
+	/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/x86_64-conda-linux-gnu-c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/hermite_spline.cpp.o -MF CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/hermite_spline.cpp.o.d -o CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/hermite_spline.cpp.o -c /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/hermite_spline.cpp
 
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/hermite_spline.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/hermite_spline.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/hermite_spline.cpp > CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/hermite_spline.cpp.i
+	/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/x86_64-conda-linux-gnu-c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/hermite_spline.cpp > CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/hermite_spline.cpp.i
 
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/hermite_spline.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/hermite_spline.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/hermite_spline.cpp -o CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/hermite_spline.cpp.s
+	/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/x86_64-conda-linux-gnu-c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/hermite_spline.cpp -o CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/hermite_spline.cpp.s
 
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/crosstrack_hermite.cpp.o: CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/flags.make
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/crosstrack_hermite.cpp.o: /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/crosstrack_hermite.cpp
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/crosstrack_hermite.cpp.o: CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/crosstrack_hermite.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/crosstrack_hermite.cpp.o -MF CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/crosstrack_hermite.cpp.o.d -o CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/crosstrack_hermite.cpp.o -c /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/crosstrack_hermite.cpp
+	/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/x86_64-conda-linux-gnu-c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/crosstrack_hermite.cpp.o -MF CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/crosstrack_hermite.cpp.o.d -o CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/crosstrack_hermite.cpp.o -c /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/crosstrack_hermite.cpp
 
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/crosstrack_hermite.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/crosstrack_hermite.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/crosstrack_hermite.cpp > CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/crosstrack_hermite.cpp.i
+	/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/x86_64-conda-linux-gnu-c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/crosstrack_hermite.cpp > CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/crosstrack_hermite.cpp.i
 
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/crosstrack_hermite.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/crosstrack_hermite.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/crosstrack_hermite.cpp -o CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/crosstrack_hermite.cpp.s
+	/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/x86_64-conda-linux-gnu-c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/crosstrack_hermite.cpp -o CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/crosstrack_hermite.cpp.s
 
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_method.cpp.o: CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/flags.make
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_method.cpp.o: /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/control_method.cpp
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_method.cpp.o: CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_method.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_method.cpp.o -MF CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_method.cpp.o.d -o CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_method.cpp.o -c /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/control_method.cpp
+	/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/x86_64-conda-linux-gnu-c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_method.cpp.o -MF CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_method.cpp.o.d -o CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_method.cpp.o -c /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/control_method.cpp
 
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_method.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_method.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/control_method.cpp > CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_method.cpp.i
+	/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/x86_64-conda-linux-gnu-c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/control_method.cpp > CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_method.cpp.i
 
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_method.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_method.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/control_method.cpp -o CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_method.cpp.s
+	/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/x86_64-conda-linux-gnu-c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/control_method.cpp -o CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_method.cpp.s
 
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/los_observer.cpp.o: CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/flags.make
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/los_observer.cpp.o: /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/los_observer.cpp
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/los_observer.cpp.o: CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/los_observer.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/los_observer.cpp.o -MF CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/los_observer.cpp.o.d -o CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/los_observer.cpp.o -c /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/los_observer.cpp
+	/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/x86_64-conda-linux-gnu-c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/los_observer.cpp.o -MF CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/los_observer.cpp.o.d -o CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/los_observer.cpp.o -c /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/los_observer.cpp
 
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/los_observer.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/los_observer.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/los_observer.cpp > CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/los_observer.cpp.i
+	/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/x86_64-conda-linux-gnu-c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/los_observer.cpp > CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/los_observer.cpp.i
 
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/los_observer.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/los_observer.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/los_observer.cpp -o CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/los_observer.cpp.s
+	/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/x86_64-conda-linux-gnu-c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/los_observer.cpp -o CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/los_observer.cpp.s
 
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ref_model.cpp.o: CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/flags.make
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ref_model.cpp.o: /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/ref_model.cpp
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ref_model.cpp.o: CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ref_model.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ref_model.cpp.o -MF CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ref_model.cpp.o.d -o CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ref_model.cpp.o -c /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/ref_model.cpp
+	/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/x86_64-conda-linux-gnu-c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ref_model.cpp.o -MF CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ref_model.cpp.o.d -o CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ref_model.cpp.o -c /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/ref_model.cpp
 
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ref_model.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ref_model.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/ref_model.cpp > CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ref_model.cpp.i
+	/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/x86_64-conda-linux-gnu-c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/ref_model.cpp > CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ref_model.cpp.i
 
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ref_model.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ref_model.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/ref_model.cpp -o CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ref_model.cpp.s
+	/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/x86_64-conda-linux-gnu-c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/ref_model.cpp -o CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ref_model.cpp.s
 
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/utilities.cpp.o: CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/flags.make
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/utilities.cpp.o: /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/utilities.cpp
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/utilities.cpp.o: CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/utilities.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/utilities.cpp.o -MF CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/utilities.cpp.o.d -o CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/utilities.cpp.o -c /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/utilities.cpp
+	/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/x86_64-conda-linux-gnu-c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/utilities.cpp.o -MF CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/utilities.cpp.o.d -o CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/utilities.cpp.o -c /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/utilities.cpp
 
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/utilities.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/utilities.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/utilities.cpp > CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/utilities.cpp.i
+	/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/x86_64-conda-linux-gnu-c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/utilities.cpp > CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/utilities.cpp.i
 
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/utilities.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/utilities.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/utilities.cpp -o CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/utilities.cpp.s
+	/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/x86_64-conda-linux-gnu-c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/utilities.cpp -o CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/utilities.cpp.s
 
 # Object files for target Optimal-Constraint-Thruster-Allocation
 Optimal__Constraint__Thruster__Allocation_OBJECTS = \
@@ -224,6 +224,7 @@ Optimal-Constraint-Thruster-Allocation: CMakeFiles/Optimal-Constraint-Thruster-A
 Optimal-Constraint-Thruster-Allocation: CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/utilities.cpp.o
 Optimal-Constraint-Thruster-Allocation: CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make
 Optimal-Constraint-Thruster-Allocation: CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/compiler_depend.ts
+Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/libpython3.13.so
 Optimal-Constraint-Thruster-Allocation: CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Linking CXX executable Optimal-Constraint-Thruster-Allocation"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/link.txt --verbose=$(VERBOSE)
