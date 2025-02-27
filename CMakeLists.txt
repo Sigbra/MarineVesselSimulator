@@ -44,6 +44,34 @@ message(STATUS "Python3 include dirs: ${Python3_INCLUDE_DIRS}")
 message(STATUS "Python3 NumPy include dirs: ${Python3_NumPy_INCLUDE_DIRS}")
 
 # -----------------------------------
+# CasADi Setup (Manually Finding CasADi)
+# -----------------------------------
+
+# Find CasADi include path
+find_path(CASADI_INCLUDE_DIR casadi/casadi.hpp
+    HINTS /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include
+)
+if(NOT CASADI_INCLUDE_DIR)
+    message(FATAL_ERROR "CasADi include directory not found!")
+else()
+    message(STATUS "CasADi include directory: ${CASADI_INCLUDE_DIR}")
+endif()
+
+# Find CasADi library
+find_library(CASADI_LIBRARY casadi
+    HINTS /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib
+)
+if(NOT CASADI_LIBRARY)
+    message(FATAL_ERROR "CasADi library not found!")
+else()
+    message(STATUS "CasADi library: ${CASADI_LIBRARY}")
+endif()
+
+# Add CasADi include directory
+include_directories(${CASADI_INCLUDE_DIR})
+link_directories(/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib)
+
+# -----------------------------------
 # Source Files
 # -----------------------------------
 set(SOURCES
@@ -53,6 +81,7 @@ set(SOURCES
     src/hermite_spline.cpp
     src/crosstrack_hermite.cpp
     src/control_method.cpp
+    src/control_allocation.cpp
     src/los_observer.cpp
     src/ref_model.cpp
     src/utilities.cpp
@@ -74,3 +103,11 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${Python3_NumPy_INCLUDE_DIRS}
 )
 target_link_libraries(${PROJECT_NAME} PRIVATE ${Python3_LIBRARIES})
+
+# Link CasADi
+target_link_libraries(${PROJECT_NAME} PRIVATE ${CASADI_LIBRARY})
+
+# Ensure CasADi is in the runtime path
+set_target_properties(${PROJECT_NAME} PROPERTIES
+    BUILD_RPATH "/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib"
+)

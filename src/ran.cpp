@@ -126,17 +126,16 @@ Eigen::Matrix3d Rzyx(double phi, double theta, double psi) {
 //   rp     - 3x1 payload location (m)
 //   V_c    - ocean current speed (m/s)
 //   beta_c - ocean current direction (rad)
+//   alpha  - 2x1 azimuth angles [alpha_left, alpha_right] (rad)
 // Outputs (by reference):
 //   xdot      - 12x1 time derivative of state vector
 //   U         - Speed (m/s) computed as sqrt(u^2+v^2+w^2)
 //   M_out     - 6x6 system mass matrix (MRB + added mass)
-//   B_prop_out- 2x2 propeller input matrix (if no input arguments, this is returned)
+//   B_prop- 3x2 propeller input matrix 
 //-------------------------------------------------------------------
-void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input,
-           double mp, const Eigen::Vector3d rp,
-           double V_c, double beta_c,
-           Eigen::VectorXd &xdot, double &U,
-           Eigen::MatrixXd &M_out, Eigen::MatrixXd &B_prop_out)
+void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input, const Eigen::VectorXd alpha_input,
+           double mp, const Eigen::Vector3d rp, double V_c, double beta_c,
+           Eigen::VectorXd &xdot, double &U, Eigen::MatrixXd &M_out, Eigen::MatrixXd &B_prop)
 {
     // Check dimensions
     if (x.size() != 12) {
@@ -145,6 +144,10 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input,
     }
     if (n_input.size() != 2) {
         std::cerr << "Error: n vector must have dimension 2!" << std::endl;
+        return;
+    }
+    if (alpha_input.size() != 2) {
+        std::cerr << "Error: alpha vector must have dimension 2!" << std::endl;
         return;
     }
     
@@ -185,7 +188,6 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input,
     // Ocean current and relative velocity
     // ---------------------------
     double psi = eta(5); // vessel yaw angle
-    //std::cout << "ran(), psi: " << psi << std::endl;
     double u_c = V_c * std::cos(beta_c - psi);
     double v_c = V_c * std::sin(beta_c - psi);
     Eigen::VectorXd nu_c = Eigen::VectorXd::Zero(6);
@@ -203,7 +205,7 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input,
     Eigen::Vector3d nu_c_dot_head = -Smtrx(nu2) * nu_c_head;
     Eigen::VectorXd nu_c_dot = Eigen::VectorXd::Zero(6);
     nu_c_dot.segment(0,3) = nu_c_dot_head;
-    // (last three entries remain zero)
+    
     
     // ---------------------------
     // Inertia and trim calculations
@@ -225,14 +227,16 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input,
                                - mp * (Smtrx(rp) * Smtrx(rp));
     
     // ---------------------------
-    // Propeller data and control forces
+    // Azimuth pods data and control forces
     // ---------------------------
-    double l1 = -y_pont;       // left propeller lever arm (m)
-    double l2 = y_pont;        // right propeller lever arm (m)
+    double l1 = -y_pont;       // left pod lever arm (m)
+    double l2 = y_pont;        // right pod lever arm (m)
     double k_pos = 0.02216 / 2.0;
     double k_neg = 0.01289 / 2.0;
     double n_max = std::sqrt((0.5 * 24.4 * g) / k_pos);
     double n_min = -std::sqrt((0.5 * 13.6 * g) / k_neg);
+    double alpha_max = 90;
+    double alpha_min = -90;
     
     // ---------------------------
     // Rigid-body (MRB) and Coriolis (CRB) matrices at the CG
@@ -331,13 +335,22 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input,
     double Nr = -M_sys(5,5) / T_yaw;
     
 
-    // Copy and saturate propeller speeds
+    // Saturate and compute propeller speeds
     Eigen::VectorXd n = n_input;
     for (int i = 0; i < 2; i++) {
         if (n(i) > n_max)
             n(i) = n_max;
         else if (n(i) < n_min)
             n(i) = n_min;
+    }
+
+    // Saturate and compute azimuth angles
+    Eigen::VectorXd alpha = alpha_input;
+    for (int i = 0; i < 2; i++) {
+        if (alpha(i) > alpha_max)
+            alpha(i) = alpha_max;
+        else if (alpha(i) < alpha_min)
+            alpha(i) = alpha_min;
     }
     
     // Control forces and moments, with saturated propeller speed
@@ -349,7 +362,7 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input,
             Thrust(i) = k_neg * n(i) * std::abs(n(i));
     }
 
-    // Control forces and moments
+    // Control forces and moments //Update!
     // tau = [Thrust_left + Thrust_right; 0; 0; 0; 0; -l1*Thrust_left - l2*Thrust_right]
     Eigen::VectorXd tau = Eigen::VectorXd::Zero(6);
     tau(0) = Thrust(0) + Thrust(1);
@@ -387,7 +400,6 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input,
     // Trim condition (adjust equilibrium)
     // ---------------------------
     // eta_0 = [0; 0; inv(G(3:5,3:5)) * g_0(3:5); 0]
-    // In 0-indexed C++, use block(2,2,3,3) and segment(2,3)
     Eigen::MatrixXd G_sub = G.block(2,2,3,3);
     Eigen::Vector3d g0_sub = g_0.segment(2,3);
     Eigen::Vector3d eta_0_sub = G_sub.inverse() * g0_sub;
@@ -443,37 +455,43 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input,
     //std::cout << "M_out: " << M_out << std::endl;
     // If ran() is called with no arguments (n not provided) MATLAB returns B_prop.
     // Here we always compute B_prop as:
-    B_prop_out = k_pos * (Eigen::MatrixXd(2,2) << 1, 1, y_pont, -y_pont).finished();
+    B_prop.resize(3,2);
+    B_prop(0,0) = k_pos * std::cos(alpha(0));
+    B_prop(0,1) = k_pos * std::cos(alpha(1));
+    B_prop(1,0) = k_pos * std::sin(alpha(0));
+    B_prop(1,1) = k_pos * std::sin(alpha(1));
+    B_prop(2,0) = y_pont * k_pos * std::cos(alpha(0));
+    B_prop(2,1) = -y_pont * k_pos * std::cos(alpha(1));
 }
 
 
 // Specialized RK4 integrator for the RAN model. 
-void rk4_ran_step(Eigen::VectorXd& x, const Eigen::VectorXd& n_input,
+void rk4_ran_step(Eigen::VectorXd& x, const Eigen::VectorXd& n_input, const Eigen::VectorXd& alpha_input,
     double mp, const Eigen::Vector3d& rp,
     double V_c, double beta_c, double h) {
     // Initialize variables
     Eigen::VectorXd xdot(12);
     double U;
     Eigen::MatrixXd M_out(6, 6);
-    Eigen::MatrixXd B_prop_out(2, 2);
+    Eigen::MatrixXd B_prop(3, 2);
 
     // Compute k1
-    ran(x, n_input, mp, rp, V_c, beta_c, xdot, U, M_out, B_prop_out);
+    ran(x, n_input, alpha_input, mp, rp, V_c, beta_c, xdot, U, M_out, B_prop);
     Eigen::VectorXd k1 = h * xdot;
     //std::cout << "k1: " << k1.transpose() << std::endl;
 
     // Compute k2
-    ran(x + 0.5 * k1, n_input, mp, rp, V_c, beta_c, xdot, U, M_out, B_prop_out);
+    ran(x + 0.5 * k1, n_input, alpha_input, mp, rp, V_c, beta_c, xdot, U, M_out, B_prop);
     Eigen::VectorXd k2 = h * xdot;
     //std::cout << "k2: " << k2.transpose() << std::endl;
 
     // Compute k3
-    ran(x + 0.5 * k2, n_input, mp, rp, V_c, beta_c, xdot, U, M_out, B_prop_out);
+    ran(x + 0.5 * k2, n_input, alpha_input, mp, rp, V_c, beta_c, xdot, U, M_out, B_prop);
     Eigen::VectorXd k3 = h * xdot;
     //std::cout << "k3: " << k3.transpose() << std::endl;
 
     // Compute k4
-    ran(x + k3, n_input, mp, rp, V_c, beta_c, xdot, U, M_out, B_prop_out);
+    ran(x + k3, n_input, alpha_input, mp, rp, V_c, beta_c, xdot, U, M_out, B_prop);
     Eigen::VectorXd k4 = h * xdot;
     //std::cout << "k4: " << k4.transpose() << std::endl;
 
