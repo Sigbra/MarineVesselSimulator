@@ -153,6 +153,30 @@ src/ALOSpsi.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ALOSpsi.cpp.s
 .PHONY : src/ALOSpsi.cpp.s
 
+src/control_allocation.o: src/control_allocation.cpp.o
+.PHONY : src/control_allocation.o
+
+# target to build an object file
+src/control_allocation.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_allocation.cpp.o
+.PHONY : src/control_allocation.cpp.o
+
+src/control_allocation.i: src/control_allocation.cpp.i
+.PHONY : src/control_allocation.i
+
+# target to preprocess a source file
+src/control_allocation.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_allocation.cpp.i
+.PHONY : src/control_allocation.cpp.i
+
+src/control_allocation.s: src/control_allocation.cpp.s
+.PHONY : src/control_allocation.s
+
+# target to generate assembly for a file
+src/control_allocation.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_allocation.cpp.s
+.PHONY : src/control_allocation.cpp.s
+
 src/control_method.o: src/control_method.cpp.o
 .PHONY : src/control_method.o
 
@@ -357,6 +381,9 @@ help:
 	@echo "... src/ALOSpsi.o"
 	@echo "... src/ALOSpsi.i"
 	@echo "... src/ALOSpsi.s"
+	@echo "... src/control_allocation.o"
+	@echo "... src/control_allocation.i"
+	@echo "... src/control_allocation.s"
 	@echo "... src/control_method.o"
 	@echo "... src/control_method.i"
 	@echo "... src/control_method.s"

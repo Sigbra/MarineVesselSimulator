@@ -2,6 +2,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/link.d"
   "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ALOSpsi.cpp.o"
   "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ALOSpsi.cpp.o.d"
+  "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_allocation.cpp.o"
+  "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_allocation.cpp.o.d"
   "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_method.cpp.o"
   "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_method.cpp.o.d"
   "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/crosstrack_hermite.cpp.o"

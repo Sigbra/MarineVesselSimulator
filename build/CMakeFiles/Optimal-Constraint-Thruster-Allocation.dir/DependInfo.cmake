@@ -9,6 +9,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/ALOSpsi.cpp" "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ALOSpsi.cpp.o" "gcc" "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ALOSpsi.cpp.o.d"
+  "/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/control_allocation.cpp" "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_allocation.cpp.o" "gcc" "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_allocation.cpp.o.d"
   "/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/control_method.cpp" "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_method.cpp.o" "gcc" "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_method.cpp.o.d"
   "/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/crosstrack_hermite.cpp" "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/crosstrack_hermite.cpp.o" "gcc" "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/crosstrack_hermite.cpp.o.d"
   "/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/hermite_spline.cpp" "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/hermite_spline.cpp.o" "gcc" "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/hermite_spline.cpp.o.d"

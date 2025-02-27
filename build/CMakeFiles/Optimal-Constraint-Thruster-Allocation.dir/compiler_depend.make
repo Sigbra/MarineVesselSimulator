@@ -425,6 +425,618 @@ CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ALOSpsi.cpp.o: /home/s
   /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/wctype.h \
   /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/xlocale.h
 
+CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_allocation.cpp.o: /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/control_allocation.cpp \
+  /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include/utilities.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/casadi.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/calculus.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/callback.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/casadi_common.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/casadi_enum.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/casadi_export.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/casadi_interrupt.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/casadi_limits.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/casadi_logger.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/casadi_meta.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/casadi_misc.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/casadi_types.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/code_generator.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/conic.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/core.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/dae_builder.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/dm.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/dm_fwd.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/dple.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/exception.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/expm.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/external.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/function.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/generic_expression.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/generic_matrix.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/generic_type.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/global_options.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/im.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/im_fwd.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/importer.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/integration_tools.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/integrator.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/interpolant.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/linsol.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/matrix_decl.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/matrix_fwd.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/mx.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/nlp_builder.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/nlp_tools.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/nlpsol.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/nonzeros.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/optistack.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/polynomial.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/printable.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/rootfinder.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_axpy.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_bfgs.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_bilin.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_bound_consistency.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_cache.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_clear.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_clip_max.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_clip_min.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_convexify.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_copy.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_cvx.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_de_boor.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_dense_lsqr.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_densify.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_dot.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_feasiblesqpmethod.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_file_slurp.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_fill.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_finite_diff.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_flip.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_iamax.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_interpn.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_interpn_grad.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_interpn_interpolate.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_interpn_weights.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_ipqp.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_jac.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_kkt.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_kron.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_ldl.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_logsumexp.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_low.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_lsqr.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_masked_norm_inf.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_max_viol.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_mmax.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_mmin.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_mtimes.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_mv.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_mv_dense.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_nd_boor_dual_eval.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_nd_boor_eval.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_newton.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_nlp.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_norm_1.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_norm_2.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_norm_inf.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_norm_inf_mul.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_ocp_block.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_oracle.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_oracle_callback.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_polyval.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_project.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_qp.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_qr.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_qrqp.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_rank1.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_regularize.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_runtime.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_scal.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_scaled_copy.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_sparsify.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_sparsity.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_sqpmethod.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_sum.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_sum_viol.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_swap.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_trans.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_tri_project.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_trilsolve.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_triusolve.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_vector_fmax.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_vector_fmin.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_vfmax.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_vfmin.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/shared.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/serializer.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/serializing_stream.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/shared_object.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/slice.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/sparsity.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/sparsity_interface.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/submatrix.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/sx.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/sx_elem.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/sx_fwd.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/tools.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/xml_file.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/xml_node.hpp \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/Cholesky \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/Core \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/Dense \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/Eigenvalues \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/Geometry \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/Householder \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/Jacobi \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/LU \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/QR \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/SVD \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Cholesky/LDLT.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Cholesky/LLT.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/plugins/ArrayCwiseBinaryOps.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/plugins/ArrayCwiseUnaryOps.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/plugins/BlockMethods.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/plugins/CommonCwiseBinaryOps.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/plugins/CommonCwiseUnaryOps.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/plugins/IndexedViewMethods.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/plugins/MatrixCwiseBinaryOps.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/plugins/MatrixCwiseUnaryOps.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/plugins/ReshapedMethods.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/ArithmeticSequence.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Array.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/ArrayBase.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/ArrayWrapper.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Assign.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/AssignEvaluator.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/BandMatrix.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Block.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/BooleanRedux.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/CommaInitializer.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/ConditionEstimator.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/CoreEvaluators.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/CoreIterators.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/CwiseBinaryOp.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/CwiseNullaryOp.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/CwiseTernaryOp.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/CwiseUnaryOp.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/CwiseUnaryView.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/DenseBase.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/DenseCoeffsBase.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/DenseStorage.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Diagonal.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/DiagonalMatrix.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/DiagonalProduct.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Dot.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/EigenBase.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Fuzzy.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/GeneralProduct.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/GenericPacketMath.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/GlobalFunctions.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/IO.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/IndexedView.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Inverse.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Map.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/MapBase.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/MathFunctions.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/MathFunctionsImpl.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Matrix.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/MatrixBase.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/NestByValue.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/NoAlias.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/NumTraits.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/PartialReduxEvaluator.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/PermutationMatrix.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/PlainObjectBase.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Product.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/ProductEvaluators.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Random.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Redux.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Ref.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Replicate.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Reshaped.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/ReturnByValue.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Reverse.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Select.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/SelfAdjointView.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/SelfCwiseBinaryOp.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Solve.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/SolveTriangular.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/SolverBase.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/StableNorm.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/StlIterators.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Stride.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Swap.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Transpose.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Transpositions.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/TriangularMatrix.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/VectorBlock.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/VectorwiseOp.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Visitor.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/arch/Default/BFloat16.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/arch/Default/ConjHelper.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/arch/Default/GenericPacketMathFunctions.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/arch/Default/GenericPacketMathFunctionsFwd.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/arch/Default/Half.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/arch/Default/Settings.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/arch/Default/TypeCasting.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/arch/SSE/Complex.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/arch/SSE/MathFunctions.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/arch/SSE/PacketMath.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/arch/SSE/TypeCasting.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/functors/AssignmentFunctors.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/functors/BinaryFunctors.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/functors/NullaryFunctors.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/functors/StlFunctors.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/functors/TernaryFunctors.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/functors/UnaryFunctors.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/products/GeneralBlockPanelKernel.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/products/GeneralMatrixMatrix.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/products/GeneralMatrixMatrixTriangular.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/products/GeneralMatrixVector.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/products/Parallelizer.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/products/SelfadjointMatrixMatrix.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/products/SelfadjointMatrixVector.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/products/SelfadjointProduct.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/products/SelfadjointRank2Update.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/products/TriangularMatrixMatrix.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/products/TriangularMatrixVector.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/products/TriangularSolverMatrix.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/products/TriangularSolverVector.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/util/BlasUtil.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/util/ConfigureVectorization.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/util/Constants.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/util/DisableStupidWarnings.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/util/ForwardDeclarations.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/util/IndexedViewHelper.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/util/IntegralConstant.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/util/MKL_support.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/util/Macros.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/util/Memory.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/util/Meta.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/util/ReenableStupidWarnings.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/util/ReshapedHelper.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/util/StaticAssert.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/util/SymbolicIndex.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/util/XprHelper.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Eigenvalues/ComplexSchur.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Eigenvalues/HessenbergDecomposition.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Eigenvalues/RealQZ.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Eigenvalues/RealSchur.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Eigenvalues/Tridiagonalization.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Eigenvalues/ComplexEigenSolver.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Eigenvalues/ComplexSchur.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Eigenvalues/EigenSolver.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Eigenvalues/GeneralizedEigenSolver.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Eigenvalues/GeneralizedSelfAdjointEigenSolver.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Eigenvalues/HessenbergDecomposition.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Eigenvalues/MatrixBaseEigenvalues.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Eigenvalues/RealQZ.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Eigenvalues/RealSchur.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Eigenvalues/SelfAdjointEigenSolver.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Eigenvalues/Tridiagonalization.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Geometry/AlignedBox.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Geometry/AngleAxis.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Geometry/EulerAngles.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Geometry/Homogeneous.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Geometry/Hyperplane.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Geometry/OrthoMethods.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Geometry/ParametrizedLine.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Geometry/Quaternion.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Geometry/Rotation2D.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Geometry/RotationBase.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Geometry/Scaling.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Geometry/Transform.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Geometry/Translation.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Geometry/Umeyama.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Geometry/arch/Geometry_SIMD.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Householder/BlockHouseholder.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Householder/Householder.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Householder/HouseholderSequence.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Jacobi/Jacobi.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/LU/Determinant.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/LU/FullPivLU.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/LU/InverseImpl.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/LU/PartialPivLU.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/LU/arch/InverseSize4.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/QR/ColPivHouseholderQR.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/QR/CompleteOrthogonalDecomposition.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/QR/FullPivHouseholderQR.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/QR/HouseholderQR.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/SVD/BDCSVD.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/SVD/JacobiSVD.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/SVD/SVDBase.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/SVD/UpperBidiagonalization.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/misc/Image.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/misc/Kernel.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/misc/RealSvd2x2.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/algorithm \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/array \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/atomic \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/backward/auto_ptr.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/backward/binders.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bit \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/algorithmfwd.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/align.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/alloc_traits.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/allocated_ptr.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/allocator.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/atomic_base.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/atomic_lockfree_defines.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/basic_ios.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/basic_ios.tcc \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/basic_string.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/basic_string.tcc \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/char_traits.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/charconv.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/chrono.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/codecvt.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/concept_check.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/cpp_type_traits.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/cxxabi_forced.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/cxxabi_init_exception.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/deque.tcc \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/enable_special_members.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/erase_if.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/exception.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/exception_defines.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/exception_ptr.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/fstream.tcc \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/functexcept.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/functional_hash.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/hash_bytes.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/hashtable.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/hashtable_policy.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/invoke.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/ios_base.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/istream.tcc \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/list.tcc \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/locale_classes.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/locale_classes.tcc \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/locale_conv.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/locale_facets.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/locale_facets.tcc \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/locale_facets_nonio.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/locale_facets_nonio.tcc \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/localefwd.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/memory_resource.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/memoryfwd.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/move.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/nested_exception.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/new_allocator.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/node_handle.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/ostream.tcc \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/ostream_insert.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/parse_numbers.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/postypes.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/predefined_ops.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/ptr_traits.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/quoted_string.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/random.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/random.tcc \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/range_access.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/refwrap.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/requires_hosted.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/shared_ptr.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/shared_ptr_atomic.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/shared_ptr_base.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/specfun.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/sstream.tcc \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/std_abs.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/std_function.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_algo.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_algobase.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_bvector.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_construct.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_deque.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_function.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_heap.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_iterator.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_iterator_base_funcs.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_iterator_base_types.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_list.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_map.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_multimap.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_multiset.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_numeric.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_pair.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_raw_storage_iter.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_relops.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_set.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_stack.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_tempbuf.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_tree.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_uninitialized.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_vector.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stream_iterator.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/streambuf.tcc \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/streambuf_iterator.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/string_view.tcc \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stringfwd.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/uniform_int_dist.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/unique_ptr.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/unordered_map.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/uses_allocator.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/uses_allocator_args.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/utility.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/vector.tcc \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/version.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/cassert \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/cctype \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/cerrno \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/chrono \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/climits \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/clocale \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/cmath \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/compare \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/complex \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/concepts \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/cstdarg \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/cstddef \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/cstdint \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/cstdio \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/cstdlib \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/cstring \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/ctime \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/cwchar \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/cwctype \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/debug/assertions.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/debug/debug.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/deque \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/exception \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/ext/aligned_buffer.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/ext/alloc_traits.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/ext/atomicity.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/ext/concurrence.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/ext/numeric_traits.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/ext/string_conversions.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/ext/type_traits.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/fstream \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/functional \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/initializer_list \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/iomanip \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/ios \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/iosfwd \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/iostream \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/istream \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/iterator \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/limits \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/list \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/locale \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/map \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/memory \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/new \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/numeric \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/ostream \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/pstl/execution_defs.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/pstl/glue_algorithm_defs.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/pstl/glue_memory_defs.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/pstl/glue_numeric_defs.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/pstl/pstl_config.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/random \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/ratio \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/set \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/sstream \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/stack \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/stdexcept \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/stdlib.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/streambuf \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/string \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/string_view \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/system_error \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/tr1/bessel_function.tcc \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/tr1/beta_function.tcc \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/tr1/ell_integral.tcc \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/tr1/exp_integral.tcc \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/tr1/gamma.tcc \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/tr1/hypergeometric.tcc \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/tr1/legendre_function.tcc \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/tr1/modified_bessel_func.tcc \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/tr1/poly_hermite.tcc \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/tr1/poly_laguerre.tcc \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/tr1/riemann_zeta.tcc \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/tr1/special_function_util.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/tuple \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/type_traits \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/typeinfo \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/unordered_map \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/utility \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/vector \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/x86_64-conda-linux-gnu/bits/atomic_word.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/x86_64-conda-linux-gnu/bits/basic_file.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/x86_64-conda-linux-gnu/bits/c++allocator.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/x86_64-conda-linux-gnu/bits/c++config.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/x86_64-conda-linux-gnu/bits/c++io.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/x86_64-conda-linux-gnu/bits/c++locale.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/x86_64-conda-linux-gnu/bits/cpu_defines.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/x86_64-conda-linux-gnu/bits/ctype_base.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/x86_64-conda-linux-gnu/bits/ctype_inline.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/x86_64-conda-linux-gnu/bits/error_constants.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/x86_64-conda-linux-gnu/bits/gthr-default.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/x86_64-conda-linux-gnu/bits/gthr.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/x86_64-conda-linux-gnu/bits/messages_members.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/x86_64-conda-linux-gnu/bits/opt_random.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/x86_64-conda-linux-gnu/bits/os_defines.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/x86_64-conda-linux-gnu/bits/time_members.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/emmintrin.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/limits.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/mm_malloc.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/mmintrin.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/mwaitintrin.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/pmmintrin.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/stdarg.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/stddef.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/stdint.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/syslimits.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/xmmintrin.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/_G_config.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/alloca.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/asm-generic/errno-base.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/asm-generic/errno.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/asm/errno.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/assert.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/byteswap-16.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/byteswap.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/endian.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/errno.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/huge_val.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/huge_valf.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/huge_vall.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/inf.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/local_lim.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/locale.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/mathcalls.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/mathdef.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/mathinline.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/nan.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/posix1_lim.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/posix2_lim.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/pthreadtypes.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/sched.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/select.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/setjmp.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/sigset.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/stdio.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/stdio_lim.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/stdlib-float.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/sys_errlist.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/time.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/timex.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/types.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/typesizes.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/waitflags.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/waitstatus.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/wchar.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/wordsize.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/xopen_lim.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/ctype.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/endian.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/errno.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/features.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/gnu/stubs-64.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/gnu/stubs.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/libintl.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/libio.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/limits.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/linux/errno.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/linux/limits.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/locale.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/math.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/pthread.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/sched.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/stdc-predef.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/stdint.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/stdio.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/stdlib.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/string.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/sys/cdefs.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/sys/select.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/sys/sysmacros.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/sys/types.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/time.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/wchar.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/wctype.h \
+  /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/xlocale.h
+
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_method.cpp.o: /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/control_method.cpp \
   /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/backward/binders.h \
   /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bit \
@@ -1547,6 +2159,7 @@ CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/los_observer.cpp.o: /h
 
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/main.cpp.o: /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/main.cpp \
   /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include/ALOSpsi.hpp \
+  /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include/control_allocation.hpp \
   /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include/control_method.hpp \
   /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include/crosstrack_hermite.hpp \
   /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include/hermite_spline.hpp \
@@ -3450,43 +4063,7 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/python3.13/site-packages/numpy/_core/include/numpy/__multiarray_api.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/x86_64-conda-linux-gnu/bits/time_members.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/ratio:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/pstl/glue_numeric_defs.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/numeric:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/map:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/iomanip:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/fstream:
-
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/filesystem:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_numeric.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_multimap.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/shared_ptr_base.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/unique_ptr.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/shared_ptr.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/quoted_string.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/locale_facets_nonio.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/locale_conv.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/fs_ops.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/fs_fwd.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/codecvt.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/weakrefobject.h:
 
@@ -3498,11 +4075,265 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/structseq.h:
 
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pytypedefs.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pythread.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pythonrun.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pystrcmp.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pyport.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pymem.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/fs_path.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pymath.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pymacconfig.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pyframe.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pyconfig.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pybuffer.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/objimpl.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/object.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/modsupport.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/methodobject.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/memoryobject.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/longobject.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/lock.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/listobject.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/import.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/fileutils.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/exports.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pyhash.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/dictobject.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/critical_section.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/unicodeobject.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/sysmodule.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/pytime.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/pythread.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/pythonrun.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/pymem.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/pylifecycle.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/pydebug.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/pyatomic.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/odictobject.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/objimpl.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/python3.13/site-packages/numpy/_core/include/numpy/utils.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/longobject.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/longintrepr.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/lock.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/listobject.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/import.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/funcobject.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/descrobject.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/traceback.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/critical_section.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/context.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/compile.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/pyerrors.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/code.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/ceval.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/object.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/cellobject.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/bytesobject.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/codecs.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/dictobject.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/ceval.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/bytearrayobject.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/boolobject.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/bltinmodule.h:
+
+/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/external/matplotlib-cpp/matplotlibcpp.h:
+
+/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/utilities.cpp:
+
+/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/ran.cpp:
+
+/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include/ref_model.hpp:
+
+/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include/ran.hpp:
+
+/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include/control_method.hpp:
+
+/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include/control_allocation.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/initconfig.h:
+
+/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/main.cpp:
+
+/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include/los_observer.hpp:
+
+/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/los_observer.cpp:
+
+/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include/hermite_spline.hpp:
+
+/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/hermite_spline.cpp:
+
+/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include/crosstrack_hermite.hpp:
+
+/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/crosstrack_hermite.cpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/x86_64-conda-linux-gnu/bits/time_members.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/x86_64-conda-linux-gnu/bits/opt_random.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/tupleobject.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/x86_64-conda-linux-gnu/bits/c++io.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/set:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/random:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/pstl/glue_numeric_defs.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/pstl/glue_memory_defs.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/map:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/iterator:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/fstream:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/deque:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/numeric:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/cstdarg:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_stack.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_set.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_raw_storage_iter.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_numeric.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_multimap.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/pystate.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_deque.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/shared_ptr_base.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/classobject.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/shared_ptr_atomic.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/unique_ptr.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/shared_ptr.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/random.tcc:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/random.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/quoted_string.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/enumobject.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/parse_numbers.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/locale_facets_nonio.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/locale_conv.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/list.tcc:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/deque.tcc:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/codecvt.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/monitoring.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/chrono.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/align.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/backward/auto_ptr.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/xml_node.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/xml_file.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/tools.hpp:
+
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/sliceobject.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Eigenvalues/GeneralizedSelfAdjointEigenSolver.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/sx_fwd.hpp:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_construct.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/sx_elem.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/sx.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/fs_ops.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/submatrix.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/sparsity.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pyerrors.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/shared_object.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/serializing_stream.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Eigenvalues/GeneralizedSelfAdjointEigenSolver.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/DenseCoeffsBase.h:
 
@@ -3516,7 +4347,7 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Map.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/specfun.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_dot.hpp:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/pthread.h:
 
@@ -3524,21 +4355,25 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/LU/FullPivLU.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/refwrap.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/external.hpp:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/postypes.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/refwrap.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/ctime:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/ostream.tcc:
 
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/fileobject.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Block.h:
+
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/nested_exception.h:
 
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/monitoring.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/xlocale.h:
+
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/locale_classes.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/istream.tcc:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/pyctype.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/ios_base.h:
 
@@ -3548,17 +4383,21 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Eigenvalues/GeneralizedEigenSolver.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/xlocale.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/monitoring.h:
-
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Geometry/ParametrizedLine.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/hash_bytes.h:
 
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/memoryobject.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/functexcept.h:
+
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/erase_if.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/exception.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pystate.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/enable_special_members.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Diagonal.h:
 
@@ -3571,6 +4410,8 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/cxxabi_forced.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/basic_ios.tcc:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/sparsity_interface.hpp:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Dot.h:
 
@@ -3588,13 +4429,27 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/products/GeneralMatrixMatrix.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/VectorwiseOp.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/warnings.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/traceback.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_bfgs.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/fs_fwd.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_bilin.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_sparsify.hpp:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/SVD/UpperBidiagonalization.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/products/GeneralMatrixVector.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pybuffer.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_fill.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/modsupport.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/QR/HouseholderQR.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/locale_facets_nonio.tcc:
 
@@ -3602,7 +4457,13 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/StlIterators.h:
 
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/optistack.hpp:
+
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/memoryfwd.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/picklebufobject.h:
+
+/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/control_allocation.cpp:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/locale_classes.tcc:
 
@@ -3614,7 +4475,7 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/atomic:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/lock.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_runtime.hpp:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Jacobi/Jacobi.h:
 
@@ -3625,8 +4486,6 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Householder/Householder.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/VectorBlock.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Geometry/Transform.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Geometry/Rotation2D.h:
 
@@ -3654,41 +4513,41 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/x86_64-conda-linux-gnu/bits/os_defines.h:
 
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_interpn_grad.hpp:
+
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Geometry/Quaternion.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_map.h:
-
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/fs_dir.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_map.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/cstdio:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Geometry/Translation.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/methodobject.h:
-
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Eigenvalues/ComplexEigenSolver.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/python3.13/site-packages/numpy/_core/include/numpy/utils.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/longobject.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_heap.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Eigenvalues/Tridiagonalization.h:
 
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/complexobject.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/misc/RealSvd2x2.h:
+
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/GenericPacketMath.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Eigenvalues/HessenbergDecomposition.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/objimpl.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pystrtod.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Eigenvalues/ComplexSchur.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/setobject.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/ostream_insert.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/util/SymbolicIndex.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/asm/errno.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/timex.h:
 
@@ -3697,6 +4556,10 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/x86_64-conda-linux-gnu/bits/gthr-default.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/errno.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/pyctype.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_project.hpp:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/util/StaticAssert.h:
 
@@ -3710,6 +4573,10 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/util/Memory.h:
 
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pyatomic.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/cpp_type_traits.h:
+
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/util/Macros.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/LU/arch/InverseSize4.h:
@@ -3720,29 +4587,45 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/linux/errno.h:
 
-/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/crosstrack_hermite.cpp:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/floatobject.h:
 
-/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/hermite_spline.cpp:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/longobject.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pymacconfig.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/functional_hash.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/util/IndexedViewHelper.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/util/ForwardDeclarations.h:
 
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_ldl.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/iterobject.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/genericaliasobject.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/util/DisableStupidWarnings.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/patchlevel.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/fileobject.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/NoAlias.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/localefwd.h:
+
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/streambuf:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_vfmax.hpp:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Inverse.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/GlobalFunctions.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/genobject.h:
-
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_pair.h:
 
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_mv.hpp:
+
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/SVD/SVDBase.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_qrqp.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/memory:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Householder/BlockHouseholder.h:
 
@@ -3758,13 +4641,15 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/ext/string_conversions.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/chrono.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/monitoring.h:
-
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/Eigenvalues:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Reshaped.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/Python.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/backward/binders.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/pyfpe.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Geometry/Scaling.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/x86_64-conda-linux-gnu/bits/c++allocator.h:
 
@@ -3778,19 +4663,13 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/ReturnByValue.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/warnings.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Geometry/Transform.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/traceback.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/critical_section.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_vector_fmax.hpp:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/DiagonalMatrix.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/SVD/BDCSVD.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/DenseBase.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/floatobject.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/allocated_ptr.h:
 
@@ -3810,49 +4689,49 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/AssignEvaluator.h:
 
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/abstract.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Assign.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/fileutils.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/SVD:
+
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/python3.13/site-packages/numpy/_core/include/numpy/_numpyconfig.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/products/Parallelizer.h:
 
 /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/ALOSpsi.cpp:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/CwiseNullaryOp.h:
-
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/invoke.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/mwaitintrin.h:
 
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_swap.hpp:
+
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Geometry/Umeyama.h:
-
-/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include/los_observer.hpp:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/arch/SSE/PacketMath.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/plugins/MatrixCwiseBinaryOps.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/concept_check.h:
 
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_sum_viol.hpp:
+
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/util/MKL_support.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/LU:
 
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/pyatomic_gcc.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/byteswap.h:
+
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/stdint.h:
-
-/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include/ref_model.hpp:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/typeslots.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/BooleanRedux.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/Householder:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/ext/atomicity.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/python3.13/site-packages/numpy/_core/include/numpy/npy_common.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/basic_string.tcc:
-
-/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include/control_method.hpp:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/atomic_base.h:
 
@@ -3872,11 +4751,9 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/std_abs.h:
 
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_regularize.hpp:
+
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_vector.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/arch/Default/ConjHelper.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/Geometry:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/products/TriangularSolverVector.h:
 
@@ -3889,6 +4766,12 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/CoreEvaluators.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/PartialReduxEvaluator.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/intrcheck.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/complexobject.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/ProductEvaluators.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/Dense:
 
@@ -3910,19 +4793,21 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_uninitialized.h:
 
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pycapsule.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/functors/TernaryFunctors.h:
+
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/range_access.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/locale.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Replicate.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/picklebufobject.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/code_generator.hpp:
 
-/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include/crosstrack_hermite.hpp:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/methodobject.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/byteswap.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/pyatomic_gcc.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/DiagonalProduct.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_tree.h:
 
@@ -3930,11 +4815,13 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/plugins/ArrayCwiseUnaryOps.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/backward/binders.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pymacro.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/Python.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/charconv.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/products/TriangularMatrixVector.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_norm_2.hpp:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/arch/Default/GenericPacketMathFunctionsFwd.h:
 
@@ -3944,25 +4831,27 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/tr1/riemann_zeta.tcc:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/plugins/CommonCwiseUnaryOps.h:
-
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/SelfCwiseBinaryOp.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/ConditionEstimator.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/wchar.h:
 
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_trilsolve.hpp:
+
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/Jacobi:
 
-/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/external/matplotlib-cpp/matplotlibcpp.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/global_options.hpp:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/plugins/CommonCwiseBinaryOps.h:
 
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/exception.hpp:
+
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Array.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/arch/Default/Settings.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_construct.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/plugins/IndexedViewMethods.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/printable.hpp:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/move.h:
 
@@ -3976,6 +4865,10 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/MathFunctionsImpl.h:
 
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/osmodule.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/GeneralProduct.h:
+
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/algorithmfwd.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Matrix.h:
@@ -3986,9 +4879,11 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/NestByValue.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Visitor.h:
-
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/streambuf_iterator.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Reshaped.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/generic_matrix.hpp:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/util/Meta.h:
 
@@ -4008,9 +4903,9 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_tempbuf.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/cpp_type_traits.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/plugins/CommonCwiseUnaryOps.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pyatomic.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/im.hpp:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/ArrayBase.h:
 
@@ -4024,13 +4919,19 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/ext/numeric_traits.h:
 
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/pyhash.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/casadi_types.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_oracle_callback.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_trans.hpp:
+
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/misc/Kernel.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/SelfAdjointView.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/descrobject.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_relops.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/integration_tools.hpp:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/SolveTriangular.h:
 
@@ -4038,23 +4939,21 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include/ALOSpsi.hpp:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/pymem.h:
-
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/products/SelfadjointMatrixVector.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Stride.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/listobject.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/pylifecycle.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_sqpmethod.hpp:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/products/GeneralMatrixMatrixTriangular.h:
 
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_max_viol.hpp:
+
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Transpositions.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/SVD:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Visitor.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/fileutils.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_norm_inf_mul.hpp:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_bvector.h:
 
@@ -4062,25 +4961,29 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/stdarg.h:
 
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_nd_boor_dual_eval.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pystats.h:
+
+/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/ref_model.cpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Solve.h:
+
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/arch/Default/GenericPacketMathFunctions.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/parse_numbers.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/slice.hpp:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/enumobject.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/plugins/IndexedViewMethods.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/casadi_common.hpp:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/arch/Default/Half.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/arch/Default/TypeCasting.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/object.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Eigenvalues/ComplexSchur.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pystrtod.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/fstream.tcc:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_iterator_base_types.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_clip_min.hpp:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/locale:
 
@@ -4112,13 +5015,7 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/products/GeneralBlockPanelKernel.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/bytesobject.h:
-
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_iterator_base_funcs.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/array:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/pyframe.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/python3.13/site-packages/numpy/_core/include/numpy/dtype_api.h:
 
@@ -4128,9 +5025,7 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Cholesky/LLT.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pyhash.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/dictobject.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/dm_fwd.hpp:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/products/TriangularMatrixMatrix.h:
 
@@ -4138,9 +5033,15 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/char_traits.h:
 
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_relops.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/casadi_logger.hpp:
+
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/MathFunctions.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/codecs.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/DenseBase.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/nlpsol.hpp:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/util/IntegralConstant.h:
 
@@ -4148,17 +5049,13 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/plugins/MatrixCwiseUnaryOps.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/import.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_clear.hpp:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/util/BlasUtil.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/memory_resource.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/mathdef.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/traceback.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/critical_section.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stringfwd.h:
 
@@ -4172,21 +5069,19 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/utility.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/vector.tcc:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/postypes.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pystrcmp.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_feasiblesqpmethod.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_mtimes.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/vector.tcc:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/cassert:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/cctype:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/cerrno:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pymem.h:
-
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/climits:
-
-/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include/ran.hpp:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/clocale:
 
@@ -4216,9 +5111,21 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/tr1/gamma.tcc:
 
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/moduleobject.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/cstring:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/bytearrayobject.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/wordsize.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/casadi_interrupt.hpp:
+
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/cwctype:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/time.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_vector_fmin.hpp:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/debug/assertions.h:
 
@@ -4244,25 +5151,23 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/waitflags.h:
 
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/arch/Default/TypeCasting.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/core.hpp:
+
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Eigenvalues/MatrixBaseEigenvalues.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/functional:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/iosfwd:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pylifecycle.h:
-
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/iostream:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/importer.hpp:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/new:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/ostream:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pystats.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Solve.h:
-
-/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/ref_model.cpp:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/stack:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/pstl/execution_defs.h:
 
@@ -4280,13 +5185,23 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/sstream:
 
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_qr.hpp:
+
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/stdexcept:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/pydebug.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/tracemalloc.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_mv_dense.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/stdlib.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/list:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/string:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/string_view:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_vfmin.hpp:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/tr1/bessel_function.tcc:
 
@@ -4296,17 +5211,19 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/gnu/stubs.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/ceval.h:
-
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/tr1/exp_integral.tcc:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/longintrepr.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/serializer.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_jac.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_scal.hpp:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/tuple:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/tr1/hypergeometric.tcc:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/matrix_fwd.hpp:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/tr1/legendre_function.tcc:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/tr1/hypergeometric.tcc:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/type_traits:
 
@@ -4320,8 +5237,6 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/unordered_map:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/bytearrayobject.h:
-
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/utility:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Fuzzy.h:
@@ -4331,6 +5246,8 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/setjmp.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/vector:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_finite_diff.hpp:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/products/SelfadjointProduct.h:
 
@@ -4342,10 +5259,6 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/pthreadtypes.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/stdlib.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/tracemalloc.h:
-
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/QR/FullPivHouseholderQR.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/x86_64-conda-linux-gnu/bits/cpu_defines.h:
@@ -4354,33 +5267,39 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/x86_64-conda-linux-gnu/bits/ctype_inline.h:
 
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/rootfinder.hpp:
+
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/python3.13/site-packages/numpy/_core/include/numpy/ndarrayobject.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/emmintrin.h:
 
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/cerrno:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_iamax.hpp:
+
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/limits.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/mm_malloc.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/odictobject.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/mmintrin.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/pmmintrin.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/listobject.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_norm_1.hpp:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/misc/Image.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/stdint.h:
 
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pylifecycle.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_triusolve.hpp:
+
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/alloca.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/huge_vall.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/funcobject.h:
-
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/asm-generic/errno-base.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/shared.hpp:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/byteswap-16.h:
 
@@ -4392,15 +5311,13 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/errno.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pyerrors.h:
-
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/huge_val.h:
 
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/iosfwd:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_densify.hpp:
+
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/local_lim.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/enable_special_members.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pystate.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/ext/concurrence.h:
 
@@ -4408,15 +5325,21 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/mathcalls.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/pystate.h:
-
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/mathinline.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/nan.h:
 
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/dm.hpp:
+
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/posix1_lim.h:
 
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/mm_malloc.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/nlp_builder.hpp:
+
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/posix2_lim.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_multiset.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/sched.h:
 
@@ -4432,15 +5355,11 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/stdlib-float.h:
 
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/nlp_tools.hpp:
+
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/stdio.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/modsupport.h:
-
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/sys_errlist.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/charconv.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pymacro.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/hashtable_policy.h:
 
@@ -4449,6 +5368,8 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/TriangularMatrix.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/wchar.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/linsol.hpp:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/xopen_lim.h:
 
@@ -4466,15 +5387,15 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/gnu/stubs-64.h:
 
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_cvx.hpp:
+
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/libio.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/x86_64-conda-linux-gnu/bits/c++io.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/tupleobject.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/stat.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/locale.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stl_list.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/sched.h:
 
@@ -4486,164 +5407,178 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/sys/cdefs.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/sysmodule.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/floatobject.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/cstring:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/moduleobject.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/dple.hpp:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/sys/select.h:
-
-/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include/hermite_spline.hpp:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/sys/types.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/wctype.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/pyhash.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/casadi.hpp:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/pythonrun.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/VectorwiseOp.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/calculus.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/callback.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/istream.tcc:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/nonzeros.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/casadi_enum.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/casadi_limits.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_qp.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/casadi_meta.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/conic.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/dae_builder.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/tr1/legendre_function.tcc:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/expm.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_scaled_copy.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/function.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/generic_expression.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_interpn_weights.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/generic_type.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/stream_iterator.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/casadi_misc.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/im_fwd.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/ratio:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/integrator.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/genobject.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/interpolant.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/casadi_export.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/matrix_decl.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_nlp.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_mmax.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/mx.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/arch/Default/Settings.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/polynomial.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_axpy.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_bound_consistency.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_cache.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/arch/SSE/PacketMath.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_clip_max.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_convexify.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_copy.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/typeslots.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/BooleanRedux.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/Householder:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_ipqp.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_de_boor.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/pyframe.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/array:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_dense_lsqr.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/functional_hash.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_file_slurp.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_flip.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_interpn.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/iomanip:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_interpn_interpolate.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_kron.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/arch/Default/ConjHelper.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/Geometry:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_logsumexp.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_low.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/specfun.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_lsqr.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_masked_norm_inf.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/asm/errno.h:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_mmin.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_nd_boor_eval.hpp:
+
+/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/control_method.cpp:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/x86_64-conda-linux-gnu/bits/c++config.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/tr1/ell_integral.tcc:
 
-/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/control_method.cpp:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_newton.hpp:
 
-/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/los_observer.cpp:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_norm_inf.hpp:
 
-/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/ran.cpp:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_ocp_block.hpp:
 
-/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/utilities.cpp:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/CwiseNullaryOp.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/bltinmodule.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_oracle.hpp:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/misc/RealSvd2x2.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/complexobject.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/boolobject.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/pyatomic.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/dictobject.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/ceval.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/compile.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Assign.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/abstract.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/x86_64-conda-linux-gnu/sysroot/usr/include/bits/wordsize.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/bytearrayobject.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/classobject.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/compile.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/context.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/Block.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/fileobject.h:
-
-/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/main.cpp:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/initconfig.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/functexcept.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/memoryobject.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/DiagonalProduct.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/methodobject.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/QR/HouseholderQR.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/modsupport.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/cellobject.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/object.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/code.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/pyerrors.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Geometry/Scaling.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/pyfpe.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pyport.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/pythread.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/pytime.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pyframe.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/stddef.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_polyval.hpp:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/setobject.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/unicodeobject.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/stddef.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/exports.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_rank1.hpp:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/fileutils.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_sparsity.hpp:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/util/IndexedViewHelper.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_kkt.hpp:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/floatobject.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_sum.hpp:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/import.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/compile.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/complexobject.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/chrono:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/ProductEvaluators.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/intrcheck.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/util/DisableStupidWarnings.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/genericaliasobject.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/iterobject.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/lock.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/memoryobject.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/objimpl.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/GeneralProduct.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/osmodule.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/NoAlias.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/localefwd.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/fileobject.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/patchlevel.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3/Eigen/src/Core/functors/TernaryFunctors.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pycapsule.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pyconfig.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib/gcc/x86_64-conda-linux-gnu/14.2.0/include/c++/bits/fs_path.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pymath.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pythonrun.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pythread.h:
-
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/pytypedefs.h:
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/casadi/core/runtime/casadi_tri_project.hpp:
