@@ -31,6 +31,9 @@ double deg2rad(double degrees) {
     return degrees * M_PI / 180.0;
 }
 
+double rad2deg(double radians) {
+    return radians * 180.0 / M_PI;
+}
 
 // Function to get the path to the 'Optimal-Constraint-Thruster-Allocation' repository dynamically
 std::string getRepositoryPath() {

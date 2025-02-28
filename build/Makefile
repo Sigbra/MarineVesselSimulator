@@ -225,6 +225,30 @@ src/crosstrack_hermite.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/crosstrack_hermite.cpp.s
 .PHONY : src/crosstrack_hermite.cpp.s
 
+src/guidance.o: src/guidance.cpp.o
+.PHONY : src/guidance.o
+
+# target to build an object file
+src/guidance.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/guidance.cpp.o
+.PHONY : src/guidance.cpp.o
+
+src/guidance.i: src/guidance.cpp.i
+.PHONY : src/guidance.i
+
+# target to preprocess a source file
+src/guidance.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/guidance.cpp.i
+.PHONY : src/guidance.cpp.i
+
+src/guidance.s: src/guidance.cpp.s
+.PHONY : src/guidance.s
+
+# target to generate assembly for a file
+src/guidance.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/guidance.cpp.s
+.PHONY : src/guidance.cpp.s
+
 src/hermite_spline.o: src/hermite_spline.cpp.o
 .PHONY : src/hermite_spline.o
 
@@ -390,6 +414,9 @@ help:
 	@echo "... src/crosstrack_hermite.o"
 	@echo "... src/crosstrack_hermite.i"
 	@echo "... src/crosstrack_hermite.s"
+	@echo "... src/guidance.o"
+	@echo "... src/guidance.i"
+	@echo "... src/guidance.s"
 	@echo "... src/hermite_spline.o"
 	@echo "... src/hermite_spline.i"
 	@echo "... src/hermite_spline.s"

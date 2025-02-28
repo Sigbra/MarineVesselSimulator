@@ -2162,6 +2162,7 @@ CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/main.cpp.o: /home/sigu
   /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include/control_allocation.hpp \
   /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include/control_method.hpp \
   /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include/crosstrack_hermite.hpp \
+  /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include/guidance.hpp \
   /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include/hermite_spline.hpp \
   /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include/los_observer.hpp \
   /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include/ran.hpp \
@@ -4171,8 +4172,6 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/context.h:
 
-/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/compile.h:
-
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/pyerrors.h:
 
 /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/code.h:
@@ -4206,6 +4205,10 @@ Optimal-Constraint-Thruster-Allocation: /home/sigurdvb/anaconda3/envs/thrust_all
 /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include/ref_model.hpp:
 
 /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include/ran.hpp:
+
+/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/python3.13/cpython/compile.h:
+
+/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include/guidance.hpp:
 
 /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include/control_method.hpp:
 

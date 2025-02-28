@@ -2169,6 +2169,7 @@ CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/main.cpp.o
  /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include/control_allocation.hpp
  /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include/control_method.hpp
  /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include/crosstrack_hermite.hpp
+ /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include/guidance.hpp
  /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include/hermite_spline.hpp
  /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include/los_observer.hpp
  /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/include/ran.hpp

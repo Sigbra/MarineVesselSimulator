@@ -8,6 +8,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_method.cpp.o.d"
   "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/crosstrack_hermite.cpp.o"
   "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/crosstrack_hermite.cpp.o.d"
+  "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/guidance.cpp.o"
+  "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/guidance.cpp.o.d"
   "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/hermite_spline.cpp.o"
   "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/hermite_spline.cpp.o.d"
   "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/los_observer.cpp.o"
