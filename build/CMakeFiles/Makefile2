@@ -85,12 +85,12 @@ clean: CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/clean
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/build/CMakeFiles --progress-num=1,2,3,4,5,6,7,8,9,10,11,12 "Built target Optimal-Constraint-Thruster-Allocation"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/build/CMakeFiles --progress-num=1,2,3,4,5,6 "Built target Optimal-Constraint-Thruster-Allocation"
 .PHONY : CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/build/CMakeFiles 12
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/build/CMakeFiles 6
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/sigurdvb/Optimal-Constraint-Thruster-Allocation/build/CMakeFiles 0
 .PHONY : CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/rule
@@ -102,7 +102,7 @@ Optimal-Constraint-Thruster-Allocation: CMakeFiles/Optimal-Constraint-Thruster-A
 # codegen rule for target.
 CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/build/CMakeFiles --progress-num=1,2,3,4,5,6,7,8,9,10,11,12 "Finished codegen for target Optimal-Constraint-Thruster-Allocation"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/build/CMakeFiles --progress-num=1,2,3,4,5,6 "Finished codegen for target Optimal-Constraint-Thruster-Allocation"
 .PHONY : CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/codegen
 
 # clean rule for target.
