@@ -1,8 +1,15 @@
+#include "control_allocation.hpp"
 #include <casadi/casadi.hpp>
+#include <vector>
+#include <cmath>
+#include <iostream>
+#include <map>
 #include "utilities.hpp"
+
 using namespace casadi;
 
-std::vector<double> controlAllocation(double Fx_des, double Fy_des, double Mz_des) {
+// Control allocation using no lookahead non_linear optimization
+std::vector<double> NLOptControlAlloc(double Fx_des, double Fy_des, double Mz_des) {
     // Define symbolic decision variables
     MX F1 = MX::sym("F1");    // Thruster 1 force
     MX phi1 = MX::sym("phi1"); // Thruster 1 angle
@@ -22,7 +29,16 @@ std::vector<double> controlAllocation(double Fx_des, double Fy_des, double Mz_de
     MX Mz = L1 * F1 * sin(phi1) - L2 * F2 * sin(phi2); // Yaw moment
 
     // Define the objective function (minimize squared error)
-    MX objective = pow(Fx - Fx_des, 2) + pow(Fy - Fy_des, 2) + pow(Mz - Mz_des, 2);
+    MX objective = 0;
+    if (!std::isnan(Fx_des)) {
+        objective += 0.5 * pow(Fx - Fx_des, 2);
+    }
+    if (!std::isnan(Fy_des)) {
+        objective += 0.5 * pow(Fy - Fy_des, 2);
+    }
+    if (!std::isnan(Mz_des)) {
+        objective += 0.5 * pow(Mz - Mz_des, 2);
+    }
 
     // Set up NLP problem dictionary
     MXDict nlp = {{"x", vars}, {"f", objective}}; 

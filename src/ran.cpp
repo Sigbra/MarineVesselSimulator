@@ -131,7 +131,7 @@ Eigen::Matrix3d Rzyx(double phi, double theta, double psi) {
 //   xdot      - 12x1 time derivative of state vector
 //   U         - Speed (m/s) computed as sqrt(u^2+v^2+w^2)
 //   M_out     - 6x6 system mass matrix (MRB + added mass)
-//   B_prop- 3x2 propeller input matrix 
+//   B_prop    - 3x2 propeller input matrix 
 //-------------------------------------------------------------------
 void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input, const Eigen::VectorXd alpha_input,
            double mp, const Eigen::Vector3d rp, double V_c, double beta_c,

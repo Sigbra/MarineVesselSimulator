@@ -2,20 +2,17 @@
 #include <vector>
 #include <array>
 #include <cmath>
-#include <cstdlib> // For getenv
-#include <Eigen/SVD>  // SVD for pseudoinverse computation
+#include <cstdlib>    // For getenv
 
 #include "utilities.hpp"
 #include "ran.hpp"
-#include "ref_model.hpp"
-#include "ALOSpsi.hpp"
-#include "hermite_spline.hpp"
-#include "crosstrack_hermite.hpp"
-#include "los_observer.hpp"
-#include "control_method.hpp"
+//#include "ref_model.hpp"
+//#include "ALOSpsi.hpp"
+//#include "hermite_spline.hpp"
+//#include "crosstrack_hermite.hpp"
+//#include "los_observer.hpp"
+#include "motion_control.hpp"
 #include "control_allocation.hpp"
-#include "guidance.hpp"
-
 
 
 int main() {
@@ -33,11 +30,11 @@ int main() {
     double V_c = 0.3;              // Ocean current speed (m/s)
     double beta_c = deg2rad(30.0); // Ocean current direction (rad)
 
-    // Waypoints for initial position + 3DOF DP square test
+    // Waypoints: position + heading angles for DP
     Waypoints wpt;
     wpt.x =     {          0,           0,          150,          150,          -100};
     wpt.y =     {          0,         200,          200,          -50,           -50};
-    wpt.angle = {deg2rad(90), deg2rad(90),  deg2rad(45),  deg2rad(90),  deg2rad(-45)};
+    wpt.angle = {deg2rad(90), deg2rad(90),  deg2rad(45),  deg2rad(90),  deg2rad(-45)}; 
     
     // Additional parameter for straight-line path following
     double R_switch = 5;
@@ -57,7 +54,7 @@ int main() {
     
     ran(x_input, n_input, alpha_input, mp, rp, V_c, beta_c, xdot, U, M, B_prop);
 
-    // Azimuth dynamics
+    // Azimuth pod dynamics
     double T_n = 0.1;                               // Propeller time constant (s)
     Eigen::Vector2d n;                              // Initial propeller speed, [n_left n_right]'
     n << 0, 0;                                      // Initial values for propeller speeds
@@ -73,78 +70,106 @@ int main() {
     x(11) = psi0;                                   // Initial heading angle
 
     // Control method selection
-    std::vector<std::string> methods = {
-        "Dynamic Positioning (DP)",
-    };
-
-    ControlMethod control(methods);
+    ControlMethod control;
     int ControlFlag = control.selectMethod();
 
-    int wpt_index  = 0;           // which waypoint are we trying to hold?
-    double z_psi   = 0.0;         // integral state for heading
+    // Current waypoint
+    int wpt_index  = 0;           
+
+    // Control forces and moment
     double tau_X   = 0.0;         // desired surge force
     double tau_Y   = 0.0;         // desired sway force
     double tau_N   = 0.0;         // desired yaw moment
-    double r_d     = 0.0;         // desired yaw rate (for logging)
-    double psi_d   = 0.0;         // desired heading (for logging)
+
+    // States for PID control
+    double z_xn    = 0.0;         // integral state for surge
+    double z_yn    = 0.0;         // integral state for sway
+    double z_psi   = 0.0;         // integral state for heading
+    double prev_error_xn  = 0.0;  // previous surge error
+    double prev_error_yn  = 0.0;  // previous sway error
+    double prev_error_psi = 0.0;  // previous heading error
 
     int num_steps = static_cast<int>(T_final / h) + 1; // Total number of time steps
     std::vector<double> t(num_steps);                  // Time vector from 0 to T_final
 
-    Eigen::MatrixXd simdata(num_steps, 12 + 2);        // Simulation data storage (Does not cause segmentation fault)
+    Eigen::MatrixXd simdata(num_steps, 12 + 4);        // Simulation data storage (x, n_c, alpha_c)
     
     for (int i = 0; i < num_steps; ++i) {
         t[i] = i * h;
         
-        //Measurements with noise
-        double u   = x(0) + 0.01 * ((double)rand() / RAND_MAX - 0.5);
-        double v   = x(1) + 0.01 * ((double)rand() / RAND_MAX - 0.5);
-        double r   = x(5) + 0.001 * ((double)rand() / RAND_MAX - 0.5);  
-
-        double xn  = x(6) + 0.01 * ((double)rand() / RAND_MAX - 0.5);   
-        double yn  = x(7) + 0.01 * ((double)rand() / RAND_MAX - 0.5);     
-        double psi = x(11) + 0.001 * ((double)rand() / RAND_MAX - 0.5);
+        // Navigation (Fake measurements using noise)
+        double random = ((double)rand() / RAND_MAX - 0.5);
+  
+        double u     = x(0)  +  0.01 * random; //Surge velocity (BODY frame)
+        double v     = x(1)  +  0.01 * random; //Sway velocity  (BODY frame)
+        double w     = x(2)  +  0.01 * random; //Heave velocity (BODY frame)
+        double p     = x(3)  + 0.001 * random; //Roll rate      (BODY frame)
+        double q     = x(4)  + 0.001 * random; //Pitch rate     (BODY frame)
+        double r     = x(5)  + 0.001 * random; //Yaw rate       (BODY frame)
+    
+        double xn    = x(6)  +  0.01 * random; //North position  (NED frame)
+        double yn    = x(7)  +  0.01 * random; //East position   (NED frame)
+        double zn    = x(8)  +  0.01 * random; //Down position   (NED frame)
+        double phi   = x(9)  + 0.001 * random; //Roll angle      (NED frame)
+        double theta = x(10) + 0.001 * random; //Pitch angle     (NED frame)
+        double psi   = x(11) + 0.001 * random; //Heading angle   (NED frame)
 
         if (std::isnan(psi)) {
             std::cerr << "NaN detected for psi at iteration " << i << ", time: " << t[i] << "s\n";
             break; 
         }
 
-        //Guidance and control system
+        // Guidance
         switch (ControlFlag) {
             case 1: {
-                // Dynamic Positioning (DP)
-                dynamicPositioning(wpt, x, wpt_index,
-                                    tau_X, tau_Y, tau_N,
-                                    r_d, psi_d, z_psi, h);
+                NoDesiredForcesOrMoments(tau_X, tau_Y, tau_N);
+                break;
+            }
+            case 2: {
+                // Using meaurements for u, v, xn, yn, psi
+                SISO_linear_PID_Control(u, v, xn, yn, psi,
+                                        wpt, wpt_index, h,
+                                        tau_X, tau_Y, tau_N,
+                                        z_xn, z_yn, z_psi,
+                                        prev_error_xn, prev_error_yn, prev_error_psi);
+                break;
+            }
+            case 3: {
+                std::cout << "ALOSpsi control method is not implemented" << std::endl;
+                
                 break;
             }
         }
 
         // Control Allocation 
-        std::vector<double> control_allocation = controlAllocation(tau_X, tau_Y, tau_N);
+        std::vector<double> control_allocation = NLOptControlAlloc(tau_X, tau_Y, tau_N);
         Eigen::Vector2d n_c, alpha_c;
         n_c << control_allocation[0], control_allocation[2];
         alpha_c << control_allocation[1], control_allocation[3];
 
         // Storing SIM data
         simdata(i, Eigen::seq(0, 11)) = x.transpose();  
-        simdata(i, 12) = r_d;                           
-        simdata(i, 13) = psi_d;                         
+        simdata(i, 12) = n_c(0);                           
+        simdata(i, 13) = n_c(1);
+        simdata(i, 14) = alpha_c(0);
+        simdata(i, 15) = alpha_c(1);                       
 
         // rk4 method for x(k+1)
         rk4_ran_step(x, n, alpha, mp, rp, V_c, beta_c, h);
 
         // Euler's method
-        // if ((n_c - n).isZero()) {
-        //     std::cout << "Error: Division by zero" << std::endl;
-        //     break;
-        // }
-        
-        n = n + h/T_n * (n_c - n);                                    // Update propeller speeds
-        alpha = alpha + h/T_alpha * (alpha_c - alpha);                // Update azimuth angles
+        n = n + h/T_n * (n_c - n);                             // Update propeller speeds
+        alpha = alpha + h/T_alpha * (alpha_c - alpha);         // Update azimuth angles
 
-        z_psi = z_psi + h * ssa(psi - psi_d);                         // Update integral state for heading control
+        z_xn  = z_xn  + h * (xn - wpt.x[wpt_index]);            // Update integral state for surge control
+        z_yn  = z_yn  + h * (yn - wpt.y[wpt_index]);            // Update integral state for sway control
+        z_psi = z_psi + h * ssa(psi - wpt.angle[wpt_index]);   // Update integral state for heading control
+
+        // Planning (Waypoint Update)
+        double position_error = sqrt(pow(xn - wpt.x[wpt_index], 2) + pow(yn - wpt.y[wpt_index], 2));
+        if (position_error < R_switch && wpt_index < wpt.x.size() - 1) {
+            wpt_index = wpt_index + 1;
+        }
 
         if (i % 100 == 0) {
             std::cout << "Iteration: " << i << ", Time: " << t[i] << "s, x: " << xn << "m, y: " << yn << "m, psi: " << psi << "rad" << std::endl;
