@@ -79,6 +79,7 @@ set(SOURCES
     src/ran.cpp
     #src/ALOSpsi.cpp
     #src/hermite_spline.cpp
+    src/guidance.cpp
     src/motion_control.cpp
     #src/crosstrack_hermite.cpp
     src/control_allocation.cpp

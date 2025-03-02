@@ -156,22 +156,22 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input, const Eigen::Ve
     // ---------------------------
     double g   = 9.81;                        // gravitational acceleration (m/s^2)
     double rho = 1025.0;                      // water density (kg/m^3)
-    double L   = 2.0;                         // vessel length (m)
-    double B   = 1.08;                        // vessel beam (m)
-    double m   = 55.0;                        // vessel mass (kg)
-    Eigen::Vector3d rg_hull(0.2, 0.0, -0.2);  // center of gravity for hull only
+    double L   = 5.0;                         // vessel length (m)
+    double B   = 3;                           // vessel beam (m)
+    double m   = 1000.0;                      // vessel mass (kg)
+    Eigen::Vector3d rg_hull(2, 0.0, -0.2);    // center of gravity for hull only
     double R44 = 0.4 * B;                     // radii of gyration in roll
     double R55 = 0.25 * L;                    // in pitch
     double R66 = 0.25 * L;                    // in yaw
-    double T_sway = 1.0;                      // sway time constant (s)
-    double T_yaw  = 1.0;                      // yaw time constant (s)
+    double T_sway = 2.0;                      // sway time constant (s)
+    double T_yaw  = 2.0;                      // yaw time constant (s)
     double Umax   = 6 * 0.5144;               // maximum forward speed (m/s) (6 knots)
     
     // Data for one pontoon
-    double B_pont  = 0.25;                    // pontoon beam (m)
-    double y_pont  = 0.395;                   // lateral offset from centerline (m)
-    double Cw_pont = 0.75;                    // waterline area coefficient
-    double Cb_pont = 0.4;                     // block coefficient
+    double B_pont  = 0.70;                    // pontoon beam (m)
+    double y_pont  = 1;                       // lateral offset from centerline (m)
+    double Cw_pont = 3.75 / (5*0.75);         // waterline area coefficient
+    double Cb_pont = 0.5;                     // block coefficient
     
     // ---------------------------
     // State extraction

@@ -11,6 +11,7 @@
 //#include "hermite_spline.hpp"
 //#include "crosstrack_hermite.hpp"
 //#include "los_observer.hpp"
+#include "guidance.hpp"
 #include "motion_control.hpp"
 #include "control_allocation.hpp"
 
@@ -30,18 +31,18 @@ int main() {
     double V_c = 0.3;              // Ocean current speed (m/s)
     double beta_c = deg2rad(30.0); // Ocean current direction (rad)
 
-    // Waypoints: position + heading angles for DP
+    // Waypoints: position + heading angles for DP control
     Waypoints wpt;
     wpt.x =     {          0,           0,          150,          150,          -100};
     wpt.y =     {          0,         200,          200,          -50,           -50};
-    wpt.angle = {deg2rad(90), deg2rad(90),  deg2rad(45),  deg2rad(90),  deg2rad(-45)}; 
+    wpt.angle = {          0, deg2rad(90),  deg2rad(45),  deg2rad(90),  deg2rad(-45)}; 
     
     // Additional parameter for straight-line path following
     double R_switch = 5;
     double K_f = 0.3;
     
     // Initial heading
-    double psi0 = wpt.angle[0];
+    double psi0 = atan2(wpt.y[1] - wpt.y[0], wpt.x[1] - wpt.x[0]);
     
     //Calculating RAN USV input Matrix
     Eigen::VectorXd x_input = Eigen::VectorXd::Zero(12);  
@@ -70,18 +71,23 @@ int main() {
     x(11) = psi0;                                   // Initial heading angle
 
     // Control method selection
-    ControlMethod control;
-    int ControlFlag = control.selectMethod();
+    GuidanceMethod guidance;
+    int GuidanceFlag = guidance.selectMethod();
 
     // Current waypoint
-    int wpt_index  = 0;           
+    int wpt_index  = 1; //First waypoint is only used for initial heading
+    
+    // Disired state in NED
+    double xn_d    = wpt.x[0];        
+    double yn_d    = wpt.y[0];        
+    double psi_d   = psi0;         
 
     // Control forces and moment
     double tau_X   = 0.0;         // desired surge force
     double tau_Y   = 0.0;         // desired sway force
     double tau_N   = 0.0;         // desired yaw moment
 
-    // States for PID control
+    // States for PID Motion Control
     double z_xn    = 0.0;         // integral state for surge
     double z_yn    = 0.0;         // integral state for sway
     double z_psi   = 0.0;         // integral state for heading
@@ -92,7 +98,8 @@ int main() {
     int num_steps = static_cast<int>(T_final / h) + 1; // Total number of time steps
     std::vector<double> t(num_steps);                  // Time vector from 0 to T_final
 
-    Eigen::MatrixXd simdata(num_steps, 12 + 4);        // Simulation data storage (x, n_c, alpha_c)
+    Eigen::MatrixXd simdata_vessel_states(num_steps, 12 + 4);   
+    Eigen::MatrixXd simdata_state_errors(num_steps, 4);        
     
     for (int i = 0; i < num_steps; ++i) {
         t[i] = i * h;
@@ -120,65 +127,88 @@ int main() {
         }
 
         // Guidance
-        switch (ControlFlag) {
+        //  Waypoint Update
+        double pos_x_error = xn - wpt.x[wpt_index];
+        double pos_y_error = yn - wpt.y[wpt_index];
+        double position_error = sqrt(pow(pos_x_error, 2) + pow(pos_y_error, 2));
+
+        if (position_error < R_switch && wpt_index < wpt.x.size() - 1) {
+            wpt_index = wpt_index + 1;
+            std::cout << "Waypoint reached, next waypoint: (" << wpt.x[wpt_index] <<", "<< wpt.y[wpt_index] << ")" << std::endl;
+        }
+
+        switch (GuidanceFlag) {
             case 1: {
-                NoDesiredForcesOrMoments(tau_X, tau_Y, tau_N);
+                // Station keeping
+                std::vector<double> desired_states = StationKeeping(wpt, wpt_index, xn, yn, psi);
+                xn_d  = desired_states[0]; //BODY
+                yn_d  = desired_states[1]; //BODY
+                psi_d = desired_states[2]; //BODY
                 break;
             }
             case 2: {
-                // Using meaurements for u, v, xn, yn, psi
-                SISO_linear_PID_Control(u, v, xn, yn, psi,
-                                        wpt, wpt_index, h,
-                                        tau_X, tau_Y, tau_N,
-                                        z_xn, z_yn, z_psi,
-                                        prev_error_xn, prev_error_yn, prev_error_psi);
-                break;
-            }
-            case 3: {
-                std::cout << "ALOSpsi control method is not implemented" << std::endl;
-                
+                // Dynamic Positioning
+                std::vector<double> desired_states = DynamicPositioning(wpt, wpt_index, xn, yn);
+                xn_d  = desired_states[0];
+                yn_d  = desired_states[1];
+                psi_d = desired_states[2];
                 break;
             }
         }
 
+        // Motion Control System (calculate forces and moments from desired states)
+        std::vector<double> tau = SISO_linear_PID_Control( //NOT expecting BODY !!!!!
+            h,
+            xn_d, yn_d, psi_d,
+            xn, yn, psi,
+            z_xn, z_yn, z_psi,
+            prev_error_xn, prev_error_yn, prev_error_psi);
+
         // Control Allocation 
+        tau_X = tau[0];
+        tau_Y = tau[1];
+        tau_N = tau[2];
         std::vector<double> control_allocation = NLOptControlAlloc(tau_X, tau_Y, tau_N);
-        Eigen::Vector2d n_c, alpha_c;
-        n_c << control_allocation[0], control_allocation[2];
-        alpha_c << control_allocation[1], control_allocation[3];
+        Eigen::Vector2d n_c     = {control_allocation[0], control_allocation[2]};
+        Eigen::Vector2d alpha_c = {control_allocation[1], control_allocation[3]};                      
 
-        // Storing SIM data
-        simdata(i, Eigen::seq(0, 11)) = x.transpose();  
-        simdata(i, 12) = n_c(0);                           
-        simdata(i, 13) = n_c(1);
-        simdata(i, 14) = alpha_c(0);
-        simdata(i, 15) = alpha_c(1);                       
-
-        // rk4 method for x(k+1)
+        // Marine Craft Model
+        //  rk4 method for x(k+1)
         rk4_ran_step(x, n, alpha, mp, rp, V_c, beta_c, h);
 
-        // Euler's method
+        //  Euler's method
         n = n + h/T_n * (n_c - n);                             // Update propeller speeds
         alpha = alpha + h/T_alpha * (alpha_c - alpha);         // Update azimuth angles
 
-        z_xn  = z_xn  + h * (xn - wpt.x[wpt_index]);            // Update integral state for surge control
-        z_yn  = z_yn  + h * (yn - wpt.y[wpt_index]);            // Update integral state for sway control
+        z_xn  = z_xn  + h * (xn - wpt.x[wpt_index]);           // Update integral state for surge control
+        z_yn  = z_yn  + h * (yn - wpt.y[wpt_index]);           // Update integral state for sway control
         z_psi = z_psi + h * ssa(psi - wpt.angle[wpt_index]);   // Update integral state for heading control
 
-        // Planning (Waypoint Update)
-        double position_error = sqrt(pow(xn - wpt.x[wpt_index], 2) + pow(yn - wpt.y[wpt_index], 2));
-        if (position_error < R_switch && wpt_index < wpt.x.size() - 1) {
-            wpt_index = wpt_index + 1;
-        }
-
+        // Show SIM progress
         if (i % 100 == 0) {
             std::cout << "Iteration: " << i << ", Time: " << t[i] << "s, x: " << xn << "m, y: " << yn << "m, psi: " << psi << "rad" << std::endl;
         }
+
+        // Storing SIM data
+        simdata_vessel_states(i, Eigen::seq(0, 11)) = x.transpose();  
+        simdata_vessel_states(i, 12) = n_c(0);                           
+        simdata_vessel_states(i, 13) = n_c(1);
+        simdata_vessel_states(i, 14) = alpha_c(0);
+        simdata_vessel_states(i, 15) = alpha_c(1); 
+
+        simdata_state_errors(i, 0) = t[i];
+        simdata_state_errors(i, 1) = xn_d  - xn;
+        simdata_state_errors(i, 2) = yn_d  - yn;
+        simdata_state_errors(i, 3) = psi_d - psi;
+
+
     }
     std::cout<<"Simulation completed"<<std::endl;
-    storeSimulationData(simdata);
+    storeSimulationData(simdata_vessel_states, "simdata_vessel_states.csv");
+    storeSimulationData(simdata_state_errors, "simdata_state_errors.csv");
 
     plotTrajectory();
+    plotStateErrors();
 
     return 0;
 }

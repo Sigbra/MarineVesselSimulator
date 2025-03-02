@@ -47,8 +47,8 @@ std::string getRepositoryPath() {
 }
 
 // Store simulation data to a file
-void storeSimulationData(const Eigen::MatrixXd& simdata) {
-    std::filesystem::path filepath = std::filesystem::path(getRepositoryPath()) / "data" / "simdata.csv";
+void storeSimulationData(const Eigen::MatrixXd& simdata, std::string filename) {
+    std::filesystem::path filepath = std::filesystem::path(getRepositoryPath()) / "data" / filename;
 
     std::ofstream file(filepath);
     if (file.is_open()) {
@@ -69,7 +69,7 @@ void storeSimulationData(const Eigen::MatrixXd& simdata) {
 
 // This function reads the CSV file and plots xn vs. yn with heading arrows
 void plotTrajectory() {
-    std::filesystem::path filepath = std::filesystem::path(getRepositoryPath()) / "data" / "simdata.csv";
+    std::filesystem::path filepath = std::filesystem::path(getRepositoryPath()) / "data" / "simdata_vessel_states.csv";
     if (!std::filesystem::exists(filepath)) {
         std::cerr << "File does not exist: " << filepath << std::endl;
         return;
@@ -83,9 +83,6 @@ void plotTrajectory() {
 
     std::vector<double> xn, yn, psi;
     std::string line;
-
-    // Skip header line
-    std::getline(file, line);
     
     // Read CSV data: expecting at least 12 columns (xn at column 7, yn at column 8, psi at column 12)
     while (std::getline(file, line)) {
@@ -102,9 +99,9 @@ void plotTrajectory() {
         }
         
         if (values.size() >= 12) {
-            xn.push_back(values[6]);   // xn(t) at column 7 (index 6)
-            yn.push_back(values[7]);   // yn(t) at column 8 (index 7)
-            psi.push_back(values[11]); // psi(t) at column 12 (index 11)
+            xn.push_back(values[6]);  
+            yn.push_back(values[7]);   
+            psi.push_back(values[11]); 
         }
     }
     file.close();
@@ -127,7 +124,7 @@ void plotTrajectory() {
     double arrowLength = 0.2;  // Scale factor for arrows
     std::vector<double> xq, yq;
     
-    for (size_t i = 0; i < xn.size(); i += 400) { // Plot every 10th point to reduce clutter
+    for (size_t i = 0; i < xn.size(); i += 400) { 
         xq.push_back(xn[i]);
         yq.push_back(yn[i]);
         u.push_back(arrowLength * cos(psi[i]));
@@ -137,6 +134,67 @@ void plotTrajectory() {
     // Use quiver-like representation with arrows
     plt::quiver(xq, yq, u, v);
     
+    plt::grid(true);
+    plt::show();
+}
+
+// This function reads the CSV file containing state error data and plots error_x, error_y, and error_psi versus time.
+void plotStateErrors() {
+    // Build the file path for the state errors CSV file
+    std::filesystem::path filepath = std::filesystem::path(getRepositoryPath()) / "data" / "simdata_state_errors.csv";
+    if (!std::filesystem::exists(filepath)) {
+        std::cerr << "File does not exist: " << filepath << std::endl;
+        return;
+    }
+    
+    std::ifstream file(filepath);
+    if (!file.is_open()) {
+        std::cerr << "Error: Unable to open " << filepath << std::endl;
+        return;
+    }
+    
+    // Vectors to hold time and state errors
+    std::vector<double> time, error_x, error_y, error_psi;
+    std::string line;
+    
+    // Read CSV data: 
+    while (std::getline(file, line)) {
+        std::stringstream ss(line);
+        std::vector<double> values;
+        std::string cell;
+        
+        while (std::getline(ss, cell, ',')) {
+            try {
+                values.push_back(std::stod(cell));
+            } catch (const std::invalid_argument&) {
+                // Skip any invalid entries
+            }
+        }
+        
+        if (values.size() >= 4) {
+            time.push_back(values[0]);
+            error_x.push_back(values[1]);
+            error_y.push_back(values[2]);
+            error_psi.push_back(values[3]);
+        }
+    }
+    file.close();
+    
+    // Check if data was successfully loaded
+    if (time.empty() || error_x.empty() || error_y.empty() || error_psi.empty()) {
+        std::cerr << "Error: No valid data found in " << filepath << std::endl;
+        return;
+    }
+    
+    // Plot state errors versus time
+    plt::figure_size(800, 600);
+    plt::named_plot("Error x position", time, error_x, "r-");
+    plt::named_plot("Error y position", time, error_y, "g-");
+    plt::named_plot("Error psi",        time, error_psi, "b-");
+    plt::xlabel("Time (s)");
+    plt::ylabel("State Error");
+    plt::title("State Errors over Time");
+    plt::legend();
     plt::grid(true);
     plt::show();
 }

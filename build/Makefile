@@ -153,6 +153,30 @@ src/control_allocation.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_allocation.cpp.s
 .PHONY : src/control_allocation.cpp.s
 
+src/guidance.o: src/guidance.cpp.o
+.PHONY : src/guidance.o
+
+# target to build an object file
+src/guidance.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/guidance.cpp.o
+.PHONY : src/guidance.cpp.o
+
+src/guidance.i: src/guidance.cpp.i
+.PHONY : src/guidance.i
+
+# target to preprocess a source file
+src/guidance.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/guidance.cpp.i
+.PHONY : src/guidance.cpp.i
+
+src/guidance.s: src/guidance.cpp.s
+.PHONY : src/guidance.s
+
+# target to generate assembly for a file
+src/guidance.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/guidance.cpp.s
+.PHONY : src/guidance.cpp.s
+
 src/main.o: src/main.cpp.o
 .PHONY : src/main.o
 
@@ -261,6 +285,9 @@ help:
 	@echo "... src/control_allocation.o"
 	@echo "... src/control_allocation.i"
 	@echo "... src/control_allocation.s"
+	@echo "... src/guidance.o"
+	@echo "... src/guidance.i"
+	@echo "... src/guidance.s"
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"

@@ -18,8 +18,10 @@ double rad2deg(double radians);
 
 std::string getRepositoryPath();
 
-void storeSimulationData(const Eigen::MatrixXd& simdata);
+void storeSimulationData(const Eigen::MatrixXd& simdata, std::string filename);
 
 void plotTrajectory();
+
+void plotStateErrors();
 
 #endif // UTILITIES_HPP
