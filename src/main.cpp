@@ -21,26 +21,26 @@ int main() {
 
     // USER INPUTS
     double h = 0.05;               // Sampling time [s]
-    double T_final = 500;         // Final simulation time [s]
+    double T_final = 200;         // Final simulation time [s]
  
     //Load condition
     double mp = 0;                 // Payload mass [kg]
     Eigen::Vector3d rp(1, 0, 0);   // Payload location [m]
     
     // Ocean current
-    double V_c = 0.3;              // Ocean current speed (m/s)
+    double V_c = 0.0; //0.3;       // Ocean current speed (m/s)
     double beta_c = deg2rad(30.0); // Ocean current direction (rad)
 
     // Waypoints: position + heading angles for DP control
     Waypoints wpt;
-    wpt.x =     {          0,           0,          150,          150,          -100};
-    wpt.y =     {          0,         200,          200,          -50,           -50};
-    wpt.angle = {          0, deg2rad(90),  deg2rad(45),  deg2rad(90),  deg2rad(-45)}; 
+    wpt.x =     {0,           0,         50,          50,            0};
+    wpt.y =     {0,          50,         50,           0,            0};
+    wpt.angle = {0, deg2rad(90), deg2rad(45), deg2rad(90), deg2rad(-45)}; 
     
     // Additional parameter for straight-line path following
     double R_switch = 5;
     double K_f = 0.3;
-    
+     
     // Initial heading
     double psi0 = atan2(wpt.y[1] - wpt.y[0], wpt.x[1] - wpt.x[0]);
     
@@ -60,7 +60,7 @@ int main() {
     Eigen::Vector2d n;                              // Initial propeller speed, [n_left n_right]'
     n << 0, 0;                                      // Initial values for propeller speeds
 
-    double T_alpha = 0.1;                           // Azimuth angle time constant (s)
+    double T_alpha = 0.01;                          // Azimuth angle time constant (s)
     Eigen::Vector2d alpha;                          // Initial azimuth angles, [alpha_left alpha_right]'
     alpha << deg2rad(0.0), deg2rad(0.0);            // Initial values for azimuth angles
 
@@ -75,7 +75,7 @@ int main() {
     int GuidanceFlag = guidance.selectMethod();
 
     // Current waypoint
-    int wpt_index  = 1; //First waypoint is only used for initial heading
+    int wpt_index  = 1; //First waypoint (index 0) is only used for initial heading
     
     // Disired state in NED
     double xn_d    = wpt.x[0];        
@@ -128,11 +128,11 @@ int main() {
 
         // Guidance
         //  Waypoint Update
-        double pos_x_error = xn - wpt.x[wpt_index];
-        double pos_y_error = yn - wpt.y[wpt_index];
-        double position_error = sqrt(pow(pos_x_error, 2) + pow(pos_y_error, 2));
+        double pos_x_error = wpt.x[wpt_index] - xn;
+        double pos_y_error = wpt.y[wpt_index] - yn;
+        double pos_error_BODY   = sqrt(pow(pos_x_error, 2) + pow(pos_y_error, 2));
 
-        if (position_error < R_switch && wpt_index < wpt.x.size() - 1) {
+        if (pos_error_BODY < R_switch && wpt_index < wpt.x.size() - 1) {
             wpt_index = wpt_index + 1;
             std::cout << "Waypoint reached, next waypoint: (" << wpt.x[wpt_index] <<", "<< wpt.y[wpt_index] << ")" << std::endl;
         }
@@ -140,15 +140,15 @@ int main() {
         switch (GuidanceFlag) {
             case 1: {
                 // Station keeping
-                std::vector<double> desired_states = StationKeeping(wpt, wpt_index, xn, yn, psi);
-                xn_d  = desired_states[0]; //BODY
-                yn_d  = desired_states[1]; //BODY
-                psi_d = desired_states[2]; //BODY
+                std::vector<double> desired_states = StationKeeping(wpt, wpt_index);
+                xn_d  = desired_states[0]; 
+                yn_d  = desired_states[1]; 
+                psi_d = desired_states[2]; 
                 break;
             }
             case 2: {
                 // Dynamic Positioning
-                std::vector<double> desired_states = DynamicPositioning(wpt, wpt_index, xn, yn);
+                std::vector<double> desired_states = DynamicPositioning(wpt, wpt_index);
                 xn_d  = desired_states[0];
                 yn_d  = desired_states[1];
                 psi_d = desired_states[2];
@@ -157,7 +157,7 @@ int main() {
         }
 
         // Motion Control System (calculate forces and moments from desired states)
-        std::vector<double> tau = SISO_linear_PID_Control( //NOT expecting BODY !!!!!
+        std::vector<double> tau = SISO_linear_PID_Control( 
             h,
             xn_d, yn_d, psi_d,
             xn, yn, psi,
@@ -180,13 +180,16 @@ int main() {
         n = n + h/T_n * (n_c - n);                             // Update propeller speeds
         alpha = alpha + h/T_alpha * (alpha_c - alpha);         // Update azimuth angles
 
-        z_xn  = z_xn  + h * (xn - wpt.x[wpt_index]);           // Update integral state for surge control
-        z_yn  = z_yn  + h * (yn - wpt.y[wpt_index]);           // Update integral state for sway control
-        z_psi = z_psi + h * ssa(psi - wpt.angle[wpt_index]);   // Update integral state for heading control
+        z_xn  = z_xn  + h * (pos_x_error);      // Update integral state for surge control
+        z_yn  = z_yn  + h * (pos_y_error);      // Update integral state for sway control
+        z_psi = z_psi + h * ssa(psi_d - psi);   // Update integral state for heading control
 
         // Show SIM progress
         if (i % 100 == 0) {
-            std::cout << "Iteration: " << i << ", Time: " << t[i] << "s, x: " << xn << "m, y: " << yn << "m, psi: " << psi << "rad" << std::endl;
+            std::cout << "Iteration: " << i << ", Time: " << t[i] << "s, x: " << xn << "m, y: " << yn << "m, psi: " << rad2deg(psi) << "deg" << std::endl;
+            std::cout << "proppellar1: " << n(0)     << std::endl;
+            std::cout << "alpha1:      " << rad2deg(alpha(0)) << std::endl;
+            std::cout << " " << std::endl;
         }
 
         // Storing SIM data
