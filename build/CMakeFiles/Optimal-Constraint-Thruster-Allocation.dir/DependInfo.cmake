@@ -8,15 +8,11 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/ALOSpsi.cpp" "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ALOSpsi.cpp.o" "gcc" "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ALOSpsi.cpp.o.d"
   "/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/control_allocation.cpp" "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_allocation.cpp.o" "gcc" "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_allocation.cpp.o.d"
-  "/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/control_method.cpp" "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_method.cpp.o" "gcc" "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_method.cpp.o.d"
-  "/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/crosstrack_hermite.cpp" "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/crosstrack_hermite.cpp.o" "gcc" "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/crosstrack_hermite.cpp.o.d"
-  "/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/hermite_spline.cpp" "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/hermite_spline.cpp.o" "gcc" "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/hermite_spline.cpp.o.d"
-  "/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/los_observer.cpp" "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/los_observer.cpp.o" "gcc" "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/los_observer.cpp.o.d"
+  "/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/guidance.cpp" "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/guidance.cpp.o" "gcc" "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/guidance.cpp.o.d"
   "/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/main.cpp" "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/main.cpp.o" "gcc" "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/main.cpp.o.d"
+  "/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/motion_control.cpp" "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/motion_control.cpp.o" "gcc" "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/motion_control.cpp.o.d"
   "/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/ran.cpp" "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ran.cpp.o" "gcc" "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ran.cpp.o.d"
-  "/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/ref_model.cpp" "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ref_model.cpp.o" "gcc" "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ref_model.cpp.o.d"
   "/home/sigurdvb/Optimal-Constraint-Thruster-Allocation/src/utilities.cpp" "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/utilities.cpp.o" "gcc" "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/utilities.cpp.o.d"
   "" "Optimal-Constraint-Thruster-Allocation" "gcc" "CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/link.d"
   )

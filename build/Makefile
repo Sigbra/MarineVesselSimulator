@@ -129,30 +129,6 @@ Optimal-Constraint-Thruster-Allocation/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build
 .PHONY : Optimal-Constraint-Thruster-Allocation/fast
 
-src/ALOSpsi.o: src/ALOSpsi.cpp.o
-.PHONY : src/ALOSpsi.o
-
-# target to build an object file
-src/ALOSpsi.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ALOSpsi.cpp.o
-.PHONY : src/ALOSpsi.cpp.o
-
-src/ALOSpsi.i: src/ALOSpsi.cpp.i
-.PHONY : src/ALOSpsi.i
-
-# target to preprocess a source file
-src/ALOSpsi.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ALOSpsi.cpp.i
-.PHONY : src/ALOSpsi.cpp.i
-
-src/ALOSpsi.s: src/ALOSpsi.cpp.s
-.PHONY : src/ALOSpsi.s
-
-# target to generate assembly for a file
-src/ALOSpsi.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ALOSpsi.cpp.s
-.PHONY : src/ALOSpsi.cpp.s
-
 src/control_allocation.o: src/control_allocation.cpp.o
 .PHONY : src/control_allocation.o
 
@@ -177,101 +153,29 @@ src/control_allocation.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_allocation.cpp.s
 .PHONY : src/control_allocation.cpp.s
 
-src/control_method.o: src/control_method.cpp.o
-.PHONY : src/control_method.o
+src/guidance.o: src/guidance.cpp.o
+.PHONY : src/guidance.o
 
 # target to build an object file
-src/control_method.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_method.cpp.o
-.PHONY : src/control_method.cpp.o
+src/guidance.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/guidance.cpp.o
+.PHONY : src/guidance.cpp.o
 
-src/control_method.i: src/control_method.cpp.i
-.PHONY : src/control_method.i
-
-# target to preprocess a source file
-src/control_method.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_method.cpp.i
-.PHONY : src/control_method.cpp.i
-
-src/control_method.s: src/control_method.cpp.s
-.PHONY : src/control_method.s
-
-# target to generate assembly for a file
-src/control_method.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/control_method.cpp.s
-.PHONY : src/control_method.cpp.s
-
-src/crosstrack_hermite.o: src/crosstrack_hermite.cpp.o
-.PHONY : src/crosstrack_hermite.o
-
-# target to build an object file
-src/crosstrack_hermite.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/crosstrack_hermite.cpp.o
-.PHONY : src/crosstrack_hermite.cpp.o
-
-src/crosstrack_hermite.i: src/crosstrack_hermite.cpp.i
-.PHONY : src/crosstrack_hermite.i
+src/guidance.i: src/guidance.cpp.i
+.PHONY : src/guidance.i
 
 # target to preprocess a source file
-src/crosstrack_hermite.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/crosstrack_hermite.cpp.i
-.PHONY : src/crosstrack_hermite.cpp.i
+src/guidance.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/guidance.cpp.i
+.PHONY : src/guidance.cpp.i
 
-src/crosstrack_hermite.s: src/crosstrack_hermite.cpp.s
-.PHONY : src/crosstrack_hermite.s
-
-# target to generate assembly for a file
-src/crosstrack_hermite.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/crosstrack_hermite.cpp.s
-.PHONY : src/crosstrack_hermite.cpp.s
-
-src/hermite_spline.o: src/hermite_spline.cpp.o
-.PHONY : src/hermite_spline.o
-
-# target to build an object file
-src/hermite_spline.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/hermite_spline.cpp.o
-.PHONY : src/hermite_spline.cpp.o
-
-src/hermite_spline.i: src/hermite_spline.cpp.i
-.PHONY : src/hermite_spline.i
-
-# target to preprocess a source file
-src/hermite_spline.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/hermite_spline.cpp.i
-.PHONY : src/hermite_spline.cpp.i
-
-src/hermite_spline.s: src/hermite_spline.cpp.s
-.PHONY : src/hermite_spline.s
+src/guidance.s: src/guidance.cpp.s
+.PHONY : src/guidance.s
 
 # target to generate assembly for a file
-src/hermite_spline.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/hermite_spline.cpp.s
-.PHONY : src/hermite_spline.cpp.s
-
-src/los_observer.o: src/los_observer.cpp.o
-.PHONY : src/los_observer.o
-
-# target to build an object file
-src/los_observer.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/los_observer.cpp.o
-.PHONY : src/los_observer.cpp.o
-
-src/los_observer.i: src/los_observer.cpp.i
-.PHONY : src/los_observer.i
-
-# target to preprocess a source file
-src/los_observer.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/los_observer.cpp.i
-.PHONY : src/los_observer.cpp.i
-
-src/los_observer.s: src/los_observer.cpp.s
-.PHONY : src/los_observer.s
-
-# target to generate assembly for a file
-src/los_observer.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/los_observer.cpp.s
-.PHONY : src/los_observer.cpp.s
+src/guidance.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/guidance.cpp.s
+.PHONY : src/guidance.cpp.s
 
 src/main.o: src/main.cpp.o
 .PHONY : src/main.o
@@ -297,6 +201,30 @@ src/main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/main.cpp.s
 .PHONY : src/main.cpp.s
 
+src/motion_control.o: src/motion_control.cpp.o
+.PHONY : src/motion_control.o
+
+# target to build an object file
+src/motion_control.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/motion_control.cpp.o
+.PHONY : src/motion_control.cpp.o
+
+src/motion_control.i: src/motion_control.cpp.i
+.PHONY : src/motion_control.i
+
+# target to preprocess a source file
+src/motion_control.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/motion_control.cpp.i
+.PHONY : src/motion_control.cpp.i
+
+src/motion_control.s: src/motion_control.cpp.s
+.PHONY : src/motion_control.s
+
+# target to generate assembly for a file
+src/motion_control.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/motion_control.cpp.s
+.PHONY : src/motion_control.cpp.s
+
 src/ran.o: src/ran.cpp.o
 .PHONY : src/ran.o
 
@@ -320,30 +248,6 @@ src/ran.s: src/ran.cpp.s
 src/ran.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ran.cpp.s
 .PHONY : src/ran.cpp.s
-
-src/ref_model.o: src/ref_model.cpp.o
-.PHONY : src/ref_model.o
-
-# target to build an object file
-src/ref_model.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ref_model.cpp.o
-.PHONY : src/ref_model.cpp.o
-
-src/ref_model.i: src/ref_model.cpp.i
-.PHONY : src/ref_model.i
-
-# target to preprocess a source file
-src/ref_model.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ref_model.cpp.i
-.PHONY : src/ref_model.cpp.i
-
-src/ref_model.s: src/ref_model.cpp.s
-.PHONY : src/ref_model.s
-
-# target to generate assembly for a file
-src/ref_model.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/build.make CMakeFiles/Optimal-Constraint-Thruster-Allocation.dir/src/ref_model.cpp.s
-.PHONY : src/ref_model.cpp.s
 
 src/utilities.o: src/utilities.cpp.o
 .PHONY : src/utilities.o
@@ -378,33 +282,21 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... Optimal-Constraint-Thruster-Allocation"
-	@echo "... src/ALOSpsi.o"
-	@echo "... src/ALOSpsi.i"
-	@echo "... src/ALOSpsi.s"
 	@echo "... src/control_allocation.o"
 	@echo "... src/control_allocation.i"
 	@echo "... src/control_allocation.s"
-	@echo "... src/control_method.o"
-	@echo "... src/control_method.i"
-	@echo "... src/control_method.s"
-	@echo "... src/crosstrack_hermite.o"
-	@echo "... src/crosstrack_hermite.i"
-	@echo "... src/crosstrack_hermite.s"
-	@echo "... src/hermite_spline.o"
-	@echo "... src/hermite_spline.i"
-	@echo "... src/hermite_spline.s"
-	@echo "... src/los_observer.o"
-	@echo "... src/los_observer.i"
-	@echo "... src/los_observer.s"
+	@echo "... src/guidance.o"
+	@echo "... src/guidance.i"
+	@echo "... src/guidance.s"
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"
+	@echo "... src/motion_control.o"
+	@echo "... src/motion_control.i"
+	@echo "... src/motion_control.s"
 	@echo "... src/ran.o"
 	@echo "... src/ran.i"
 	@echo "... src/ran.s"
-	@echo "... src/ref_model.o"
-	@echo "... src/ref_model.i"
-	@echo "... src/ref_model.s"
 	@echo "... src/utilities.o"
 	@echo "... src/utilities.i"
 	@echo "... src/utilities.s"
