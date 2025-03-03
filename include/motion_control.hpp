@@ -4,7 +4,6 @@
 #include <vector>
 #include <string>
 
-
 std::vector<double> SISO_linear_PID_Control(
     double h,
     double xn_d, double yn_d, double psi_d,

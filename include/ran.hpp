@@ -30,7 +30,7 @@ Eigen::Matrix3d Rzyx(double phi, double theta, double psi);
 // Function to compute dynamics (ran)
 void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input, const Eigen::VectorXd alpha_input,
     double mp, const Eigen::Vector3d rp, double V_c, double beta_c,
-    Eigen::VectorXd &xdot, double &U, Eigen::MatrixXd &M_out, Eigen::MatrixXd &B_prop);
+    Eigen::VectorXd &xdot, double &U, Eigen::MatrixXd &M_out, Eigen::MatrixXd &B);
 
 // Specialized RK4 integrator for the RAN model
 void rk4_ran_step(Eigen::VectorXd& x, const Eigen::VectorXd& n_input, const Eigen::VectorXd& alpha_input,

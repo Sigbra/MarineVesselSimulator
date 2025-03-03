@@ -21,7 +21,7 @@ int main() {
 
     // USER INPUTS
     double h = 0.05;               // Sampling time [s]
-    double T_final = 200;         // Final simulation time [s]
+    double T_final = 500;         // Final simulation time [s]
  
     //Load condition
     double mp = 0;                 // Payload mass [kg]
@@ -39,7 +39,6 @@ int main() {
     
     // Additional parameter for straight-line path following
     double R_switch = 5;
-    double K_f = 0.3;
      
     // Initial heading
     double psi0 = atan2(wpt.y[1] - wpt.y[0], wpt.x[1] - wpt.x[0]);
@@ -51,16 +50,16 @@ int main() {
     Eigen::VectorXd xdot = Eigen::VectorXd::Zero(12); 
     double U = 0;
     Eigen::MatrixXd M = Eigen::MatrixXd::Zero(6, 6); 
-    Eigen::MatrixXd B_prop = Eigen::MatrixXd::Zero(3, 2); 
+    Eigen::MatrixXd B = Eigen::MatrixXd::Zero(3, 4); 
     
-    ran(x_input, n_input, alpha_input, mp, rp, V_c, beta_c, xdot, U, M, B_prop);
+    ran(x_input, n_input, alpha_input, mp, rp, V_c, beta_c, xdot, U, M, B);
 
     // Azimuth pod dynamics
     double T_n = 0.1;                               // Propeller time constant (s)
     Eigen::Vector2d n;                              // Initial propeller speed, [n_left n_right]'
     n << 0, 0;                                      // Initial values for propeller speeds
 
-    double T_alpha = 0.01;                          // Azimuth angle time constant (s)
+    double T_alpha = 0.1;                           // Azimuth angle time constant (s)
     Eigen::Vector2d alpha;                          // Initial azimuth angles, [alpha_left alpha_right]'
     alpha << deg2rad(0.0), deg2rad(0.0);            // Initial values for azimuth angles
 
@@ -73,6 +72,9 @@ int main() {
     // Control method selection
     GuidanceMethod guidance;
     int GuidanceFlag = guidance.selectMethod();
+
+    ControlAllocationMethod controlAlloc;
+    int ControlAllocFlag = controlAlloc.selectMethod();
 
     // Current waypoint
     int wpt_index  = 1; //First waypoint (index 0) is only used for initial heading
@@ -168,9 +170,21 @@ int main() {
         tau_X = tau[0];
         tau_Y = tau[1];
         tau_N = tau[2];
-        std::vector<double> control_allocation = NLOptControlAlloc(tau_X, tau_Y, tau_N);
-        Eigen::Vector2d n_c     = {control_allocation[0], control_allocation[2]};
-        Eigen::Vector2d alpha_c = {control_allocation[1], control_allocation[3]};                      
+        Eigen::Vector2d n_c = {0.0, 0.0};
+        Eigen::Vector2d alpha_c = {0.0, 0.0};
+
+        switch (ControlAllocFlag){
+            case 1: {
+                std::vector<double> control_allocation = NLOptControlAlloc(tau_X, tau_Y, tau_N);
+                n_c     = {control_allocation[0], control_allocation[2]};
+                alpha_c = {control_allocation[1], control_allocation[3]};
+                break;
+            }
+            case 2: {
+                //MPC
+                break;
+            }
+        }                      
 
         // Marine Craft Model
         //  rk4 method for x(k+1)
@@ -186,9 +200,9 @@ int main() {
 
         // Show SIM progress
         if (i % 100 == 0) {
-            std::cout << "Iteration: " << i << ", Time: " << t[i] << "s, x: " << xn << "m, y: " << yn << "m, psi: " << rad2deg(psi) << "deg" << std::endl;
-            std::cout << "proppellar1: " << n(0)     << std::endl;
-            std::cout << "alpha1:      " << rad2deg(alpha(0)) << std::endl;
+            std::cout << "Iteration:  " << i << ", Time: " << t[i] << "s, x: " << xn << "m, y: " << yn << "m, psi: " << rad2deg(psi) << "deg" << std::endl;
+            std::cout << "proppellar: " << n(0)              << ", " <<n(1)              << std::endl;
+            std::cout << "alpha:      " << rad2deg(alpha(0)) << ", " <<rad2deg(alpha(1)) << std::endl;
             std::cout << " " << std::endl;
         }
 
