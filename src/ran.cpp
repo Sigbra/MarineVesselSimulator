@@ -5,6 +5,9 @@
 #include <cmath>
 #include <array>
 #include <iostream>
+#include <vector>
+#include <utility>
+#include <stdexcept>
 
 //-------------------------------------------------------------------
 // Helper function: Skew-symmetric matrix (Smtrx)
@@ -67,12 +70,115 @@ double addedMassSurge(double m, double /*L*/, double /*rho*/) {
     return 0.1 * m; 
 }
 
+// Function: Hoerner
+// Computes the 2D Hoerner cross-flow form coefficient based on beam (B) and draft (T).
+// The coefficient is obtained via linear interpolation from digitized data.
+// Inputs:
+//    B - beam (m)
+//    T - draft (m)
+// Output:
+//    CY_2D - 2D Hoerner cross-flow form coefficient
+double Hoerner(double B, double T) {
+    // Compute the ratio B/(2*T)
+    double ratio = B / (2.0 * T);
+    
+    // Digitized data: each pair is {B/(2*T), C_D}
+    const std::vector<std::pair<double, double>> CD_DATA = {
+        {0.0108623, 1.96608},
+        {0.176606,  1.96573},
+        {0.353025,  1.89756},
+        {0.451863,  1.78718},
+        {0.472838,  1.58374},
+        {0.492877,  1.27862},
+        {0.493252,  1.21082},
+        {0.558473,  1.08356},
+        {0.646401,  0.998631},
+        {0.833589,  0.87959},
+        {0.988002,  0.828415},
+        {1.30807,   0.759941},
+        {1.63918,   0.691442},
+        {1.85998,   0.657076},
+        {2.31288,   0.630693},
+        {2.59998,   0.596186},
+        {3.00877,   0.586846},
+        {3.45075,   0.585909},
+        {3.7379,    0.559877},
+        {4.00309,   0.559315}
+    };
+    
+    // If the ratio is above the highest value in the table, return the last value
+    if (ratio >= CD_DATA.back().first) {
+        return CD_DATA.back().second;
+    }
+    
+    // If the ratio is below the first data point, return the first value.
+    if (ratio <= CD_DATA.front().first) {
+        return CD_DATA.front().second;
+    }
+    
+    // Otherwise, search for the interval in which the ratio falls and interpolate.
+    for (size_t i = 0; i < CD_DATA.size() - 1; ++i) {
+        double x1 = CD_DATA[i].first;
+        double x2 = CD_DATA[i+1].first;
+        if (ratio >= x1 && ratio <= x2) {
+            double y1 = CD_DATA[i].second;
+            double y2 = CD_DATA[i+1].second;
+            // Linear interpolation
+            double t = (ratio - x1) / (x2 - x1);
+            return y1 + t * (y2 - y1);
+        }
+    }
+    
+    // Fallback: Should never reach here.
+    throw std::runtime_error("Interpolation error in Hoerner function.");
+}
+
 //-------------------------------------------------------------------
 // Helper function: crossFlowDrag
-// Stub: returns a zero 6x1 vector.
 //-------------------------------------------------------------------
-Eigen::VectorXd crossFlowDrag(double /*L*/, double /*B_pont*/, double /*T*/, const Eigen::VectorXd & /*nu_r*/) {
-    return Eigen::VectorXd::Zero(6);
+Eigen::VectorXd crossFlowDrag(double L, double B, double T, const Eigen::VectorXd& nu_r) {
+    // Check that nu_r has the correct size
+    if (nu_r.size() < 6) {
+        throw std::runtime_error("nu_r must be a 6-element vector.");
+    }
+
+    const double rho = 1025.0;   // density of water (kg/m^3)
+    const double dx = L / 20.0;    // divide the craft into 20 strips
+    const double Cd_2D = Hoerner(B, T);  // 2-D drag coefficient from Hoerner's curve
+
+    double Yh = 0.0, Zh = 0.0, Mh = 0.0, Nh = 0.0;
+
+    // Loop from -L/2 to L/2 with step dx.
+    // Use a for loop; note that floating point comparisons might not hit L/2 exactly.
+    for (double xL = -L/2.0; xL <= L/2.0 + 1e-6; xL += dx) {
+        // Extract relevant components from nu_r (C++ indices):
+        // v_r (sway velocity) is nu_r[1] (MATLAB nu_r(2))
+        // w_r (heave velocity) is nu_r[2] (MATLAB nu_r(3))
+        // q (pitch rate)      is nu_r[4] (MATLAB nu_r(5))
+        // r (yaw rate)        is nu_r[5] (MATLAB nu_r(6))
+        double v_r = nu_r(1);
+        double w_r = nu_r(2);
+        double q   = nu_r(4);
+        double r   = nu_r(5);
+
+        // Effective velocities at the strip (including rotational effects)
+        double effective_v = v_r + xL * r;
+        double effective_w = w_r + xL * q;
+        double U_h = std::abs(effective_v) * effective_v;
+        double U_v = std::abs(effective_w) * effective_w;
+
+        // Accumulate cross-flow drag forces and moments
+        Yh -= 0.5 * rho * T * Cd_2D * U_h * dx;       // sway force
+        Zh -= 0.5 * rho * T * Cd_2D * U_v * dx;         // heave force
+        Mh -= 0.5 * rho * T * Cd_2D * xL * U_v * dx;    // pitch moment
+        Nh -= 0.5 * rho * T * Cd_2D * xL * U_h * dx;    // yaw moment
+    }
+
+    // Assemble the 6-DOF cross-flow drag vector: [0, Yh, Zh, 0, Mh, Nh]^T
+    Eigen::VectorXd tau_crossflow(6);
+    tau_crossflow << 0.0, Yh, Zh, 0.0, Mh, Nh;
+
+    return tau_crossflow;
 }
 
 //-------------------------------------------------------------------
@@ -179,16 +285,16 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input, const Eigen::Ve
     // ---------------------------
     // x = [u, v, w, p, q, r, x, y, z, phi, theta, psi]'
     Eigen::VectorXd nu = x.segment(0,6);   // body velocities
-    Eigen::VectorXd eta = x.segment(6,6);    // positions and Euler angles
-    // Euler angles: phi = eta(3), theta = eta(4), psi = eta(5) (0-indexed)
+    Eigen::VectorXd eta = x.segment(6,6);  // positions and Euler angles
+
     
-    // Compute speed U from surge, sway, and heave components
+    // Speed U from surge, sway, and heave components
     U = std::sqrt(nu(0)*nu(0) + nu(1)*nu(1) + nu(2)*nu(2));
     
     // ---------------------------
     // Ocean current and relative velocity
     // ---------------------------
-    double psi = eta(5); // vessel yaw angle
+    double psi = eta(5); 
     double u_c = V_c * std::cos(beta_c - psi);
     double v_c = V_c * std::sin(beta_c - psi);
     Eigen::VectorXd nu_c = Eigen::VectorXd::Zero(6);
@@ -197,7 +303,7 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input, const Eigen::Ve
     // Relative velocity:
     Eigen::VectorXd nu_r = nu - nu_c;
     
-    // Split nu into translational (nu1) and rotational (nu2) parts:
+    // Translational (nu1) and rotational (nu2) parts of nu:
     // nu1 = [u, v, w] and nu2 = [p, q, r]
     Eigen::Vector3d nu2 = nu.segment(3,3);
     
@@ -233,10 +339,10 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input, const Eigen::Ve
     double ly1 = y_pont;                                 // left pod lever arm (m)
     double ly2 = -y_pont;                                // right pod lever arm (m)
     double lx = x_pont;                                  // (m)
-    double k_pos = 0.2216 / 2.0;                         // Positive Bollard, one propeller 
-    double k_neg = 0.1289 / 2.0;                         // Negative Bollard, one propeller
-    double n_max = std::sqrt((0.5 * 24.4 * g) / k_pos);  // maximum propeller rev. (rad/s)
-    double n_min = -std::sqrt((0.5 * 13.6 * g) / k_neg); // minimum propeller rev. (rad/s)
+    double k_pos = 0.2216 / 2.0;                         // Positive Bollard, one propeller //Example value
+    double k_neg = 0.1289 / 2.0;                         // Negative Bollard, one propeller //Example value
+    double n_max = std::sqrt((0.5 * 24,4 * g) / k_pos);  // maximum propeller rev. (rad/s)
+    double n_min = -std::sqrt((0.5 * 13,6 * g) / k_neg); // minimum propeller rev. (rad/s)
     double alpha_max = deg2rad(90);                      // maximum azimuth angle (rad)
     double alpha_min = deg2rad(-90);                     // minimum azimuth angle (rad)
     
@@ -355,21 +461,28 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input, const Eigen::Ve
             alpha(i) = alpha_min;
     }
     
-    // Thrust with saturated propeller speeds
+    // Thrust for podded propellar (Fossen, Chapter 9.2.1)
+    // T = p*D⁴*K_T(J_a) * |n|n ~= T_|n|n * |n|n - T|n|u_a * |n|u_a 
+    // u_a = (1-w)*u, u - forward speed of ship, w - wake fraction (0.1-0.4)
+    // T_|n|n = p*D⁴*a1   
+    // T_|n|u_a = p*D³*a2
+    // D - propellar diameter, p - water density, n - propeller revs, a - const value, 
+    // Temporary Thrust calculation based on otter.m in the MssToolbox
     Eigen::Vector2d Thrust;
     for (int i = 0; i < 2; i++) {
         if (n(i) > 0)
-            Thrust(i) = k_pos * n(i) * std::abs(n(i));
+            Thrust(i) = k_pos * n(i) * std::abs(n(i)); //Positive Thrust (thust, not direction of thrust)
         else
-            Thrust(i) = k_neg * n(i) * std::abs(n(i));
+            Thrust(i) = k_neg * n(i) * std::abs(n(i)); //Nagavtive Thrust (thust, not direction of thrust)
     }
 
     // Control forces and moments. 
     //  Using ly1 and ly2, but what about lx?
     Eigen::VectorXd tau = Eigen::VectorXd::Zero(6);
-    tau(0) = Thrust(0)*sin(alpha(0)) + Thrust(1)*sin(alpha(1)); //X: Surge 
-    tau(1) = Thrust(0)*cos(alpha(0)) + Thrust(1)*cos(alpha(1)); //Y: Sway 
-    tau(5) = -ly1 * Thrust(0) - ly2 * Thrust(1);                //N: Yaw 
+    tau(0) = Thrust(0) * cos(alpha(0)) + Thrust(1) * cos(alpha(1)); //X: Surge 
+    tau(1) = Thrust(0) * sin(alpha(0)) + Thrust(1) * sin(alpha(1)); //Y: Sway 
+    tau(5) = lx * (Thrust(0) * sin(alpha(0)) + Thrust(1) * sin(alpha(1)))
+          - (ly1 * Thrust(0) * cos(alpha(0)) + ly2 * Thrust(1) * cos(alpha(1))); //N: Yaw
 
     //Linear damping using relative velocities + nonlinear yaw dampning
     double Xh = Xu * nu_r(0);
@@ -383,7 +496,7 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input, const Eigen::Ve
     tau_damp << Xh, Yh, Zh, Kh, Mh, Nh;
     
     // ---------------------------
-    // Cross-flow drag (using strip theory; stub here)
+    // Cross-flow drag
     // ---------------------------
     Eigen::VectorXd tau_crossflow = crossFlowDrag(L, Beam_pont, T_draft, nu_r);
     
@@ -452,34 +565,52 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input, const Eigen::Ve
 
     
     // ---------------------------
-    // Set output mass matrix M and input matrix B
+    // Set output mass matrix M 
     // ---------------------------
     M_out = M_sys;
     //std::cout << "M_out: " << M_out << std::endl;
 
-    // B matrix is defined as: 
-    // B = [1,   0,  1,   0;
-    //      0,   1,  0,   1;
-    //      ly1, lx, ly2, lx]
+    //----------------------------
+    // Input matrix B (3x4). 
+    // B = T_e * K_e (Fossen Chapter 9.4 and 11.2)
+    //----------------------------
 
-    //B.resize(3,4);
+    // T_e = [1,   0,  1,   0;
+    //        0,   1,  0,   1;
+    //        ly1, lx, ly2, lx]
+    Eigen::MatrixXd T_e = Eigen::MatrixXd::Zero(3,4);
     // First row: contribution to surge (X)
-    B(0,0) = 1;
-    B(0,1) = 0;
-    B(0,2) = 1;
-    B(0,3) = 0;
-
+    T_e(0,0) = 1;
+    T_e(0,1) = 0;
+    T_e(0,2) = 1;
+    T_e(0,3) = 0;
     // Second row: contribution to sway (Y)
-    B(1,0) = 0;
-    B(1,1) = 1;
-    B(1,2) = 0;
-    B(1,3) = 1;
-
+    T_e(1,0) = 0;
+    T_e(1,1) = 1;
+    T_e(1,2) = 0;
+    T_e(1,3) = 1;
     // Third row: contribution to yaw moment (N)
-    B(2,0) =  ly1;
-    B(2,1) =  lx;
-    B(2,2) =  ly2;
-    B(2,3) =  lx;
+    T_e(2,0) =  ly1;
+    T_e(2,1) =  lx;
+    T_e(2,2) =  ly2;
+    T_e(2,3) =  lx;
+
+    // K_e = [K1  0  0  0;
+    //         0 K2  0  0;
+    //         0  0 K3  0;
+    //         0  0  0 K4]
+    Eigen::MatrixXd K_e = Eigen::MatrixXd::Zero(4,4);
+    //How should these be defined?                            !!!
+    double K1 = 10; 
+    double K2 = 5;
+    double K3 = 10;
+    double K4 = 5;
+    K_e(0,0) = K1;
+    K_e(1,1) = K2;
+    K_e(2,2) = K3;
+    K_e(3,3) = K4;
+
+    B = T_e * K_e;
 }
 
 

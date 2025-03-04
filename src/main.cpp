@@ -2,7 +2,8 @@
 #include <vector>
 #include <array>
 #include <cmath>
-#include <cstdlib>    // For getenv
+
+#include <iomanip>    // setprecision()
 
 #include "utilities.hpp"
 #include "ran.hpp"
@@ -21,7 +22,7 @@ int main() {
 
     // USER INPUTS
     double h = 0.05;               // Sampling time [s]
-    double T_final = 500;         // Final simulation time [s]
+    double T_final = 1000;         // Final simulation time [s]
  
     //Load condition
     double mp = 0;                 // Payload mass [kg]
@@ -33,12 +34,12 @@ int main() {
 
     // Waypoints: position + heading angles for DP control
     Waypoints wpt;
-    wpt.x =     {0,           0,         50,          50,            0};
-    wpt.y =     {0,          50,         50,           0,            0};
+    wpt.x =     {0,           0,         20,          20,            0};
+    wpt.y =     {0,          20,         20,           0,            0};
     wpt.angle = {0, deg2rad(90), deg2rad(45), deg2rad(90), deg2rad(-45)}; 
     
     // Additional parameter for straight-line path following
-    double R_switch = 5;
+    double R_switch = 2;
      
     // Initial heading
     double psi0 = atan2(wpt.y[1] - wpt.y[0], wpt.x[1] - wpt.x[0]);
@@ -55,11 +56,11 @@ int main() {
     ran(x_input, n_input, alpha_input, mp, rp, V_c, beta_c, xdot, U, M, B);
 
     // Azimuth pod dynamics
-    double T_n = 0.1;                               // Propeller time constant (s)
+    double T_n = 0.5;                               // Propeller time constant (s)
     Eigen::Vector2d n;                              // Initial propeller speed, [n_left n_right]'
     n << 0, 0;                                      // Initial values for propeller speeds
 
-    double T_alpha = 0.1;                           // Azimuth angle time constant (s)
+    double T_alpha = 1;                             // Azimuth angle time constant (s)
     Eigen::Vector2d alpha;                          // Initial azimuth angles, [alpha_left alpha_right]'
     alpha << deg2rad(0.0), deg2rad(0.0);            // Initial values for azimuth angles
 
@@ -194,16 +195,44 @@ int main() {
         n = n + h/T_n * (n_c - n);                             // Update propeller speeds
         alpha = alpha + h/T_alpha * (alpha_c - alpha);         // Update azimuth angles
 
+
+        // Saturate:
+        double k_pos = 0.2216 / 2.0;                         
+        double k_neg = 0.1289 / 2.0;                         
+        double n_max = std::sqrt((0.5 * 24,4 * 9.81) / k_pos);  
+        double n_min = -std::sqrt((0.5 * 13,6 * 9.81) / k_neg); 
+        double alpha_max = deg2rad(90);                      
+        double alpha_min = deg2rad(-90);
+        for (int i = 0; i < n.size(); ++i) {
+            if (n(i) > n_max) n(i) = n_max;
+            else if (n(i) < n_min) n(i) = n_min;
+        }
+        for (int i = 0; i < alpha.size(); ++i) {
+            if (alpha(i) > alpha_max) alpha(i) = alpha_max;
+            else if (alpha(i) < alpha_min) alpha(i) = alpha_min;
+        }
+
         z_xn  = z_xn  + h * (pos_x_error);      // Update integral state for surge control
         z_yn  = z_yn  + h * (pos_y_error);      // Update integral state for sway control
         z_psi = z_psi + h * ssa(psi_d - psi);   // Update integral state for heading control
 
         // Show SIM progress
         if (i % 100 == 0) {
-            std::cout << "Iteration:  " << i << ", Time: " << t[i] << "s, x: " << xn << "m, y: " << yn << "m, psi: " << rad2deg(psi) << "deg" << std::endl;
-            std::cout << "proppellar: " << n(0)              << ", " <<n(1)              << std::endl;
-            std::cout << "alpha:      " << rad2deg(alpha(0)) << ", " <<rad2deg(alpha(1)) << std::endl;
-            std::cout << " " << std::endl;
+            std::cout << std::fixed << std::setprecision(0)
+                      << "################################################" << std::endl
+                      << "Iteration: " << i << ", Time: " << t[i] << "s, "
+                      << "Active WP: ("<< wpt.x[wpt_index] << "," << wpt.y[wpt_index] << ")" << std::endl
+                      << "------------------------------------------------" << std::endl
+                      << "x_d: " << xn << "m, y_d: " << yn << "m, psi_d: " << rad2deg(psi) << "deg" << std::endl
+                      << "x:   " << xn << "m, y:   " << yn << "m, psi:   " << rad2deg(psi) << "deg" << std::endl
+                      << "------------------------------------------------" << std::endl
+                      << "n_c(0), n_c(1): " << n_c(0) << ", " << n_c(1) << std::endl
+                      << "n(0),   n(1):   " << n(0) << ", " << n(1) << std::endl
+                      << "------------------------------------------------" << std::endl
+                      << "alpha_c(0), alpha_c(1): " << rad2deg(alpha_c(0)) << ", " << rad2deg(alpha_c(1)) << std::endl
+                      << "alpha(0), alpha(1):     " << rad2deg(alpha(0)) << ", " << rad2deg(alpha(1)) << std::endl
+                      << "" << std::endl
+                      << std::defaultfloat;
         }
 
         // Storing SIM data
