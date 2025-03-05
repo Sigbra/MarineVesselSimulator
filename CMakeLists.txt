@@ -43,6 +43,11 @@ find_package(Python3 COMPONENTS Development NumPy REQUIRED)
 message(STATUS "Python3 include dirs: ${Python3_INCLUDE_DIRS}")
 message(STATUS "Python3 NumPy include dirs: ${Python3_NumPy_INCLUDE_DIRS}")
 
+#-------------------------------------
+# Yaml-cpp setup
+#-------------------------------------
+find_package(yaml-cpp REQUIRED)
+
 # -----------------------------------
 # CasADi Setup (Manually Finding CasADi)
 # -----------------------------------
@@ -112,3 +117,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ${CASADI_LIBRARY})
 set_target_properties(${PROJECT_NAME} PROPERTIES
     BUILD_RPATH "/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib"
 )
+
+# Link yaml-cpp
+target_link_libraries(${PROJECT_NAME} PRIVATE ${YAML_CPP_LIBRARIES})

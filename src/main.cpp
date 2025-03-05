@@ -2,44 +2,47 @@
 #include <vector>
 #include <array>
 #include <cmath>
+#include <iomanip>
+#include <yaml-cpp/yaml.h>
 
-#include <iomanip>    // setprecision()
-
-#include "utilities.hpp"
 #include "ran.hpp"
-//#include "ref_model.hpp"
-//#include "ALOSpsi.hpp"
-//#include "hermite_spline.hpp"
-//#include "crosstrack_hermite.hpp"
-//#include "los_observer.hpp"
 #include "guidance.hpp"
+#include "utilities.hpp"
 #include "motion_control.hpp"
 #include "control_allocation.hpp"
 
 
 int main() {
-    srand(time(0)); // Randomize seed
+    srand(time(0)); 
+    YAML::Node config = YAML::LoadFile("../config.yaml");
 
-    // USER INPUTS
-    double h = 0.05;               // Sampling time [s]
-    double T_final = 1200;         // Final simulation time [s]
+    // Simulation parameters
+    double h = config["simulation"]["h"].as<double>();
+    double T_final = config["simulation"]["T_final"].as<double>();
  
     //Load condition
-    double mp = 0;                 // Payload mass [kg]
-    Eigen::Vector3d rp(1, 0, 0);   // Payload location [m]
+    double mp = config["load_condition"]["mp"].as<double>(); 
+    Eigen::Vector3d rp(3.5, 0, 0);   // Payload location (front cabin) [m]
     
     // Ocean current
-    double V_c = 0.0; //0.3;       // Ocean current speed (m/s)
-    double beta_c = deg2rad(30.0); // Ocean current direction (rad)
+    double V_c = config["ocean_current"]["V_c"].as<double>();   
+    double beta_c = deg2rad(config["ocean_current"]["beta_c"].as<double>());
 
     // Waypoints: position + heading angles for DP control
     Waypoints wpt;
-    wpt.x =     {0,           0,         20,          20,            0};
-    wpt.y =     {0,          20,         20,           0,            0};
-    wpt.angle = {0, deg2rad(90), deg2rad(45), deg2rad(90), deg2rad(-45)}; 
+    for (const auto &elem : config["waypoints"]["x"]) {
+        wpt.x.push_back(elem.as<double>());
+    }
+    for (const auto &elem : config["waypoints"]["y"]) {
+        wpt.y.push_back(elem.as<double>());
+    }
+    for (const auto &elem : config["waypoints"]["angle"]) {
+        // Convert each angle from degrees to radians
+        wpt.angle.push_back(deg2rad(elem.as<double>()));
+    }
     
     // Additional parameter for straight-line path following
-    double R_switch = 0.5;
+    double R_switch = config["path_following"]["R_switch"].as<double>();
      
     // Initial heading
     double psi0 = atan2(wpt.y[1] - wpt.y[0], wpt.x[1] - wpt.x[0]);
@@ -56,13 +59,11 @@ int main() {
     ran(x_input, n_input, alpha_input, mp, rp, V_c, beta_c, xdot, U, M, B);
 
     // Azimuth pod dynamics
-    double T_n = 0.5;                               // Propeller time constant (s)
-    Eigen::Vector2d n;                              // Initial propeller speed, [n_left n_right]'
-    n << 0, 0;                                      // Initial values for propeller speeds
+    double T_n = 0.5;                                // Propeller time constant (s)
+    Eigen::Vector2d n = Eigen::Vector2d::Zero();     // Init: [n_left, n_right] = [0, 0]
 
-    double T_alpha = 1;                             // Azimuth angle time constant (s)
-    Eigen::Vector2d alpha;                          // Initial azimuth angles, [alpha_left alpha_right]'
-    alpha << deg2rad(0.0), deg2rad(0.0);            // Initial values for azimuth angles
+    double T_alpha = 1;                              // Azimuth angle time constant (s)
+    Eigen::Vector2d alpha = Eigen::Vector2d::Zero(); // Init: [angle_left, angle_right] = [0, 0]
 
     // Initial states and variables
     Eigen::VectorXd x = Eigen::VectorXd::Zero(12);  // x = [u v w p q r xn yn zn phi theta psi]'
@@ -101,8 +102,7 @@ int main() {
     int num_steps = static_cast<int>(T_final / h) + 1; // Total number of time steps
     std::vector<double> t(num_steps);                  // Time vector from 0 to T_final
 
-    Eigen::MatrixXd simdata_vessel_states(num_steps, 12 + 4);   
-    Eigen::MatrixXd simdata_state_errors(num_steps, 4);        
+    Eigen::MatrixXd simdata(num_steps, 24);         
     
     for (int i = 0; i < num_steps; ++i) {
         t[i] = i * h;
@@ -239,25 +239,29 @@ int main() {
         }
 
         // Storing SIM data
-        simdata_vessel_states(i, Eigen::seq(0, 11)) = x.transpose();  
-        simdata_vessel_states(i, 12) = n_c(0);                           
-        simdata_vessel_states(i, 13) = n_c(1);
-        simdata_vessel_states(i, 14) = alpha_c(0);
-        simdata_vessel_states(i, 15) = alpha_c(1); 
+        simdata(i, 0) = t[i];
+        simdata(i, Eigen::seq(1, 12)) = x.transpose();  
+        simdata(i, 13) = xn_d;
+        simdata(i, 14) = yn_d;
+        simdata(i, 15) = psi_d;
+        simdata(i, 16) = n_c(0);                           
+        simdata(i, 17) = n_c(1);
+        simdata(i, 18) = n(0);
+        simdata(i, 19) = n(1);
+        simdata(i, 20) = alpha_c(0);
+        simdata(i, 21) = alpha_c(1);
+        simdata(i, 22) = alpha(0); 
+        simdata(i, 23) = alpha(1); 
 
-        simdata_state_errors(i, 0) = t[i];
-        simdata_state_errors(i, 1) = xn_d  - xn;
-        simdata_state_errors(i, 2) = yn_d  - yn;
-        simdata_state_errors(i, 3) = ssa(psi_d - psi);
 
 
     }
     std::cout<<"Simulation completed"<<std::endl;
-    storeSimulationData(simdata_vessel_states, "simdata_vessel_states.csv");
-    storeSimulationData(simdata_state_errors, "simdata_state_errors.csv");
+    storeSimulationData(simdata, "simdata.csv");
 
     plotTrajectory();
     plotStateErrors();
+    plotAngles();
 
     return 0;
 }

@@ -24,4 +24,6 @@ void plotTrajectory();
 
 void plotStateErrors();
 
+void plotAngles();
+
 #endif // UTILITIES_HPP

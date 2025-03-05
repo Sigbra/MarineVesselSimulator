@@ -31,7 +31,7 @@ std::vector<double> SISO_linear_PID_Control( //Help with PID implementation or a
     // --- PID Gains ---
     // Surge and sway gains (N/m, N/(m·s), N·s/m)
     const double Kp_xn = 35.0;
-    const double Ki_xn = 0.0; //Integral action calculations are faulty 
+    const double Ki_xn = 0.0; //Integral action calculations are faulty
     const double Kd_xn = 1.0;
 
     const double Kp_yn = 35.0;

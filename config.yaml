@@ -1,23 +1,27 @@
 #config.yaml
 
 simulation:
-  h: 0.05        # Sampling time [s]
-  T_final: 1200  # Final simulation time [s]
+  h: 0.05               # Sampling time [s]
+  T_final: 1200         # Final simulation time [s]
 
 load_condition:
-  mp: 0.0              # Payload mass [kg]
-  rp: [1.0, 0.0, 0.0]  # Payload location [m]
+  mp: 0.0               # Payload mass (front cabin) [kg]
 
 ocean_current:
-  V_c: 0.0      #Ocean current speed [m/s]
-  beta_c: 30.0  #Ocean current heading [rad]
+  V_c: 0.0              # Ocean current speed [m/s]
+  beta_c: 30.0          # Ocean current heading [rad]
+
+
+waypoints: 
+# Each column are a waypoint (x, y, angle)
+# First waypoints are only used to find the initial heading
+  x:     [0,   0,  20,  20,   0] 
+  y:     [0,  20,  20,   0,   0]
+  angle: [0,  90,  45,  90, -45]  # Heading angles for DP control only
+
 
 path_following:
   R_switch: 0.5  # How close x, y error must be before WP is reached
-
-azimuth_pods:
-  T_n: 0.5  # Propeller time constant [s]
-  T_alpha: 1 # Azimuth angle time constant [s]
 
 
 
