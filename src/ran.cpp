@@ -56,7 +56,7 @@ Eigen::Matrix3d Tzyx(double phi, double theta) {
 
 //-------------------------------------------------------------------
 // Helper function: m2c (added-mass to Coriolis matrix)
-// For this stub, we simply return a 6x6 zero matrix.
+// Stub, return a 6x6 zero matrix.
 //-------------------------------------------------------------------
 Eigen::MatrixXd m2c(const Eigen::MatrixXd &MA, const Eigen::VectorXd & /*nu_r*/) {
     return Eigen::MatrixXd::Zero(6,6);
@@ -262,6 +262,7 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input, const Eigen::Ve
     // ---------------------------
     double g   = 9.81;                        // gravitational acceleration (m/s^2)
     double rho = 1025.0;                      // water density (kg/m^3)
+
     double L   = 5.0;                         // vessel length (m)
     double Beam   = 3;                        // vessel beam (m)
     double m   = 800.0;                       // vessel mass (kg)
@@ -269,15 +270,14 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input, const Eigen::Ve
     double R44 = 0.4 * Beam;                  // radii of gyration in roll
     double R55 = 0.25 * L;                    // in pitch
     double R66 = 0.25 * L;                    // in yaw
-    double T_sway = 1.0;                      // sway time constant (s)
-    double T_yaw  = 1.0;                      // yaw time constant (s)
-    double Umax   = 0.1;                        // maximum forward speed (m/s)
+    double T_sway = 1.0;                     // sway time constant (s)
+    double T_yaw  = 10;                       // yaw time constant (s)
+    double Umax   = 0.1;                     // maximum forward speed (m/s)
     
     // Data for one pontoon
     double Beam_pont  = 0.70;                 // pontoon beam (m)
     double y_pont  = 1.1;                     // lateral offset from centerline (m)
-    double x_pont  = 1.4;                       // (m)
-    double Cw_pont = 3.75 / (5*0.75);         // waterline area coefficient
+    double Cw_pont = 1;                       // waterline area coefficient
     double Cb_pont = 0.5;                     // block coefficient
     
     // ---------------------------
@@ -334,11 +334,11 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input, const Eigen::Ve
                                - mp * (Smtrx(rp) * Smtrx(rp));
     
     // ---------------------------
-    // Azimuth pods data and control forces
+    // Azimuth pods / Pontoon data and control forces
     // ---------------------------
     double ly1 = y_pont;                                 // left pod lever arm (m)
     double ly2 = -y_pont;                                // right pod lever arm (m)
-    double lx = x_pont;                                  // (m)
+    double lx  = 1.4;                                    // forward displacement of pods (m)
     double k_pos = 0.2216 / 2.0;                         // Positive Bollard, one propeller //Example value
     double k_neg = 0.1289 / 2.0;                         // Negative Bollard, one propeller //Example value
     double n_max = std::sqrt((0.5 * 24.4 * g) / k_pos);  // maximum propeller rev. (rad/s)
