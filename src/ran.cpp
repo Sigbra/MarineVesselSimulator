@@ -264,19 +264,19 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input, const Eigen::Ve
     double rho = 1025.0;                      // water density (kg/m^3)
     double L   = 5.0;                         // vessel length (m)
     double Beam   = 3;                        // vessel beam (m)
-    double m   = 1000.0;                      // vessel mass (kg)
-    Eigen::Vector3d rg_hull(2, 0.0, -0.2);    // center of gravity for hull only
+    double m   = 800.0;                       // vessel mass (kg)
+    Eigen::Vector3d rg_hull(2.3, 0.0, -0.2);  // center of gravity for hull only
     double R44 = 0.4 * Beam;                  // radii of gyration in roll
     double R55 = 0.25 * L;                    // in pitch
     double R66 = 0.25 * L;                    // in yaw
-    double T_sway = 2.0;                      // sway time constant (s)
-    double T_yaw  = 2.0;                      // yaw time constant (s)
-    double Umax   = 2 * 0.5144;               // maximum forward speed (m/s) (6 knots)
+    double T_sway = 1.0;                      // sway time constant (s)
+    double T_yaw  = 1.0;                      // yaw time constant (s)
+    double Umax   = 0.1;                        // maximum forward speed (m/s)
     
     // Data for one pontoon
     double Beam_pont  = 0.70;                 // pontoon beam (m)
     double y_pont  = 1.1;                     // lateral offset from centerline (m)
-    double x_pont  = 1;                       // (m)
+    double x_pont  = 1.4;                       // (m)
     double Cw_pont = 3.75 / (5*0.75);         // waterline area coefficient
     double Cb_pont = 0.5;                     // block coefficient
     
@@ -421,7 +421,7 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input, const Eigen::Ve
     
     // Transform hydrostatic matrix from the center-of-flotation frame to the CO.
     // Here we use Hmtrx with LCF = [-0.2, 0, 0]
-    Eigen::Vector3d LCF_vec; LCF_vec << -0.2, 0, 0;
+    Eigen::Vector3d LCF_vec; LCF_vec << 2.5, 0, 0;
     Eigen::MatrixXd H2 = Hmtrx(LCF_vec);
     Eigen::MatrixXd G = H2.transpose() * G_CF * H2;
 

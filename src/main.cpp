@@ -22,7 +22,7 @@ int main() {
 
     // USER INPUTS
     double h = 0.05;               // Sampling time [s]
-    double T_final = 500;         // Final simulation time [s]
+    double T_final = 1200;         // Final simulation time [s]
  
     //Load condition
     double mp = 0;                 // Payload mass [kg]
@@ -39,7 +39,7 @@ int main() {
     wpt.angle = {0, deg2rad(90), deg2rad(45), deg2rad(90), deg2rad(-45)}; 
     
     // Additional parameter for straight-line path following
-    double R_switch = 2;
+    double R_switch = 0.5;
      
     // Initial heading
     double psi0 = atan2(wpt.y[1] - wpt.y[0], wpt.x[1] - wpt.x[0]);
@@ -143,7 +143,7 @@ int main() {
         switch (GuidanceFlag) {
             case 1: {
                 // Station keeping
-                std::vector<double> desired_states = StationKeeping(wpt, wpt_index, xn, yn);
+                std::vector<double> desired_states = StationKeeping(wpt, wpt_index, xn, yn, psi_d);
                 xn_d  = desired_states[0]; 
                 yn_d  = desired_states[1]; 
                 psi_d = desired_states[2]; 
@@ -190,6 +190,7 @@ int main() {
         // Marine Craft Model
         //  rk4 method for x(k+1)
         rk4_ran_step(x, n, alpha, mp, rp, V_c, beta_c, h);
+        x(11) = ssa(x(11));
 
         //  Euler's method
         n = n + h/T_n * (n_c - n);                             // Update propeller speeds
@@ -216,8 +217,8 @@ int main() {
         z_yn  = z_yn  + h * (pos_y_error);      // Update integral state for sway control
         z_psi = z_psi + h * ssa(psi_d - psi);   // Update integral state for heading control
 
-        // Show SIM progress
-        if (i % 100 == 0) {
+        // Show SIM progress once per second
+        if (i % 20 == 0) {
             std::cout << std::fixed << std::setprecision(0)
                       << "################################################" << std::endl
                       << "Iteration: " << i << ", Time: " << t[i] << "s, "
@@ -226,11 +227,13 @@ int main() {
                       << "x_d: " << xn_d << "m, y_d: " << yn_d << "m, psi_d: " << rad2deg(psi_d) << "deg" << std::endl
                       << "x:   " << xn << "m, y:   " << yn << "m, psi:   " << rad2deg(psi) << "deg" << std::endl
                       << "------------------------------------------------" << std::endl
-                      << "n_c(0), n_c(1): " << n_c(0) << ", " << n_c(1) << std::endl
-                      << "n(0),   n(1):   " << n(0) << ", " << n(1) << std::endl
+                      << "n_c(0), n_c(1):         " << n_c(0) << ", " << n_c(1) << std::endl
+                      << "n(0),   n(1):           " << n(0) << ", " << n(1) << std::endl
                       << "------------------------------------------------" << std::endl
                       << "alpha_c(0), alpha_c(1): " << rad2deg(alpha_c(0)) << ", " << rad2deg(alpha_c(1)) << std::endl
                       << "alpha(0), alpha(1):     " << rad2deg(alpha(0)) << ", " << rad2deg(alpha(1)) << std::endl
+                      << "------------------------------------------------" << std::endl
+                      << "tauX, tauY, tauN: " << tau_X << ", " << tau_Y << ", " << tau_N << std::endl
                       << "" << std::endl
                       << std::defaultfloat;
         }
@@ -245,7 +248,7 @@ int main() {
         simdata_state_errors(i, 0) = t[i];
         simdata_state_errors(i, 1) = xn_d  - xn;
         simdata_state_errors(i, 2) = yn_d  - yn;
-        simdata_state_errors(i, 3) = psi_d - psi;
+        simdata_state_errors(i, 3) = ssa(psi_d - psi);
 
 
     }

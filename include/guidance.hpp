@@ -20,7 +20,7 @@ class GuidanceMethod {
         };
     };
 
-std::vector<double> StationKeeping(Waypoints wpt, int wpt_index, double xn, double yn);
+std::vector<double> StationKeeping(Waypoints wpt, int wpt_index, double xn, double yn, double psi_d);
 
 std::vector<double> DynamicPositioning(Waypoints wpt, int wpt_index);
 

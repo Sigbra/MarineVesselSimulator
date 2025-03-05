@@ -7,7 +7,7 @@
 #include <string>
 #include <limits>
 
-std::vector<double> SISO_linear_PID_Control(
+std::vector<double> SISO_linear_PID_Control( //Help with PID implementation or alternative?
     double h,
     double xn_d, double yn_d, double psi_d,
     double xn, double yn, double psi,
@@ -30,17 +30,17 @@ std::vector<double> SISO_linear_PID_Control(
 
     // --- PID Gains ---
     // Surge and sway gains (N/m, N/(m·s), N·s/m)
-    const double Kp_xn = 10.0;
-    const double Ki_xn = 0.1;
+    const double Kp_xn = 35.0;
+    const double Ki_xn = 0.0; //Integral action calculations are faulty 
     const double Kd_xn = 1.0;
 
-    const double Kp_yn = 10.0;
-    const double Ki_yn = 0.1;
+    const double Kp_yn = 35.0;
+    const double Ki_yn = 0.0;
     const double Kd_yn = 1.0;
     
     // Yaw gains (N·m/rad, N·m/(rad·s), N·m·s/rad)
-    const double Kp_psi = 15.0;
-    const double Ki_psi = 0.1;
+    const double Kp_psi = 120.0;
+    const double Ki_psi = 0.0;
     const double Kd_psi = 1.0;
 
     // --- Compute Derivative Terms ---
