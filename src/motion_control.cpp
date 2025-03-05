@@ -30,16 +30,16 @@ std::vector<double> SISO_linear_PID_Control(
 
     // --- PID Gains ---
     // Surge and sway gains (N/m, N/(m·s), N·s/m)
-    const double Kp_xn = 20.0;
+    const double Kp_xn = 10.0;
     const double Ki_xn = 0.1;
     const double Kd_xn = 1.0;
 
-    const double Kp_yn = 20.0;
+    const double Kp_yn = 10.0;
     const double Ki_yn = 0.1;
     const double Kd_yn = 1.0;
     
     // Yaw gains (N·m/rad, N·m/(rad·s), N·m·s/rad)
-    const double Kp_psi = 100.0;
+    const double Kp_psi = 15.0;
     const double Ki_psi = 0.1;
     const double Kd_psi = 1.0;
 

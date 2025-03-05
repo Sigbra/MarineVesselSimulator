@@ -271,12 +271,12 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input, const Eigen::Ve
     double R66 = 0.25 * L;                    // in yaw
     double T_sway = 2.0;                      // sway time constant (s)
     double T_yaw  = 2.0;                      // yaw time constant (s)
-    double Umax   = 6 * 0.5144;               // maximum forward speed (m/s) (6 knots)
+    double Umax   = 2 * 0.5144;               // maximum forward speed (m/s) (6 knots)
     
     // Data for one pontoon
     double Beam_pont  = 0.70;                 // pontoon beam (m)
-    double y_pont  = 1;                       // lateral offset from centerline (m)
-    double x_pont  = 0.5;                     // (m)
+    double y_pont  = 1.1;                     // lateral offset from centerline (m)
+    double x_pont  = 1;                       // (m)
     double Cw_pont = 3.75 / (5*0.75);         // waterline area coefficient
     double Cb_pont = 0.5;                     // block coefficient
     
@@ -341,10 +341,10 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input, const Eigen::Ve
     double lx = x_pont;                                  // (m)
     double k_pos = 0.2216 / 2.0;                         // Positive Bollard, one propeller //Example value
     double k_neg = 0.1289 / 2.0;                         // Negative Bollard, one propeller //Example value
-    double n_max = std::sqrt((0.5 * 24,4 * g) / k_pos);  // maximum propeller rev. (rad/s)
-    double n_min = -std::sqrt((0.5 * 13,6 * g) / k_neg); // minimum propeller rev. (rad/s)
-    double alpha_max = deg2rad(90);                      // maximum azimuth angle (rad)
-    double alpha_min = deg2rad(-90);                     // minimum azimuth angle (rad)
+    double n_max = std::sqrt((0.5 * 24.4 * g) / k_pos);  // maximum propeller rev. (rad/s)
+    double n_min = -std::sqrt((0.5 * 13.6 * g) / k_neg); // minimum propeller rev. (rad/s)
+    double alpha_max = M_PI/2;                      // maximum azimuth angle (rad)
+    double alpha_min = -M_PI/2;                     // minimum azimuth angle (rad)
     
     // ---------------------------
     // Rigid-body (MRB) and Coriolis (CRB) matrices at the CG

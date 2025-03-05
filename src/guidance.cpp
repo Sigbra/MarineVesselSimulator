@@ -34,10 +34,10 @@ int GuidanceMethod::selectMethod() {
     return choice;
 }
 
-std::vector<double> StationKeeping(Waypoints wpt, int wpt_index) {
+std::vector<double> StationKeeping(Waypoints wpt, int wpt_index, double xn, double yn) {
     double xn_d  = wpt.x[wpt_index];
     double yn_d  = wpt.y[wpt_index];
-    double psi_d = std::atan2(yn_d - wpt.y[wpt_index-1], xn_d - wpt.x[wpt_index-1]);
+    double psi_d = std::atan2(yn_d - yn, xn_d - xn);
     return {xn_d, yn_d, psi_d};
 }
 

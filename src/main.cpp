@@ -22,7 +22,7 @@ int main() {
 
     // USER INPUTS
     double h = 0.05;               // Sampling time [s]
-    double T_final = 1000;         // Final simulation time [s]
+    double T_final = 500;         // Final simulation time [s]
  
     //Load condition
     double mp = 0;                 // Payload mass [kg]
@@ -143,7 +143,7 @@ int main() {
         switch (GuidanceFlag) {
             case 1: {
                 // Station keeping
-                std::vector<double> desired_states = StationKeeping(wpt, wpt_index);
+                std::vector<double> desired_states = StationKeeping(wpt, wpt_index, xn, yn);
                 xn_d  = desired_states[0]; 
                 yn_d  = desired_states[1]; 
                 psi_d = desired_states[2]; 
@@ -199,10 +199,10 @@ int main() {
         // Saturate:
         double k_pos = 0.2216 / 2.0;                         
         double k_neg = 0.1289 / 2.0;                         
-        double n_max = std::sqrt((0.5 * 24,4 * 9.81) / k_pos);  
-        double n_min = -std::sqrt((0.5 * 13,6 * 9.81) / k_neg); 
-        double alpha_max = deg2rad(90);                      
-        double alpha_min = deg2rad(-90);
+        double n_max = std::sqrt((0.5 * 24.4 * 9.81) / k_pos);  
+        double n_min = -std::sqrt((0.5 * 13.6 * 9.81) / k_neg); 
+        double alpha_max = M_PI/2;                      
+        double alpha_min = -M_PI/2;
         for (int i = 0; i < n.size(); ++i) {
             if (n(i) > n_max) n(i) = n_max;
             else if (n(i) < n_min) n(i) = n_min;
@@ -223,7 +223,7 @@ int main() {
                       << "Iteration: " << i << ", Time: " << t[i] << "s, "
                       << "Active WP: ("<< wpt.x[wpt_index] << "," << wpt.y[wpt_index] << ")" << std::endl
                       << "------------------------------------------------" << std::endl
-                      << "x_d: " << xn << "m, y_d: " << yn << "m, psi_d: " << rad2deg(psi) << "deg" << std::endl
+                      << "x_d: " << xn_d << "m, y_d: " << yn_d << "m, psi_d: " << rad2deg(psi_d) << "deg" << std::endl
                       << "x:   " << xn << "m, y:   " << yn << "m, psi:   " << rad2deg(psi) << "deg" << std::endl
                       << "------------------------------------------------" << std::endl
                       << "n_c(0), n_c(1): " << n_c(0) << ", " << n_c(1) << std::endl
