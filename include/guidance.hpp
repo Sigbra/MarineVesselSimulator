@@ -15,13 +15,15 @@ class GuidanceMethod {
     
     private:
         std::vector<std::string> methods = {
-            "Station keeping (dynamic heading ref)",
-            "Dynamic Positioning (static heading ref)"
+            "Dynamic Positioning (static heading ref)",
+            "Station keeping (dynamic heading ref)"
         };
     };
 
 std::vector<double> StationKeeping(Waypoints wpt, int wpt_index, double xn, double yn, double psi_d);
 
-std::vector<double> DynamicPositioning(Waypoints wpt, int wpt_index);
+std::vector<double> DynamicPositioning(std::vector<double> wpt_start,
+                                       std::vector<double> wpt_goal,
+                                       std::vector<double> current_position);
 
 #endif // GUIDANCE_HPP

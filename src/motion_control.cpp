@@ -7,7 +7,7 @@
 #include <string>
 #include <limits>
 
-std::vector<double> SISO_linear_PID_Control( //Help with PID implementation or alternative?
+std::vector<double> tau_XYN_PID( //Help with PID implementation or alternative?
     double h,
     double xn_d, double yn_d, double psi_d,
     double xn, double yn, double psi,
@@ -20,7 +20,7 @@ std::vector<double> SISO_linear_PID_Control( //Help with PID implementation or a
     double error_yn_NED =  yn_d - yn;
 
     // Position error in BODY frame
-    // R = [cos sin;
+    // RT = [cos sin;
     //     -sin cos]
     double error_xn =  cos(psi) * error_xn_NED + sin(psi) * error_yn_NED;  // Surge error (m)
     double error_yn = -sin(psi) * error_xn_NED + cos(psi)* error_yn_NED;  // Sway error (m)
@@ -32,16 +32,16 @@ std::vector<double> SISO_linear_PID_Control( //Help with PID implementation or a
     // Surge and sway gains (N/m, N/(m·s), N·s/m)
     const double Kp_xn = 35.0;
     const double Ki_xn = 0.0; //Integral action calculations are faulty
-    const double Kd_xn = 1.0;
+    const double Kd_xn = 0.0;
 
     const double Kp_yn = 35.0;
     const double Ki_yn = 0.0;
-    const double Kd_yn = 1.0;
+    const double Kd_yn = 0.0;
     
     // Yaw gains (N·m/rad, N·m/(rad·s), N·m·s/rad)
     const double Kp_psi = 120.0;
     const double Ki_psi = 0.0;
-    const double Kd_psi = 1.0;
+    const double Kd_psi = 0.0;
 
     // --- Compute Derivative Terms ---
     double d_error_xn  = (error_xn - prev_error_xn)   / h;
@@ -58,5 +58,13 @@ std::vector<double> SISO_linear_PID_Control( //Help with PID implementation or a
     prev_error_yn  = error_yn;
     prev_error_psi = error_psi;
 
+    return {tau_X, tau_Y, tau_N};
+}
+
+// Stub
+std::vector<double> tau_XN_PID(){
+    double tau_X = 0; // PD here
+    double tau_Y = 0; // 0 here
+    double tau_N = 0; // PID here
     return {tau_X, tau_Y, tau_N};
 }

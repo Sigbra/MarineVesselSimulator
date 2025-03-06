@@ -48,15 +48,15 @@ std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N) 
 
     //Constants from ran()
     double g = 9.81;
-    double k_pos = 0.2216 / 2.0;  //Borrowed from otter
-    double k_neg = 0.1289 / 2.0;  //Borrowed from otter
-    double n_max =  std::sqrt((0.5 * 24.4 * g) / k_pos);  //Borrowed from otter // maximum propeller rev. (rad/s)
-    double n_min = -std::sqrt((0.5 * 13.6 * g) / k_neg);  //Borrowed from otter // minimum propeller rev. (rad/s)
-    double alpha_max = M_PI/2 - 0.01; 
-    double alpha_min = -M_PI/2 + 0.01;
     double ly1 =  1.1;   
     double ly2 = -1.1;  
     double lx  =  1.4; 
+    double k_pos = 220*g;       // Positive Bollard
+    double k_neg = 220*g;       // Negative Bollard
+    double n_max =  1;          // relative propellar speed max 
+    double n_min = -1;          // relative propellar speed min
+    double alpha_max = M_PI/2; 
+    double alpha_min = -M_PI/2;
 
     // Thrust Calcualtion
     MX Thrust1 = if_else(n1 >= 0, k_pos * n1 * fabs(n1), k_neg * n1 * fabs(n1));
@@ -74,17 +74,40 @@ std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N) 
                    + 0.1 * pow(tau_Y - tau_Y_model, 2)
                    + 0.5 * pow(tau_N - tau_N_model, 2);
                    
-    // - Penalizing equal direction that can lead to loss of surge or sway control
-    MX penalty_equal = 10/(abs(alpha1 - alpha2)+0.1);  
-    
-    // - Penalizing complete opposite directions leading to loss of surge control
     MX eff_alpha1 = if_else(n1 >= 0, alpha1, alpha1 + M_PI);
     MX eff_alpha2 = if_else(n2 >= 0, alpha2, alpha2 + M_PI);
-    MX f1 = exp( -pow((M_PI/2 - abs(eff_alpha1)), 2) / 0.1 );
-    MX f2 = exp( -pow((M_PI/2 - abs(eff_alpha2)), 2) / 0.1 );
-    MX penalty_opposite = 10*f1*f2; //Penalize when both thrusters have bad surge efficiency simultaniously
+
+    // - Penalty for both pods forward, leading to loss of sway control.
+    MX a1 = exp( -pow( abs(eff_alpha1), 2 ) / 0.1 ); 
+    MX a2 = exp( -pow( abs(eff_alpha2), 2 ) / 0.1 );
+    MX penalty_both_zero = 10 * a1 * a2; // a1_max * a2_max = 1  
     
-    MX objective = penalty_tau + penalty_equal + penalty_opposite;
+    // - Penalty for pods in complete opposite directions, leading to loss of surge control.
+    MX b1 = exp( -pow((M_PI/2 - abs(eff_alpha1)), 2) / 0.1 ); 
+    MX b2 = exp( -pow((M_PI/2 - abs(eff_alpha2)), 2) / 0.1 );
+    MX penalty_opposite = 10 * b1 * b2; // b1_max * b2_max = 1  
+
+    // - Penalty for pods pointing inwards, cancelling each other out.
+    MX c1 = exp( -pow(eff_alpha1 - M_PI/2, 2) / 0.1 );
+    MX c2 = exp( -pow(eff_alpha2 + M_PI/2, 2) / 0.1 );
+    MX penalty_inward = 10 * c1 * c2; // c1_max * c2_max = 1 
+
+    // Penalty for both pods beeing +90, leading to loss of surge control?
+    MX d1 = exp( -pow(eff_alpha1 - M_PI/2, 2) / 0.1 );
+    MX d2 = exp( -pow(eff_alpha2 - M_PI/2, 2) / 0.1 );
+    MX penalty_both_plus_90 = 10 * d1 * d2;
+
+    // Penalty for both pods beeing -90, leading to loss of surge control?
+    MX e1 = exp( -pow(eff_alpha1 + M_PI/2, 2) / 0.1 );
+    MX e2 = exp( -pow(eff_alpha2 + M_PI/2, 2) / 0.1 );
+    MX penalty_both_minus_90 = 10 * e1 * e2;
+    
+    MX objective = penalty_tau
+                 + penalty_both_zero
+                 + penalty_opposite
+                 + penalty_inward
+                 + penalty_both_plus_90
+                 + penalty_both_minus_90;
 
     // Set up NLP problem dictionary
     MXDict nlp = {{"x", vars}, {"f", objective}}; 

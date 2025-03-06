@@ -222,6 +222,15 @@ Eigen::Matrix3d Rzyx(double phi, double theta, double psi) {
     return R;
 }
 
+std::vector<double> CO_frame(double L, double U) {
+    double CO_min = L/2;
+    double CO_max = L;
+    double x = 0;
+    double y = 0;
+    double z = 0;
+    return {x, y, z};
+}
+
 //-------------------------------------------------------------------
 // The ran() function
 //
@@ -260,19 +269,18 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input, const Eigen::Ve
     // ---------------------------
     // Main physical constants
     // ---------------------------
-    double g   = 9.81;                        // gravitational acceleration (m/s^2)
-    double rho = 1025.0;                      // water density (kg/m^3)
-
-    double L   = 5.0;                         // vessel length (m)
-    double Beam   = 3;                        // vessel beam (m)
-    double m   = 800.0;                       // vessel mass (kg)
-    Eigen::Vector3d rg_hull(2.3, 0.0, -0.2);  // center of gravity for hull only
-    double R44 = 0.4 * Beam;                  // radii of gyration in roll
-    double R55 = 0.25 * L;                    // in pitch
-    double R66 = 0.25 * L;                    // in yaw
-    double T_sway = 1.0;                     // sway time constant (s)
-    double T_yaw  = 10;                       // yaw time constant (s)
-    double Umax   = 0.1;                     // maximum forward speed (m/s)
+    double g    = 9.81;                        // gravitational acceleration (m/s^2)
+    double rho  = 1025.0;                      // water density (kg/m^3)
+    double L    = 5.0;                         // vessel length (m)
+    double Beam = 3;                           // vessel beam (m)
+    double m    = 800.0;                       // vessel mass (kg)
+    Eigen::Vector3d rg_hull(-0.5, 0.0, -0.2);  // center of gravity for hull only
+    double R44 = 0.4 * Beam;                   // radii of gyration in roll
+    double R55 = 0.25 * L;                     // in pitch
+    double R66 = 0.25 * L;                     // in yaw
+    double T_sway = 1.0;                       // sway time constant (s)
+    double T_yaw  = 1.0;                       // yaw time constant (s)
+    double Umax   = 10;                        // maximum forward speed (m/s)
     
     // Data for one pontoon
     double Beam_pont  = 0.70;                 // pontoon beam (m)
@@ -288,8 +296,8 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input, const Eigen::Ve
     Eigen::VectorXd eta = x.segment(6,6);  // positions and Euler angles
 
     
-    // Speed U from surge, sway, and heave components
-    U = std::sqrt(nu(0)*nu(0) + nu(1)*nu(1) + nu(2)*nu(2));
+    // Speed U from surge and sway components
+    U = std::sqrt(nu(0)*nu(0) + nu(1)*nu(1));
     
     // ---------------------------
     // Ocean current and relative velocity
@@ -336,15 +344,15 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input, const Eigen::Ve
     // ---------------------------
     // Azimuth pods / Pontoon data and control forces
     // ---------------------------
-    double ly1 = y_pont;                                 // left pod lever arm (m)
-    double ly2 = -y_pont;                                // right pod lever arm (m)
-    double lx  = 1.4;                                    // forward displacement of pods (m)
-    double k_pos = 0.2216 / 2.0;                         // Positive Bollard, one propeller //Example value
-    double k_neg = 0.1289 / 2.0;                         // Negative Bollard, one propeller //Example value
-    double n_max = std::sqrt((0.5 * 24.4 * g) / k_pos);  // maximum propeller rev. (rad/s)
-    double n_min = -std::sqrt((0.5 * 13.6 * g) / k_neg); // minimum propeller rev. (rad/s)
-    double alpha_max = M_PI/2;                      // maximum azimuth angle (rad)
-    double alpha_min = -M_PI/2;                     // minimum azimuth angle (rad)
+    double ly1 = y_pont;         // left pod lever arm (m)
+    double ly2 = -y_pont;        // right pod lever arm (m)
+    double lx  = -0.9;           // forward displacement of pods (m)
+    double k_pos = 220*g;        // Positive Bollard
+    double k_neg = 220*g;        // Negative Bollard
+    double n_max =  1;           // relative propellar speed max 
+    double n_min = -1;           // relative propellar speed min
+    double alpha_max = M_PI/2;   // maximum azimuth angle (rad)
+    double alpha_min = -M_PI/2;  // minimum azimuth angle (rad)
     
     // ---------------------------
     // Rigid-body (MRB) and Coriolis (CRB) matrices at the CG
@@ -420,8 +428,7 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input, const Eigen::Ve
     G_CF(4,4) = G55;
     
     // Transform hydrostatic matrix from the center-of-flotation frame to the CO.
-    // Here we use Hmtrx with LCF = [-0.2, 0, 0]
-    Eigen::Vector3d LCF_vec; LCF_vec << 2.5, 0, 0;
+    Eigen::Vector3d LCF_vec; LCF_vec << -0.2, 0, 0;
     Eigen::MatrixXd H2 = Hmtrx(LCF_vec);
     Eigen::MatrixXd G = H2.transpose() * G_CF * H2;
 
@@ -601,10 +608,10 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input, const Eigen::Ve
     //         0  0  0 K4]
     Eigen::MatrixXd K_e = Eigen::MatrixXd::Zero(4,4);
     //How should these be defined?                            !!!
-    double K1 = 10; 
-    double K2 = 5;
-    double K3 = 10;
-    double K4 = 5;
+    double K1 = 1; 
+    double K2 = 1;
+    double K3 = 1;
+    double K4 = 1;
     K_e(0,0) = K1;
     K_e(1,1) = K2;
     K_e(2,2) = K3;
