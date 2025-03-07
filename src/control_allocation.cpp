@@ -4,7 +4,9 @@
 #include <string>
 #include <iostream>
 #include <map>
+#include <Eigen/Dense>
 #include "control_allocation.hpp"
+#include "ran.hpp"
 #include "utilities.hpp"
 
 ControlAllocationMethod::ControlAllocationMethod(){}
@@ -34,33 +36,37 @@ int ControlAllocationMethod::selectMethod() {
     return choice;
 }
 
-std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N) {
+std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N, double U) {
     using namespace casadi;
 
     // Define symbolic decision variables
-    MX n1 = MX::sym("F1");    // Thruster 1 force
-    MX alpha1 = MX::sym("phi1"); // Thruster 1 angle
-    MX n2 = MX::sym("F2");    // Thruster 2 force
-    MX alpha2 = MX::sym("phi2"); // Thruster 2 angle
+    MX n1 = MX::sym("F1");        // Thruster 1 force
+    MX alpha1 = MX::sym("phi1");  // Thruster 1 angle
+    MX n2 = MX::sym("F2");        // Thruster 2 force
+    MX alpha2 = MX::sym("phi2");  // Thruster 2 angle
 
     // Combine decision variables
     MX vars = vertcat(n1, alpha1, n2, alpha2);
 
-    //Constants from ran()
+    // CO offset
+    Eigen::Vector3d CO_offset = CO_Offset(U);
+    double ly1 =  1.1 - CO_offset(1);    // Left pod lever arm
+    double ly2 = -1.1 + CO_offset(1);    // Right pod lever arm
+    double lx  = -1.1 - CO_offset(0);    // Pod locations in x
+
+    // Constants from ran()
     double g = 9.81;
-    double ly1 =  1.1;   
-    double ly2 = -1.1;  
-    double lx  =  1.4; 
-    double k_pos = 220*g;       // Positive Bollard
-    double k_neg = 220*g;       // Negative Bollard
-    double n_max =  1;          // relative propellar speed max 
-    double n_min = -1;          // relative propellar speed min
+    double k_pos = 200*g;         // Positive Bollard
+    double k_neg = 200*g;         // Negative Bollard
+    double n_max =  1;            // Relative propellar speed max (representing max positive  revs)
+    double n_min =  0 + 0.000001; // Relative propellar speed min (representing max negative revs)
     double alpha_max = M_PI/2; 
     double alpha_min = -M_PI/2;
 
-    // Thrust Calcualtion
-    MX Thrust1 = if_else(n1 >= 0, k_pos * n1 * fabs(n1), k_neg * n1 * fabs(n1));
-    MX Thrust2 = if_else(n2 >= 0, k_pos * n2 * fabs(n2), k_neg * n2 * fabs(n2));
+    // Thrust Calcualtion 
+    // - Symbolic version of ThrustsFromRelativeN() in ran.cpp for casadi.
+    MX Thrust1 = if_else(n1 >= 0, k_pos * (n1 * fabs(n1) - 0.25) / 0.75, k_neg * (n1 * fabs(n1) - 0.25) / 0.75);
+    MX Thrust2 = if_else(n2 >= 0, k_pos * (n2 * fabs(n2) - 0.25) / 0.75, k_neg * (n2 * fabs(n2) - 0.25) / 0.75);
 
     // Mapping to forces and moments (From ran())
     MX tau_X_model = Thrust1 * cos(alpha1) + Thrust2 * cos(alpha2);
@@ -70,9 +76,9 @@ std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N) 
 
     // Objective Function
     // - Mean square error minimization of each tau component
-    MX penalty_tau = 0.1 * pow(tau_X - tau_X_model, 2)
-                   + 0.1 * pow(tau_Y - tau_Y_model, 2)
-                   + 0.5 * pow(tau_N - tau_N_model, 2);
+    MX penalty_tau = 200  * pow(tau_X - tau_X_model, 2)
+                   + 200  * pow(tau_Y - tau_Y_model, 2)
+                   + 0.8  * pow(tau_N - tau_N_model, 2);
                    
     MX eff_alpha1 = if_else(n1 >= 0, alpha1, alpha1 + M_PI);
     MX eff_alpha2 = if_else(n2 >= 0, alpha2, alpha2 + M_PI);
@@ -80,27 +86,27 @@ std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N) 
     // - Penalty for both pods forward, leading to loss of sway control.
     MX a1 = exp( -pow( abs(eff_alpha1), 2 ) / 0.1 ); 
     MX a2 = exp( -pow( abs(eff_alpha2), 2 ) / 0.1 );
-    MX penalty_both_zero = 10 * a1 * a2; // a1_max * a2_max = 1  
+    MX penalty_both_zero = 20 * a1 * a2; // a1_max * a2_max = 1  
     
     // - Penalty for pods in complete opposite directions, leading to loss of surge control.
     MX b1 = exp( -pow((M_PI/2 - abs(eff_alpha1)), 2) / 0.1 ); 
     MX b2 = exp( -pow((M_PI/2 - abs(eff_alpha2)), 2) / 0.1 );
-    MX penalty_opposite = 10 * b1 * b2; // b1_max * b2_max = 1  
+    MX penalty_opposite = 20 * b1 * b2; // b1_max * b2_max = 1  
 
     // - Penalty for pods pointing inwards, cancelling each other out.
     MX c1 = exp( -pow(eff_alpha1 - M_PI/2, 2) / 0.1 );
     MX c2 = exp( -pow(eff_alpha2 + M_PI/2, 2) / 0.1 );
-    MX penalty_inward = 10 * c1 * c2; // c1_max * c2_max = 1 
+    MX penalty_inward = 20 * c1 * c2; // c1_max * c2_max = 1 
 
     // Penalty for both pods beeing +90, leading to loss of surge control?
     MX d1 = exp( -pow(eff_alpha1 - M_PI/2, 2) / 0.1 );
     MX d2 = exp( -pow(eff_alpha2 - M_PI/2, 2) / 0.1 );
-    MX penalty_both_plus_90 = 10 * d1 * d2;
+    MX penalty_both_plus_90 = 20 * d1 * d2;
 
     // Penalty for both pods beeing -90, leading to loss of surge control?
     MX e1 = exp( -pow(eff_alpha1 + M_PI/2, 2) / 0.1 );
     MX e2 = exp( -pow(eff_alpha2 + M_PI/2, 2) / 0.1 );
-    MX penalty_both_minus_90 = 10 * e1 * e2;
+    MX penalty_both_minus_90 = 20 * e1 * e2;
     
     MX objective = penalty_tau
                  + penalty_both_zero

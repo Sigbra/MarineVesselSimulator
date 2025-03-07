@@ -222,13 +222,94 @@ Eigen::Matrix3d Rzyx(double phi, double theta, double psi) {
     return R;
 }
 
-std::vector<double> CO_frame(double L, double U) {
-    double CO_min = L/2;
-    double CO_max = L;
+Eigen::Vector3d CO_Offset(double U) {
+
+    //Length of craft;
+    double L = 5;
+
+    // Lower and upper bounds [m]
+    double U_lower = 2; 
+    double U_upper = 10;
+
+    // Max and Min x values for CO
+    // - Midship
+    double x_min = 0;
+    // - Front of ship
+    double x_max = 0.4*L;
+
+    // CO
     double x = 0;
     double y = 0;
     double z = 0;
-    return {x, y, z};
+
+    // Finding offset x based on speed
+    if (U < U_lower) {
+        x = x_min;
+    }
+    else if (U > U_upper) {
+        x = x_max;
+    }
+    else {
+        x = x_min + (x_max - x_min) * (U-U_lower) / (U_upper-U_lower);
+    }
+
+    return Eigen::Vector3d(x, y, z);
+}
+
+// Calculates real propeller revs
+// Assuming positive and negative Bollard and propeller revs are the same.
+std::vector<double> nReal(std::vector<double> n_relative) {
+    //n_relative: 0 to 1
+    //n_real:   100 to -100
+    double n1_real = 200 * n_relative[0] - 100; 
+    double n2_real = 200 * n_relative[1] - 100; 
+    return {n1_real, n2_real};
+}
+
+// Calculating thrusts based on relative propellar revs (n).
+//
+//   Expecting n_r is scaled between [0, 1].
+//   Thrust_pos = k_pos * (n*|n| - 0.5²) / (1-0.5²), k_pos = Positive bollard pull = 200*g,
+//   Thrust_neg = k_neg * (n*|n| - 0.5²) / (1-0.5²), k_neg = Negative bollard pull = 200*g,
+//
+//   Same as direct Thrusts calculation;
+//   Thrust_pos = k_pos * n_real*|n_real|, 
+//   Thrust_neg = k_neg * n_real*|n_real|,
+//   where 
+//   n_real = nReal(n),
+//   k_pos = Bollard_pull_pos / n_real_max, n_real_max = +100 revs,
+//   k_neg = Bollard_pull_neg / n_real_min, n_real_min = -100 revs,
+//
+//   This formulation, as opposed to the direct one avoids nlpsol's solver issue at n = {0, 0}.
+//
+//   Assuming max positive and max negative propellar revs are the same.
+Eigen::VectorXd ThrustsFromRealativeN(Eigen::VectorXd n_r) {
+    double g = 9.81;
+    double k_pos = 200*g;
+    double k_neg = 200*g; 
+
+    int n_r_size = n_r.size();
+
+    Eigen::VectorXd Thrusts(n_r_size);
+    Thrusts.setZero();
+
+    for (int i = 0; i < n_r_size; ++i) {
+        double n_i = n_r(i);
+        if (n_i >= 0.5 && n_i <= 1) {
+            Thrusts(i) = k_pos * (n_i * fabs(n_i) - 0.25) / 0.75;
+        }
+        else if (n_i >= 0 && n_i <= 0.5) {
+            Thrusts(i) = k_neg * (n_i * fabs(n_i) - 0.25) / 0.75;
+        }
+        else {
+            std::cout << "Warning: n_r[" << i << "] outside expected interval [0, 1] with value: " << n_r(i) << std::endl;
+            std::cout << "Returning 0 value for Thrust" << std::endl;
+            Thrusts.setZero();
+            return Thrusts;
+        }
+    }
+
+    return Thrusts;
 }
 
 //-------------------------------------------------------------------
@@ -244,12 +325,12 @@ std::vector<double> CO_frame(double L, double U) {
 //   alpha  - 2x1 azimuth angles [alpha_left, alpha_right] (rad)
 // Outputs (by reference):
 //   xdot      - 12x1 time derivative of state vector
-//   U         - Speed (m/s) computed as sqrt(u^2+v^2+w^2)
+//   U         - Speed (m/s) computed as sqrt(u^2+v^2)
 //   M_out     - 6x6 system mass matrix (MRB + added mass)
 //   B    - 3x2 propeller input matrix 
 //-------------------------------------------------------------------
 void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input, const Eigen::VectorXd alpha_input,
-           double mp, const Eigen::Vector3d rp, double V_c, double beta_c,
+           double mp, double V_c, double beta_c,
            Eigen::VectorXd &xdot, double &U, Eigen::MatrixXd &M_out, Eigen::MatrixXd &B)
 {
     // Check dimensions
@@ -265,39 +346,67 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input, const Eigen::Ve
         std::cerr << "Error: alpha vector must have dimension 2!" << std::endl;
         return;
     }
-    
+
     // ---------------------------
     // Main physical constants
     // ---------------------------
-    double g    = 9.81;                        // gravitational acceleration (m/s^2)
-    double rho  = 1025.0;                      // water density (kg/m^3)
-    double L    = 5.0;                         // vessel length (m)
-    double Beam = 3;                           // vessel beam (m)
-    double m    = 800.0;                       // vessel mass (kg)
-    Eigen::Vector3d rg_hull(-0.5, 0.0, -0.2);  // center of gravity for hull only
-    double R44 = 0.4 * Beam;                   // radii of gyration in roll
-    double R55 = 0.25 * L;                     // in pitch
-    double R66 = 0.25 * L;                     // in yaw
-    double T_sway = 1.0;                       // sway time constant (s)
-    double T_yaw  = 1.0;                       // yaw time constant (s)
-    double Umax   = 10;                        // maximum forward speed (m/s)
+    // - gravitational acceleration (m/s^2)
+    double g    = 9.81;                        
+    // - water density (kg/m^3)
+    double rho  = 1025.0;                     
+    // - vessel length (m)
+    double L    = 5.0;                         
+    // - vessel beam (m)
+    double Beam = 3;                           
+    // - vessel mass (kg)
+    double m    = 800.0;                        
+    // - radii of gyration in roll
+    double R44 = 0.4  * Beam;                  
+    // - in pitch
+    double R55 = 0.25 * L;                    
+    // - in yaw
+    double R66 = 0.25 * L;                    
+    // - sway time constant (s)
+    double T_sway = 1.0;                      
+    // - yaw time constant (s)
+    double T_yaw  = 1.0;                       
+    // - maximum forward speed (m/s)
+    double Umax   = 10;                        
     
     // Data for one pontoon
-    double Beam_pont  = 0.70;                 // pontoon beam (m)
-    double y_pont  = 1.1;                     // lateral offset from centerline (m)
-    double Cw_pont = 1;                       // waterline area coefficient
-    double Cb_pont = 0.5;                     // block coefficient
+    // - pontoon beam (m)
+    double Beam_pont = 0.70;                 
+    // - lateral offset from centerline (m)
+    double y_pont    = 1.1;                    
+    // - waterline area coefficient
+    double Cw_pont   = 1;                       
+    // - block coefficient
+    double Cb_pont   = 0.5;                     
     
     // ---------------------------
     // State extraction
     // ---------------------------
     // x = [u, v, w, p, q, r, x, y, z, phi, theta, psi]'
-    Eigen::VectorXd nu = x.segment(0,6);   // body velocities
-    Eigen::VectorXd eta = x.segment(6,6);  // positions and Euler angles
+    // - Body velocities
+    Eigen::VectorXd nu = x.segment(0,6);   
+    // - Positions and Euler angles
+    Eigen::VectorXd eta = x.segment(6,6);  
 
-    
     // Speed U from surge and sway components
     U = std::sqrt(nu(0)*nu(0) + nu(1)*nu(1));
+
+    //----------------------------
+    // Coordinate frame updates
+    // - Assuming CO = (0, 0, 0) means center of the boat.
+    //----------------------------
+    // - Coordinate origin (CO) offset update (Speed dependant)
+    Eigen::Vector3d CO_offset = CO_Offset(U);
+    // - CO to center of gravity for hull only.
+    Eigen::Vector3d rg_hull = Eigen::Vector3d( -0.5, 0.0, -0.2) - CO_offset;
+    // - CO to payload location (front cabin).
+    Eigen::Vector3d rp      = Eigen::Vector3d( 0.75, 0.0, -0.2) - CO_offset;
+    // - CO to longditudinal center of flotation (LCF).
+    Eigen::Vector3d LCF_vec = Eigen::Vector3d( -0.2, 0.0,  0.0) - CO_offset;
     
     // ---------------------------
     // Ocean current and relative velocity
@@ -308,14 +417,15 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input, const Eigen::Ve
     Eigen::VectorXd nu_c = Eigen::VectorXd::Zero(6);
     nu_c(0) = u_c;
     nu_c(1) = v_c;
-    // Relative velocity:
+    // - Relative velocity:
     Eigen::VectorXd nu_r = nu - nu_c;
     
     // Translational (nu1) and rotational (nu2) parts of nu:
     // nu1 = [u, v, w] and nu2 = [p, q, r]
     Eigen::Vector3d nu2 = nu.segment(3,3);
     
-    // Compute current acceleration term: nu_c_dot = [ -Smtrx(nu2)*nu_c_head; zeros(3) ]
+    // Compute current acceleration term: 
+    // nu_c_dot = [ -Smtrx(nu2)*nu_c_head; zeros(3) ]
     Eigen::Vector3d nu_c_head = nu_c.segment(0,3);
     Eigen::Vector3d nu_c_dot_head = -Smtrx(nu2) * nu_c_head;
     Eigen::VectorXd nu_c_dot = Eigen::VectorXd::Zero(6);
@@ -325,8 +435,10 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input, const Eigen::Ve
     // ---------------------------
     // Inertia and trim calculations
     // ---------------------------
-    double nabla = (m + mp) / rho;  // displaced volume
-    double T_draft = nabla / (2 * Cb_pont * Beam_pont * L);  // vessel draft
+    // - Displaced volume
+    double nabla = (m + mp) / rho; 
+    // - Vessel draft
+    double T_draft = nabla / (2 * Cb_pont * Beam_pont * L);  
     
     // Inertia dyadic for hull only at CG: Ig_CG = m * diag(R44^2, R55^2, R66^2)
     Eigen::Matrix3d Ig_CG = Eigen::Matrix3d::Zero();
@@ -344,15 +456,24 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input, const Eigen::Ve
     // ---------------------------
     // Azimuth pods / Pontoon data and control forces
     // ---------------------------
-    double ly1 = y_pont;         // left pod lever arm (m)
-    double ly2 = -y_pont;        // right pod lever arm (m)
-    double lx  = -0.9;           // forward displacement of pods (m)
-    double k_pos = 220*g;        // Positive Bollard
-    double k_neg = 220*g;        // Negative Bollard
-    double n_max =  1;           // relative propellar speed max 
-    double n_min = -1;           // relative propellar speed min
-    double alpha_max = M_PI/2;   // maximum azimuth angle (rad)
-    double alpha_min = -M_PI/2;  // minimum azimuth angle (rad)
+    // left pod lever arm (m)
+    double ly1 = y_pont - CO_offset(1);         
+    // right pod lever arm (m)
+    double ly2 = -y_pont + CO_offset(1);        
+    // forward displacement of pods (m)
+    double lx  = -1.1 + CO_offset(0);           
+    // Positive Bollard
+    double k_pos = 200*g;        
+    // Negative Bollard
+    double k_neg = 200*g;       
+    // relative propellar speed max
+    double n_max =  1;           
+    // relative propellar speed min
+    double n_min = -1;           
+    // maximum azimuth angle (rad)
+    double alpha_max = M_PI/2;   
+    // minimum azimuth angle (rad)
+    double alpha_min = -M_PI/2;  
     
     // ---------------------------
     // Rigid-body (MRB) and Coriolis (CRB) matrices at the CG
@@ -428,7 +549,6 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input, const Eigen::Ve
     G_CF(4,4) = G55;
     
     // Transform hydrostatic matrix from the center-of-flotation frame to the CO.
-    Eigen::Vector3d LCF_vec; LCF_vec << -0.2, 0, 0;
     Eigen::MatrixXd H2 = Hmtrx(LCF_vec);
     Eigen::MatrixXd G = H2.transpose() * G_CF * H2;
 
@@ -468,28 +588,15 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input, const Eigen::Ve
             alpha(i) = alpha_min;
     }
     
-    // Thrust for podded propellar (Fossen, Chapter 9.2.1)
-    // T = p*D⁴*K_T(J_a) * |n|n ~= T_|n|n * |n|n - T|n|u_a * |n|u_a 
-    // u_a = (1-w)*u, u - forward speed of ship, w - wake fraction (0.1-0.4)
-    // T_|n|n = p*D⁴*a1   
-    // T_|n|u_a = p*D³*a2
-    // D - propellar diameter, p - water density, n - propeller revs, a - const value, 
-    // Temporary Thrust calculation based on otter.m in the MssToolbox
-    Eigen::Vector2d Thrust;
-    for (int i = 0; i < 2; i++) {
-        if (n(i) > 0)
-            Thrust(i) = k_pos * n(i) * std::abs(n(i)); //Positive Thrust (thust, not direction of thrust)
-        else
-            Thrust(i) = k_neg * n(i) * std::abs(n(i)); //Nagavtive Thrust (thust, not direction of thrust)
-    }
+    // Thrusts from podded propellars
+    Eigen::VectorXd Thrusts = ThrustsFromRealativeN(n);
 
     // Control forces and moments. 
-    //  Using ly1 and ly2, but what about lx?
     Eigen::VectorXd tau = Eigen::VectorXd::Zero(6);
-    tau(0) = Thrust(0) * cos(alpha(0)) + Thrust(1) * cos(alpha(1)); //X: Surge 
-    tau(1) = Thrust(0) * sin(alpha(0)) + Thrust(1) * sin(alpha(1)); //Y: Sway 
-    tau(5) = lx * (Thrust(0) * sin(alpha(0)) + Thrust(1) * sin(alpha(1)))
-          - (ly1 * Thrust(0) * cos(alpha(0)) + ly2 * Thrust(1) * cos(alpha(1))); //N: Yaw
+    tau(0) = Thrusts(0) * cos(alpha(0)) + Thrusts(1) * cos(alpha(1)); //X: Surge 
+    tau(1) = Thrusts(0) * sin(alpha(0)) + Thrusts(1) * sin(alpha(1)); //Y: Sway 
+    tau(5) = lx * (Thrusts(0) * sin(alpha(0)) + Thrusts(1) * sin(alpha(1)))
+          - (ly1 * Thrusts(0) * cos(alpha(0)) + ly2 * Thrusts(1) * cos(alpha(1))); //N: Yaw
 
     //Linear damping using relative velocities + nonlinear yaw dampning
     double Xh = Xu * nu_r(0);
@@ -623,8 +730,7 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input, const Eigen::Ve
 
 // Specialized RK4 integrator for the RAN model. 
 void rk4_ran_step(Eigen::VectorXd& x, const Eigen::VectorXd& n, const Eigen::VectorXd& alpha,
-    double mp, const Eigen::Vector3d& rp,
-    double V_c, double beta_c, double h) {
+                                   double mp, double V_c, double beta_c, double h) {
     // Initialize output variables
     Eigen::VectorXd xdot(12);
     double U;
@@ -632,22 +738,22 @@ void rk4_ran_step(Eigen::VectorXd& x, const Eigen::VectorXd& n, const Eigen::Vec
     Eigen::MatrixXd B(3, 4);
 
     // Compute k1
-    ran(x, n, alpha, mp, rp, V_c, beta_c, xdot, U, M_out, B);
+    ran(x, n, alpha, mp, V_c, beta_c, xdot, U, M_out, B);
     Eigen::VectorXd k1 = h * xdot;
     //std::cout << "k1: " << k1.transpose() << std::endl;
 
     // Compute k2
-    ran(x + 0.5 * k1, n, alpha, mp, rp, V_c, beta_c, xdot, U, M_out, B);
+    ran(x + 0.5 * k1, n, alpha, mp, V_c, beta_c, xdot, U, M_out, B);
     Eigen::VectorXd k2 = h * xdot;
     //std::cout << "k2: " << k2.transpose() << std::endl;
 
     // Compute k3
-    ran(x + 0.5 * k2, n, alpha, mp, rp, V_c, beta_c, xdot, U, M_out, B);
+    ran(x + 0.5 * k2, n, alpha, mp, V_c, beta_c, xdot, U, M_out, B);
     Eigen::VectorXd k3 = h * xdot;
     //std::cout << "k3: " << k3.transpose() << std::endl;
 
     // Compute k4
-    ran(x + k3, n, alpha, mp, rp, V_c, beta_c, xdot, U, M_out, B);
+    ran(x + k3, n, alpha, mp, V_c, beta_c, xdot, U, M_out, B);
     Eigen::VectorXd k4 = h * xdot;
     //std::cout << "k4: " << k4.transpose() << std::endl;
 

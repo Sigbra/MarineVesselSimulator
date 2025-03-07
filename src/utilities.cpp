@@ -33,6 +33,49 @@ double rad2deg(double radians) {
     return radians * 180.0 / M_PI;
 }
 
+Waypoints addIntermediateWaypoints(const Waypoints& input, double space) {
+    Waypoints output;
+    
+    // Check if there are any waypoints to process.
+    if (input.x.empty() || input.y.empty() || input.x.size() != input.y.size())
+        return output;
+    
+    // Always include the first waypoint.
+    output.x.push_back(input.x[0]);
+    output.y.push_back(input.y[0]);
+    
+    // Process each pair of consecutive waypoints.
+    for (size_t i = 1; i < input.x.size(); ++i) {
+        double x1 = input.x[i - 1];
+        double y1 = input.y[i - 1];
+        double x2 = input.x[i];
+        double y2 = input.y[i];
+        
+        // Compute the Euclidean distance between the two waypoints.
+        double dist = std::hypot(x2 - x1, y2 - y1);
+        
+        // If the distance exceeds 5 meters, add intermediate waypoints.
+        if (dist > space) {
+            // Determine the number of segments required so that each segment is <= 5 meters.
+            int num_segments = static_cast<int>(std::ceil(dist / space));
+            // Insert intermediate waypoints along the line.
+            for (int seg = 1; seg < num_segments; ++seg) {
+                double t = static_cast<double>(seg) / num_segments;
+                double new_x = x1 + t * (x2 - x1);
+                double new_y = y1 + t * (y2 - y1);
+                output.x.push_back(new_x);
+                output.y.push_back(new_y);
+            }
+        }
+        
+        // Add the original waypoint.
+        output.x.push_back(x2);
+        output.y.push_back(y2);
+    }
+    
+    return output;
+}
+
 std::string getRepositoryPath() {
     const char* home = std::getenv("HOME");  // Get the user's home directory
     if (home) {

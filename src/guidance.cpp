@@ -51,34 +51,17 @@ std::vector<double> StationKeeping(Waypoints wpt, int wpt_index, double xn, doub
 }
 
 // Dynamic positioning
-// Steers x, y and psi towards a goal.
-std::vector<double> DynamicPositioning(std::vector<double> wpt_start,
-                                       std::vector<double> wpt_goal,
-                                       std::vector<double> current_position){
+std::vector<double> DynamicPositioning(Waypoints pd_points, int pd_points_index){
 
-    // Current position
-    double xn = current_position[0];
-    double yn = current_position[1];
+    double x_start = pd_points.x[pd_points_index-1];
+    double y_start = pd_points.y[pd_points_index-1];
 
-    // Start states
-    double x_s = wpt_start[0];
-    double y_s = wpt_start[1];
+    double x_goal = pd_points.x[pd_points_index];
+    double y_goal = pd_points.y[pd_points_index];
 
-    // Goal states  
-    double x_g = wpt_goal[0];
-    double y_g = wpt_goal[1];
-    double psi_g = std::atan2(y_g - y_s, y_g - y_s);
-
-    // Calculating the step size for the desired position. 
-    double dx = x_g - xn;
-    double dy = y_g - yn;
-    double abs_dist_to_goal = std::hypot(dx, dy);     
-    double step_size = std::min(1.0, abs_dist_to_goal);
-
-    // Desired states limited by 1m in distance
-    double xn_d = xn + step_size * std::cos(psi_g);
-    double yn_d = yn + step_size * std::sin(psi_g);
-    double psi_d  = psi_g;
+    double xn_d = x_goal;
+    double yn_d = y_goal;
+    double psi_d = std::atan2(y_goal - y_start, x_goal - x_start);
 
     return {xn_d, yn_d, psi_d};
 }

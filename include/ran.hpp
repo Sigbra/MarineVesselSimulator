@@ -27,17 +27,22 @@ Eigen::MatrixXd eulerang(double phi, double theta, double psi);
 // Rotation matrix from body-fixed frame to inertial frame (ZYX Euler angles)
 Eigen::Matrix3d Rzyx(double phi, double theta, double psi);
 
-//Helper function to find CO based on length and speed. 
-std::vector<double> CO_frame(double L, double U);
+// Helper function to find CO based on length and speed. 
+Eigen::Vector3d CO_Offset(double U);
+
+// Converting the relative propellar revs to the real ones. 
+std::vector<double> nReal(std::vector<double> n_relative);
+
+// Calculating thrusts based on relative propellar revs (n).
+Eigen::VectorXd ThrustsFromRealativeN(std::vector<double> n_r);
 
 // Function to compute dynamics (ran)
 void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input, const Eigen::VectorXd alpha_input,
-    double mp, const Eigen::Vector3d rp, double V_c, double beta_c,
+    double mp, double V_c, double beta_c,
     Eigen::VectorXd &xdot, double &U, Eigen::MatrixXd &M_out, Eigen::MatrixXd &B);
 
 // Specialized RK4 integrator for the RAN model
-void rk4_ran_step(Eigen::VectorXd& x, const Eigen::VectorXd& n_input, const Eigen::VectorXd& alpha_input,
-                    double mp, const Eigen::Vector3d& rp,
-                    double V_c, double beta_c, double h);
+void rk4_ran_step(Eigen::VectorXd& x, const Eigen::VectorXd& n, const Eigen::VectorXd& alpha,
+                    double mp, double V_c, double beta_c, double h);
                     
 #endif // RAN_HPP

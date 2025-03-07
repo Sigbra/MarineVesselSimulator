@@ -22,8 +22,6 @@ class GuidanceMethod {
 
 std::vector<double> StationKeeping(Waypoints wpt, int wpt_index, double xn, double yn, double psi_d);
 
-std::vector<double> DynamicPositioning(std::vector<double> wpt_start,
-                                       std::vector<double> wpt_goal,
-                                       std::vector<double> current_position);
+std::vector<double> DynamicPositioning(Waypoints pd_points, int pd_points_index);
 
 #endif // GUIDANCE_HPP

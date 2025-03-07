@@ -7,7 +7,6 @@
 struct Waypoints {
     std::vector<double> x;
     std::vector<double> y;
-    std::vector<double> angle;
 };
 
 double ssa(double angle);
@@ -15,6 +14,8 @@ double ssa(double angle);
 double deg2rad(double degrees);
 
 double rad2deg(double radians);
+
+Waypoints addIntermediateWaypoints(const Waypoints& input, double space);
 
 std::string getRepositoryPath();
 

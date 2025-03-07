@@ -22,13 +22,12 @@ int main() {
  
     //Load condition
     double mp = config["load_condition"]["mp"].as<double>(); 
-    Eigen::Vector3d rp(0.75, 0, 0);   // Payload location (front cabin) [m]
     
     // Ocean current
     double V_c = config["ocean_current"]["V_c"].as<double>();   
     double beta_c = deg2rad(config["ocean_current"]["beta_c"].as<double>());
 
-    // Waypoints: position + heading angles for DP control
+    // Waypoints: position
     Waypoints wpt;
     for (const auto &elem : config["waypoints"]["x"]) {
         wpt.x.push_back(elem.as<double>());
@@ -36,10 +35,17 @@ int main() {
     for (const auto &elem : config["waypoints"]["y"]) {
         wpt.y.push_back(elem.as<double>());
     }
-    for (const auto &elem : config["waypoints"]["angle"]) {
-        // Convert each angle from degrees to radians
-        wpt.angle.push_back(deg2rad(elem.as<double>()));
+    wpt = addIntermediateWaypoints(wpt, 10.0);
+
+    // DP points: 
+    Waypoints dp_points;
+    for (const auto &elem : config["dp_points"]["x"]) {
+        dp_points.x.push_back(elem.as<double>());
     }
+    for (const auto &elem : config["dp_points"]["y"]) {
+        dp_points.y.push_back(elem.as<double>());
+    }
+    dp_points = addIntermediateWaypoints(dp_points, 5.0);
     
     // Additional parameter for straight-line path following
     double R_switch = config["path_following"]["R_switch"].as<double>();
@@ -47,17 +53,6 @@ int main() {
     // Initial heading
     double psi0 = atan2(wpt.y[1] - wpt.y[0], wpt.x[1] - wpt.x[0]);
     
-    //Calculating RAN USV input Matrix
-    Eigen::VectorXd x_input = Eigen::VectorXd::Zero(12);  
-    Eigen::VectorXd n_input = Eigen::VectorXd::Zero(2); 
-    Eigen::VectorXd alpha_input = Eigen::VectorXd::Zero(2);                    
-    Eigen::VectorXd xdot = Eigen::VectorXd::Zero(12); 
-    double U = 0;
-    Eigen::MatrixXd M = Eigen::MatrixXd::Zero(6, 6); 
-    Eigen::MatrixXd B = Eigen::MatrixXd::Zero(3, 4); 
-    
-    ran(x_input, n_input, alpha_input, mp, rp, V_c, beta_c, xdot, U, M, B);
-
     // Azimuth pod dynamics
     double T_n = 0.5;                                // Propeller time constant (s)
     Eigen::Vector2d n = Eigen::Vector2d::Zero();     // Init: [n_left, n_right] = [0, 0]
@@ -79,12 +74,19 @@ int main() {
     int ControlAllocFlag = controlAlloc.selectMethod();
 
     // Current waypoint
-    int wpt_index  = 1; //First waypoint (index 0) is only used for initial heading
-    
+    int wpt_index  = 1; //First waypoint (index 0) is only used for initial heading, not goal position.
+    int dp_points_index = 0; // Using angle between current and next DP point for heading
+    bool dp_flag = false;
+
     // Disired state in NED
     double xn_d    = wpt.x[0];        
     double yn_d    = wpt.y[0];        
-    double psi_d   = psi0;         
+    double psi_d   = psi0; 
+
+    // State errors
+    double pos_x_error;
+    double pos_y_error;
+    double pos_error_BODY;
 
     // Control forces and moment
     double tau_X   = 0.0;         // desired surge force
@@ -99,9 +101,24 @@ int main() {
     double prev_error_yn  = 0.0;  // previous sway error
     double prev_error_psi = 0.0;  // previous heading error
 
-    int num_steps = static_cast<int>(T_final / h) + 1; // Total number of time steps
-    std::vector<double> t(num_steps);                  // Time vector from 0 to T_final
+    // Marine vessel Dynamics
+    // - derivative of state vector
+    Eigen::VectorXd xdot = Eigen::VectorXd::Zero(12);
+    // - System mass matrix (MRB + added mass)
+    Eigen::MatrixXd M = Eigen::MatrixXd::Zero(6, 6); 
+    // - Input Matrix
+    Eigen::MatrixXd B = Eigen::MatrixXd::Zero(3, 4); 
+    // - Speed (surge and sway)
+    double U = 0.0;
+    
+    ran(x, n, alpha, mp, V_c, beta_c, xdot, U, M, B);
+    
+    // Total number of time steps
+    int num_steps = static_cast<int>(T_final / h) + 1;
+    // Time vector from 0 to T_final
+    std::vector<double> t(num_steps);    
 
+    // SIM data storage
     Eigen::MatrixXd simdata(num_steps, 24);         
     
     for (int i = 0; i < num_steps; ++i) {
@@ -129,21 +146,36 @@ int main() {
             break; 
         }
 
-        // Guidance
-        //  Waypoint Update
-        double pos_x_error = wpt.x[wpt_index] - xn;
-        double pos_y_error = wpt.y[wpt_index] - yn;
-        double pos_error_BODY   = sqrt(pow(pos_x_error, 2) + pow(pos_y_error, 2));
+        // Guidance //Obs error here!
 
-        if (pos_error_BODY < R_switch && wpt_index < wpt.x.size() - 2) {
-            wpt_index = wpt_index + 1;
-
+        // - Update state errors
+        if (dp_flag = false) {
+            pos_x_error = wpt.x[wpt_index] - xn;
+            pos_y_error = wpt.y[wpt_index] - yn;
         } 
-        else if (pos_error_BODY < R_switch && wpt_index == wpt.x.size() - 1){
-            wpt_index = wpt_index + 1;
-            GuidanceFlag = 1; // DP
-            R_switch = 0.2;    //m
+        else {
+            pos_x_error = dp_points.x[dp_points_index] - xn;
+            pos_y_error = dp_points.y[dp_points_index] - xn;
         }
+        pos_error_BODY   = sqrt(pow(pos_x_error, 2) + pow(pos_y_error, 2));
+
+        // - Waypoint following
+        if ((pos_error_BODY < R_switch) && (dp_flag = false)){
+            if (wpt_index < wpt.x.size() - 1) {
+                wpt_index = wpt_index + 1;
+            }
+            else if (wpt_index == wpt.x.size()) {
+                bool DP_flag = true;
+            }
+        } 
+
+        // - Dp point following 
+        if ((pos_error_BODY < R_switch) && (dp_flag = true)) {
+            if (dp_points_index < dp_points.x.size() - 1) {
+                dp_points_index = dp_points_index + 1;
+            }
+        }
+        
 
         std::vector<double> wpt_start        = {wpt.x[wpt_index-1], wpt.y[wpt_index-1]};
         std::vector<double> wpt_goal         = {wpt.x[wpt_index], wpt.y[wpt_index]};
@@ -151,7 +183,7 @@ int main() {
 
         switch (GuidanceFlag) {
             case 1: { // Dynamic Positioning
-                std::vector<double> desired_states = DynamicPositioning(wpt_start, wpt_goal, current_position);
+                std::vector<double> desired_states = DynamicPositioning(dp_points, dp_points_index);
                 xn_d  = desired_states[0];
                 yn_d  = desired_states[1];
                 psi_d = desired_states[2];
@@ -190,7 +222,7 @@ int main() {
             tau_N = tau[2];
             
             // Control allocation
-            std::vector<double> control_allocation = NLOptControlAlloc(tau_X, tau_Y, tau_N);
+            std::vector<double> control_allocation = NLOptControlAlloc(tau_X, tau_Y, tau_N, U);
             n_c     = {control_allocation[0], control_allocation[2]};
             alpha_c = {control_allocation[1], control_allocation[3]};
 
@@ -205,21 +237,20 @@ int main() {
                 xn, yn, psi,
                 z_xn, z_yn, z_psi,
                 prev_error_xn, prev_error_yn, prev_error_psi);
-
             tau_X = tau[0];
             tau_Y = tau[1];
             tau_N = tau[2];
 
             // Control allocation
-            std::vector<double> control_allocation = NLOptControlAlloc(tau_X, tau_Y, tau_N);
+            std::vector<double> control_allocation = NLOptControlAlloc(tau_X, tau_Y, tau_N, U);
             n_c     = {control_allocation[0], control_allocation[2]};
             alpha_c = {control_allocation[1], control_allocation[3]};
+            //std::cout << "n_c" << n_c(0) << std::endl;
         }
-
 
         // Marine Craft Model
         //  rk4 method for x(k+1)
-        rk4_ran_step(x, n, alpha, mp, rp, V_c, beta_c, h);
+        rk4_ran_step(x, n, alpha, mp, V_c, beta_c, h);
         x(11) = ssa(x(11));
 
         //  Euler's method
@@ -228,10 +259,10 @@ int main() {
 
 
         // Saturate:
-        double k_pos = 220*9.81;     // Positive Bollard
-        double k_neg = 220*9.81;     // Negative Bollard
-        double n_max =  1;           // relative propellar speed max 
-        double n_min = -1;           // relative propellar speed min
+        double k_pos = 200*9.81;     // Positive Bollard
+        double k_neg = 200*9.81;     // Negative Bollard
+        double n_max = 1;            // relative propellar speed max 
+        double n_min = 0;            // relative propellar speed min
         double alpha_max = M_PI/2;   // maximum azimuth angle (rad)
         double alpha_min = -M_PI/2;  // minimum azimuth angle (rad)
         for (int i = 0; i < n.size(); ++i) {
@@ -254,16 +285,21 @@ int main() {
             << "Iteration: " << i << ", Time: " << t[i] << "s, "
             << "Active WP: ("<< wpt.x[wpt_index] << "," << wpt.y[wpt_index] << ")" << std::endl
             << "------------------------------------------------" << std::endl
+            << std::fixed << std::setprecision(1)
             << "x_d: " << xn_d << "m, y_d: " << yn_d << "m, psi_d: " << rad2deg(psi_d) << "deg" << std::endl
             << "x:   " << xn << "m, y:   " << yn << "m, psi:   " << rad2deg(psi) << "deg" << std::endl
             << "------------------------------------------------" << std::endl
+            << std::fixed << std::setprecision(3)
             << "n_c(0), n_c(1):         " << n_c(0) << ", " << n_c(1) << std::endl
             << "n(0),   n(1):           " << n(0) << ", " << n(1) << std::endl
             << "------------------------------------------------" << std::endl
+            << std::fixed << std::setprecision(0)
             << "alpha_c(0), alpha_c(1): " << rad2deg(alpha_c(0)) << ", " << rad2deg(alpha_c(1)) << std::endl
             << "alpha(0), alpha(1):     " << rad2deg(alpha(0)) << ", " << rad2deg(alpha(1)) << std::endl
             << "------------------------------------------------" << std::endl
             << "tauX, tauY, tauN: " << tau_X << ", " << tau_Y << ", " << tau_N << std::endl
+            << "------------------------------------------------" << std::endl
+            << "dp_flag: " << dp_flag << std::endl
             << "" << std::endl
             << std::defaultfloat;
         }
@@ -283,8 +319,7 @@ int main() {
         simdata(i, 22) = alpha(0); 
         simdata(i, 23) = alpha(1); 
 
-        // Calculating real, from relative, propellar revolutions per second. 
-        // To boat n_real = r_max * n
+        // To physical boat n_real = nReal(n)
 
     }
     std::cout<<"Simulation completed"<<std::endl;

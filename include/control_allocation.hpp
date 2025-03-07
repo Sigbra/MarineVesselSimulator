@@ -19,7 +19,7 @@ class ControlAllocationMethod {
         };
     };
 
-std::vector<double> NLOptControlAlloc(double Fx_des, double Fy_des, double Mz_des);
+std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N, double U);
 
 
 #endif
