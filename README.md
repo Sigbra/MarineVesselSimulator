@@ -48,13 +48,13 @@ Initialization: Where to go and what to do.
 Trajectory: Manuver to designated spot at the pier. ( TT to PF ? using ex ALOS?)
 Berthing: Enter DP mode. 
 
- ### Fix CO to be dynamic (changing based on mission status)
+ ### Fix CO to be dynamic (changing based on mission status) (DONE)
  CO in front of center for Initialization and Trajectory.
  CO at Center of boat for Berthing.
  CO can be speed dependant if we lowpass speed such that it's value is stable.
  Idea: Scale CO based on U_low_threshold < U < U_max_threshold, from mid_ship < CO < front_ship, if over or under U_low_threshold and U_max_threshold cap value to mid_ship or front_ship. 
 
- ### Make n relative
+ ### Make n relative (DONE)
  Let n be scaled between 0-1, and set k_pos = k_neg = Max Thrust (~200 kg-f)
  Get specifications for thrusters (rpm and max Thrust) from SeaDrive.
  
@@ -63,7 +63,7 @@ Berthing: Enter DP mode.
  Check that the numbers used in equations make sence for ran. 
 
  ### MPC guidance
- Not MPC for guidance to get best path possible.
+ Not MPC for guidance, but to follow the best path possible.
  Can be calculated by a thread in the background and updated once in a while.
 
  Minimization based on the inputs 

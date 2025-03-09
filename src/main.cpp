@@ -37,6 +37,16 @@ int main() {
     }
     wpt = addIntermediateWaypoints(wpt, 10.0);
 
+    std::cout << "wpt.x: ";
+    for (double x : wpt.x) {
+        std::cout << x << " ";
+    }
+    std::cout << "\nwpt.y: ";
+    for (double y : wpt.y) {
+        std::cout << y << " ";
+    }
+    std::cout << std::endl;
+
     // DP points: 
     Waypoints dp_points;
     for (const auto &elem : config["dp_points"]["x"]) {
@@ -46,7 +56,16 @@ int main() {
         dp_points.y.push_back(elem.as<double>());
     }
     dp_points = addIntermediateWaypoints(dp_points, 5.0);
-    
+    std::cout << "dp_points.x: ";
+    for (double x : dp_points.x) {
+        std::cout << x << " ";
+    }
+    std::cout << "\ndp_points.y: ";
+    for (double y : dp_points.y) {
+        std::cout << y << " ";
+    }
+    std::cout << std::endl;
+
     // Additional parameter for straight-line path following
     double R_switch = config["path_following"]["R_switch"].as<double>();
      
@@ -146,40 +165,31 @@ int main() {
             break; 
         }
 
-        // Guidance //Obs error here!
-
-        // - Update state errors
-        if (dp_flag = false) {
+        // - Waypoint Following
+        if (!dp_flag) {
             pos_x_error = wpt.x[wpt_index] - xn;
             pos_y_error = wpt.y[wpt_index] - yn;
+            pos_error_BODY   = sqrt(pow(pos_x_error, 2) + pow(pos_y_error, 2));
+            if (pos_error_BODY < R_switch) {
+                if (wpt_index < wpt.x.size() - 1) {
+                    std::cout << "hello" << wpt_index << std::endl;
+                    wpt_index = wpt_index + 1;
+                }
+                else if ((wpt_index == wpt.x.size()) && (dp_points.x.size() != 0)) {
+                    dp_flag = true;
+                }
+            }
         } 
+        // - Dynamic Positioning 
         else {
             pos_x_error = dp_points.x[dp_points_index] - xn;
-            pos_y_error = dp_points.y[dp_points_index] - xn;
-        }
-        pos_error_BODY   = sqrt(pow(pos_x_error, 2) + pow(pos_y_error, 2));
-
-        // - Waypoint following
-        if ((pos_error_BODY < R_switch) && (dp_flag = false)){
-            if (wpt_index < wpt.x.size() - 1) {
-                wpt_index = wpt_index + 1;
-            }
-            else if (wpt_index == wpt.x.size()) {
-                bool DP_flag = true;
-            }
-        } 
-
-        // - Dp point following 
-        if ((pos_error_BODY < R_switch) && (dp_flag = true)) {
-            if (dp_points_index < dp_points.x.size() - 1) {
+            pos_y_error = dp_points.y[dp_points_index] - yn;
+            pos_error_BODY   = sqrt(pow(pos_x_error, 2) + pow(pos_y_error, 2));
+            if ((pos_error_BODY < R_switch) && (dp_points_index < dp_points.x.size() - 1)) {
                 dp_points_index = dp_points_index + 1;
             }
         }
-        
 
-        std::vector<double> wpt_start        = {wpt.x[wpt_index-1], wpt.y[wpt_index-1]};
-        std::vector<double> wpt_goal         = {wpt.x[wpt_index], wpt.y[wpt_index]};
-        std::vector<double> current_position = {xn, yn};
 
         switch (GuidanceFlag) {
             case 1: { // Dynamic Positioning

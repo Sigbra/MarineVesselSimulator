@@ -30,18 +30,18 @@ std::vector<double> tau_XYN_PID( //Help with PID implementation or alternative?
 
     // --- PID Gains ---
     // Surge and sway gains (N/m, N/(m·s), N·s/m)
-    const double Kp_xn = 5.0;
+    const double Kp_xn = 6.0;
     const double Ki_xn = 0.0; //Integral action calculations are faulty
-    const double Kd_xn = 1.5;
+    const double Kd_xn = 2.0;
 
-    const double Kp_yn = 5.0;
+    const double Kp_yn = 6.0;
     const double Ki_yn = 0.0;
-    const double Kd_yn = 1.5;
+    const double Kd_yn = 2.0;
     
     // Yaw gains (N·m/rad, N·m/(rad·s), N·m·s/rad)
-    const double Kp_psi = 3.0;
+    const double Kp_psi = 6.0;
     const double Ki_psi = 0.0;
-    const double Kd_psi = 0.3;
+    const double Kd_psi = 2.0;
 
     // --- Compute Derivative Terms ---
     double d_error_xn  = (error_xn - prev_error_xn)   / h;

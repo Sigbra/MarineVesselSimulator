@@ -42,7 +42,7 @@ std::vector<double> StationKeeping(Waypoints wpt, int wpt_index, double xn, doub
 
     // Small errors can give unstable psi_d, 
     // hence the previous value is kept as desired.
-    if ((abs(xn_error) + abs(yn_error)) < 0.1) { 
+    if ((abs(xn_error) + abs(yn_error)) < 1) { 
         return {xn_d, yn_d, psi_d}; 
     } 
 

@@ -76,8 +76,8 @@ std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N, 
 
     // Objective Function
     // - Mean square error minimization of each tau component
-    MX penalty_tau = 200  * pow(tau_X - tau_X_model, 2)
-                   + 200  * pow(tau_Y - tau_Y_model, 2)
+    MX penalty_tau = 0.5  * pow(tau_X - tau_X_model, 2)
+                   + 0.5  * pow(tau_Y - tau_Y_model, 2)
                    + 0.8  * pow(tau_N - tau_N_model, 2);
                    
     MX eff_alpha1 = if_else(n1 >= 0, alpha1, alpha1 + M_PI);
@@ -128,9 +128,9 @@ std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N, 
 
     // Initial guess
     DM x0 = DM::zeros(4,1);
-    x0(0) = 0.0;  //n1
+    x0(0) = 0.5;  //n1
     x0(1) = 0.0;  //alpha1
-    x0(2) = 0.0;  //n2
+    x0(2) = 0.5;  //n2
     x0(3) = 0.0;  //alpha2
 
     DM lbx = DM::zeros(4, 1);

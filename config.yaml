@@ -25,7 +25,7 @@ dp_points:
   y: [ 0, 10]
 
 path_following:
-  R_switch: 2  # How close x, y error must be before WP is reached
+  R_switch: 5  # How close x, y error must be before WP is reached
 
 
 
