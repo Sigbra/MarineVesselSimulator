@@ -709,53 +709,35 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input, const Eigen::Ve
     T_e(2,2) =  ly2;
     T_e(2,3) =  lx;
 
-    // K_e = [K1  0  0  0;
-    //         0 K2  0  0;
-    //         0  0 K3  0;
-    //         0  0  0 K4]
-    Eigen::MatrixXd K_e = Eigen::MatrixXd::Zero(4,4);
-    //How should these be defined?                            !!!
-    double K1 = 1; 
-    double K2 = 1;
-    double K3 = 1;
-    double K4 = 1;
-    K_e(0,0) = K1;
-    K_e(1,1) = K2;
-    K_e(2,2) = K3;
-    K_e(3,3) = K4;
-
-    B = T_e * K_e;
+    B = k_pos * T_e;
 }
 
 
 // Specialized RK4 integrator for the RAN model. 
 void rk4_ran_step(Eigen::VectorXd& x, const Eigen::VectorXd& n, const Eigen::VectorXd& alpha,
-                                   double mp, double V_c, double beta_c, double h) {
+                  double mp, double V_c, double beta_c, double h) {
+
     // Initialize output variables
     Eigen::VectorXd xdot(12);
     double U;
-    Eigen::MatrixXd M_out(6, 6);
+    Eigen::MatrixXd M(6, 6);
     Eigen::MatrixXd B(3, 4);
 
     // Compute k1
-    ran(x, n, alpha, mp, V_c, beta_c, xdot, U, M_out, B);
+    ran(x, n, alpha, mp, V_c, beta_c, xdot, U, M, B);
     Eigen::VectorXd k1 = h * xdot;
-    //std::cout << "k1: " << k1.transpose() << std::endl;
 
     // Compute k2
-    ran(x + 0.5 * k1, n, alpha, mp, V_c, beta_c, xdot, U, M_out, B);
+    ran(x + 0.5 * k1, n, alpha, mp, V_c, beta_c, xdot, U, M, B);
     Eigen::VectorXd k2 = h * xdot;
-    //std::cout << "k2: " << k2.transpose() << std::endl;
 
     // Compute k3
-    ran(x + 0.5 * k2, n, alpha, mp, V_c, beta_c, xdot, U, M_out, B);
+    ran(x + 0.5 * k2, n, alpha, mp, V_c, beta_c, xdot, U, M, B);
     Eigen::VectorXd k3 = h * xdot;
-    //std::cout << "k3: " << k3.transpose() << std::endl;
 
     // Compute k4
-    ran(x + k3, n, alpha, mp, V_c, beta_c, xdot, U, M_out, B);
+    ran(x + k3, n, alpha, mp, V_c, beta_c, xdot, U, M, B);
     Eigen::VectorXd k4 = h * xdot;
-    //std::cout << "k4: " << k4.transpose() << std::endl;
 
     // Update state vector x
     x += (k1 + 2 * k2 + 2 * k3 + k4) / 6.0;

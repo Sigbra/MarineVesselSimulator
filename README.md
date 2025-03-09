@@ -43,6 +43,8 @@ git push
 
 ## TODO:
 
+### Use splines to make a better path than lines using WP's
+
 ### Define mission in 3 parts: 
 Initialization: Where to go and what to do. 
 Trajectory: Manuver to designated spot at the pier. ( TT to PF ? using ex ALOS?)

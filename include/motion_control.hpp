@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <Eigen/Dense>
 
 std::vector<double> tau_XYN_PID(
     double h,
@@ -11,7 +12,6 @@ std::vector<double> tau_XYN_PID(
     double &z_xn, double &z_yn, double &z_psi,
     double &prev_error_xn, double &prev_error_yn, double &prev_error_psi);
 
-// Stub
-std::vector<double> tau_XN_PID();
+std::vector<double> tau_XN_PID(Eigen::MatrixXd M, double psi, double z_psi, double psi_d, double r, double r_d, double a_d);
 
 #endif 

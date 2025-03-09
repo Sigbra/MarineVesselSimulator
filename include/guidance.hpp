@@ -16,11 +16,11 @@ class GuidanceMethod {
     private:
         std::vector<std::string> methods = {
             "Dynamic Positioning (static heading ref)",
-            "Station keeping (dynamic heading ref)"
+            "ALOS straight line path following"
         };
     };
 
-std::vector<double> StationKeeping(Waypoints wpt, int wpt_index, double xn, double yn, double psi_d);
+// std::vector<double> StationKeeping(Waypoints wpt, int wpt_index, double xn, double yn, double psi_d);
 
 std::vector<double> DynamicPositioning(Waypoints pd_points, int pd_points_index);
 

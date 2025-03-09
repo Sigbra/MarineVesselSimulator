@@ -11,6 +11,9 @@
 #include "motion_control.hpp"
 #include "control_allocation.hpp"
 
+#include "ALOSpsi.hpp"
+#include "los_observer.hpp"
+
 
 int main() {
     srand(time(0)); 
@@ -68,6 +71,14 @@ int main() {
 
     // Additional parameter for straight-line path following
     double R_switch = config["path_following"]["R_switch"].as<double>();
+    double K_f = config["path_following"]["K_f"].as<double>();
+
+    LOSObserver losObserver(h, K_f);
+
+    // ALOS and ILOS parameters
+    double Delta_h = config["path_following"]["Delta_h"].as<double>();                    
+    double gamma_h = config["path_following"]["gamma_h"].as<double>();               
+    double kappa = config["path_following"]["kappa"].as<double>();   
      
     // Initial heading
     double psi0 = atan2(wpt.y[1] - wpt.y[0], wpt.x[1] - wpt.x[0]);
@@ -93,35 +104,47 @@ int main() {
     int ControlAllocFlag = controlAlloc.selectMethod();
 
     // Current waypoint
-    int wpt_index  = 1; //First waypoint (index 0) is only used for initial heading, not goal position.
+    int wpt_index  = 1;      //First waypoint (index 0) is only used for initial heading, not goal position.
     int dp_points_index = 0; // Using angle between current and next DP point for heading
     bool dp_flag = false;
 
-    // Disired state in NED
+    // Disired states in NED
     double xn_d    = wpt.x[0];        
     double yn_d    = wpt.y[0];        
     double psi_d   = psi0; 
 
-    // State errors
+    // Position errors for waypoint switching
     double pos_x_error;
     double pos_y_error;
-    double pos_error_BODY;
+    double pos_error_BODY;                
 
-    // Control forces and moment
-    double tau_X   = 0.0;         // desired surge force
-    double tau_Y   = 0.0;         // desired sway force
-    double tau_N   = 0.0;         // desired yaw moment
+    // Desired surge force, sway force and yaw moment
+    double tau_X   = 0.0;         
+    double tau_Y   = 0.0;         
+    double tau_N   = 0.0;         
 
     // States for PID Motion Control
-    double z_xn    = 0.0;         // integral state for surge
-    double z_yn    = 0.0;         // integral state for sway
-    double z_psi   = 0.0;         // integral state for heading
-    double prev_error_xn  = 0.0;  // previous surge error
-    double prev_error_yn  = 0.0;  // previous sway error
-    double prev_error_psi = 0.0;  // previous heading error
+    // - Desired rate of turn
+    double r_d = 0; 
+    // - Desired acceleration
+    double a_d = 0;
+
+    // - Integral state for surge
+    double z_xn  = 0.0;         
+    // - Integral state for sway
+    double z_yn  = 0.0;         
+    // - Integral state for heading
+    double z_psi = 0.0;         
+
+    // - Previous surge error
+    double prev_error_xn  = 0.0;  
+    // - Previous sway error
+    double prev_error_yn  = 0.0;  
+    // - Previous heading error
+    double prev_error_psi = 0.0;  
 
     // Marine vessel Dynamics
-    // - derivative of state vector
+    // - Derivative of state vector
     Eigen::VectorXd xdot = Eigen::VectorXd::Zero(12);
     // - System mass matrix (MRB + added mass)
     Eigen::MatrixXd M = Eigen::MatrixXd::Zero(6, 6); 
@@ -199,15 +222,16 @@ int main() {
                 psi_d = desired_states[2];
                 break;
             }
-            case 2: { // Station Keeping
-                std::vector<double> desired_states = StationKeeping(wpt, wpt_index, xn, yn, psi_d);
-                xn_d  = desired_states[0]; 
-                yn_d  = desired_states[1]; 
-                psi_d = desired_states[2]; 
+            case 2: { // ALOS heading autopilot straight-line path following
+                std::pair<double, double> ALOS_result = ALOSpsi(xn, yn, Delta_h, gamma_h, h, R_switch, wpt);
+                double psi_ref = ALOS_result.first;
+                losObserver.update(psi_ref);
+                double currentLOSAngle = losObserver.getLOSAngle();
+                double currentLOSRate = losObserver.getLOSRate();
                 break;
             }
-            case 3: { // other 
-                
+            case 3: { // ALOS heading autopilot spline following.
+                break;
             }
         }
 
@@ -220,16 +244,16 @@ int main() {
         // DP mode for berthing
         if (GuidanceFlag==1) {
             // Motion control system
-            std::vector<double> tau = tau_XYN_PID( 
+            std::vector<double> tau_XYN = tau_XYN_PID( 
                 h,
                 xn_d, yn_d, psi_d,
                 xn, yn, psi,
                 z_xn, z_yn, z_psi,
                 prev_error_xn, prev_error_yn, prev_error_psi);
 
-            tau_X = tau[0];
-            tau_Y = tau[1];
-            tau_N = tau[2];
+            tau_X = tau_XYN[0];
+            tau_Y = tau_XYN[1];
+            tau_N = tau_XYN[2];
             
             // Control allocation
             std::vector<double> control_allocation = NLOptControlAlloc(tau_X, tau_Y, tau_N, U);
@@ -237,16 +261,10 @@ int main() {
             alpha_c = {control_allocation[1], control_allocation[3]};
 
         } 
-        // Path following
+        // ALOS Path following
         else { 
             // Motion control system
-            //std::vector<double> tau = tau_XN_PID(); //Not yet implemented
-            std::vector<double> tau = tau_XYN_PID( //To be removed
-                h,
-                xn_d, yn_d, psi_d,
-                xn, yn, psi,
-                z_xn, z_yn, z_psi,
-                prev_error_xn, prev_error_yn, prev_error_psi);
+            std::vector<double> tau_XYN = tau_XN_PID(M, psi, z_psi, psi_d, r, r_d, a_d);
             tau_X = tau[0];
             tau_Y = tau[1];
             tau_N = tau[2];
