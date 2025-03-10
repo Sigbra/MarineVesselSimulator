@@ -8,7 +8,8 @@
 #include <string>
 #include <limits>
 
-std::vector<double> tau_XYN_PID( //Help with PID implementation or alternative?
+//Super simple PID controllerfor DP
+std::vector<double> tau_XYN_PID( 
     double h,
     double xn_d, double yn_d, double psi_d,
     double xn, double yn, double psi,
@@ -62,17 +63,18 @@ std::vector<double> tau_XYN_PID( //Help with PID implementation or alternative?
     return {tau_X, tau_Y, tau_N};
 }
 
+//PID heading autopilot (Nomoto model: M(6,6) = T/K)
 std::vector<double> tau_XN_PID(Eigen::MatrixXd M, double psi, double z_psi, double psi_d, double r, double r_d, double a_d){
-    // (Nomoto model: M(6,6) = T/K)
+    
     // - Nomoto time constant
     double T = 1;
     // - Nomoto gain constant
     double K = T / M(5,5);
 
     // - Closed-loop natural frequency (rad/s) (Guess)
-    double wn = 1.0;
+    double wn = 1.5;
     // - Closed-loop relative damping factor (-) (Guess)
-    double zeta = 1.5;
+    double zeta = 1.0;
 
     // - Proportional gain
     double Kp = M(5,5)*pow(wn, 2);
@@ -84,7 +86,7 @@ std::vector<double> tau_XN_PID(Eigen::MatrixXd M, double psi, double z_psi, doub
     double Ti = 10 / wn;
 
     // Desired forces and moment
-    double tau_X = 100; 
+    double tau_X = 10; 
     double tau_Y = 0;  
     double tau_N = (T/K) * a_d + (1/K) * r_d -        
                     Kp * (ssa(psi - psi_d) + 

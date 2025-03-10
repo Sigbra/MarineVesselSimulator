@@ -2,7 +2,7 @@
 
 simulation:
   h: 0.05               # Sampling time [s]
-  T_final: 1200         # Final simulation time [s]
+  T_final: 1000         # Final simulation time [s]
 
 load_condition:
   mp: 0.0               # Payload mass (front cabin) [kg]

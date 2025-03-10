@@ -82,13 +82,11 @@ link_directories(/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib)
 set(SOURCES
     src/main.cpp
     src/ran.cpp
-    src/ALOSpsi.cpp
     #src/hermite_spline.cpp
     src/guidance.cpp
     src/motion_control.cpp
     #src/crosstrack_hermite.cpp
     src/control_allocation.cpp
-    src/los_observer.cpp
     #src/ref_model.cpp
     src/utilities.cpp
 )

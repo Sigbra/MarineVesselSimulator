@@ -227,11 +227,11 @@ Eigen::Vector3d CO_Offset(double U) {
     //Length of craft;
     double L = 5;
 
-    // Lower and upper bounds [m]
+    // Lower and upper bounds [m/s]
     double U_lower = 2; 
     double U_upper = 10;
 
-    // Max and Min x values for CO
+    // Max and Min x values for CO [m]
     // - Midship
     double x_min = 0;
     // - Front of ship
@@ -266,11 +266,11 @@ std::vector<double> nReal(std::vector<double> n_relative) {
     return {n1_real, n2_real};
 }
 
-// Calculating thrusts based on relative propellar revs (n).
+// Calculating thrusts based on relative propellar revs (n). Obs, wrong comments
 //
 //   Expecting n_r is scaled between [0, 1].
-//   Thrust_pos = k_pos * (n*|n| - 0.5²) / (1-0.5²), k_pos = Positive bollard pull = 200*g,
-//   Thrust_neg = k_neg * (n*|n| - 0.5²) / (1-0.5²), k_neg = Negative bollard pull = 200*g,
+//   Thrust_pos = k_pos * (n*|n| - 0.5²) / (1-0.25), k_pos = Positive bollard pull = 200*g,
+//   Thrust_neg = k_neg * (n*|n| - 0.5²) / (1-0.75), k_neg = Negative bollard pull = 200*g,
 //
 //   Same as direct Thrusts calculation;
 //   Thrust_pos = k_pos * n_real*|n_real|, 
@@ -295,14 +295,14 @@ Eigen::VectorXd ThrustsFromRealativeN(Eigen::VectorXd n_r) {
 
     for (int i = 0; i < n_r_size; ++i) {
         double n_i = n_r(i);
-        if (n_i >= 0.5 && n_i <= 1) {
-            Thrusts(i) = k_pos * (n_i * fabs(n_i) - 0.25) / 0.75;
+        if (n_i >= 0 && n_i <= 1) {
+            Thrusts(i) = k_pos * n_i * fabs(n_i);
         }
-        else if (n_i >= 0 && n_i <= 0.5) {
-            Thrusts(i) = k_neg * (n_i * fabs(n_i) - 0.25) / 0.75;
+        else if (n_i >= -1 && n_i < 0) {
+            Thrusts(i) = k_neg * n_i * fabs(n_i);
         }
         else {
-            std::cout << "Warning: n_r[" << i << "] outside expected interval [0, 1] with value: " << n_r(i) << std::endl;
+            std::cout << "Warning: n_r[" << i << "] outside expected interval [-1, 1] with value: " << n_r(i) << std::endl;
             std::cout << "Returning 0 value for Thrust" << std::endl;
             Thrusts.setZero();
             return Thrusts;
@@ -688,6 +688,12 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input, const Eigen::Ve
     // Input matrix B (3x4). 
     // B = T_e * K_e (Fossen Chapter 9.4 and 11.2)
     //----------------------------
+    // K_e = [k_pos, k_pos, k_neg, k_neg]'
+    Eigen::MatrixXd K_e = Eigen::MatrixXd::Zero(4,4);
+    K_e(0,0) = k_pos;
+    K_e(1,1) = k_pos;
+    K_e(2,2) = k_neg;
+    K_e(3,3) = k_neg;
 
     // T_e = [1,   0,  1,   0;
     //        0,   1,  0,   1;
@@ -709,7 +715,7 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input, const Eigen::Ve
     T_e(2,2) =  ly2;
     T_e(2,3) =  lx;
 
-    B = k_pos * T_e;
+    B = T_e; //K_e * T_e;                                 !!!!
 }
 
 

@@ -11,9 +11,6 @@
 #include "motion_control.hpp"
 #include "control_allocation.hpp"
 
-#include "ALOSpsi.hpp"
-#include "los_observer.hpp"
-
 
 int main() {
     srand(time(0)); 
@@ -73,12 +70,15 @@ int main() {
     double R_switch = config["path_following"]["R_switch"].as<double>();
     double K_f = config["path_following"]["K_f"].as<double>();
 
-    LOSObserver losObserver(h, K_f);
-
     // ALOS and ILOS parameters
     double Delta_h = config["path_following"]["Delta_h"].as<double>();                    
     double gamma_h = config["path_following"]["gamma_h"].as<double>();               
     double kappa = config["path_following"]["kappa"].as<double>();   
+
+    // Initializing guidance classes
+    DynamicPositioning dp(dp_points, 5);
+    ALOS alos(wpt, Delta_h, gamma_h, h, 0.5);
+    LOSObserver losObserver(h, K_f);
      
     // Initial heading
     double psi0 = atan2(wpt.y[1] - wpt.y[0], wpt.x[1] - wpt.x[0]);
@@ -104,19 +104,18 @@ int main() {
     int ControlAllocFlag = controlAlloc.selectMethod();
 
     // Current waypoint
-    int wpt_index  = 1;      //First waypoint (index 0) is only used for initial heading, not goal position.
+    int wpt_index  = 1;      // First waypoint (index 0) is only used for initial heading, not goal position.
     int dp_points_index = 0; // Using angle between current and next DP point for heading
-    bool dp_flag = false;
 
     // Disired states in NED
     double xn_d    = wpt.x[0];        
     double yn_d    = wpt.y[0];        
     double psi_d   = psi0; 
 
-    // Position errors for waypoint switching
-    double pos_x_error;
-    double pos_y_error;
-    double pos_error_BODY;                
+    // ALOS output
+    double psi_ref;
+    double y_e;
+    bool at_goal;
 
     // Desired surge force, sway force and yaw moment
     double tau_X   = 0.0;         
@@ -162,6 +161,7 @@ int main() {
 
     // SIM data storage
     Eigen::MatrixXd simdata(num_steps, 24);         
+
     
     for (int i = 0; i < num_steps; ++i) {
         t[i] = i * h;
@@ -188,49 +188,26 @@ int main() {
             break; 
         }
 
-        // - Waypoint Following
-        if (!dp_flag) {
-            pos_x_error = wpt.x[wpt_index] - xn;
-            pos_y_error = wpt.y[wpt_index] - yn;
-            pos_error_BODY   = sqrt(pow(pos_x_error, 2) + pow(pos_y_error, 2));
-            if (pos_error_BODY < R_switch) {
-                if (wpt_index < wpt.x.size() - 1) {
-                    std::cout << "hello" << wpt_index << std::endl;
-                    wpt_index = wpt_index + 1;
-                }
-                else if ((wpt_index == wpt.x.size()) && (dp_points.x.size() != 0)) {
-                    dp_flag = true;
-                }
-            }
-        } 
-        // - Dynamic Positioning 
-        else {
-            pos_x_error = dp_points.x[dp_points_index] - xn;
-            pos_y_error = dp_points.y[dp_points_index] - yn;
-            pos_error_BODY   = sqrt(pow(pos_x_error, 2) + pow(pos_y_error, 2));
-            if ((pos_error_BODY < R_switch) && (dp_points_index < dp_points.x.size() - 1)) {
-                dp_points_index = dp_points_index + 1;
-            }
-        }
-
-
+        // Guidance
         switch (GuidanceFlag) {
             case 1: { // Dynamic Positioning
-                std::vector<double> desired_states = DynamicPositioning(dp_points, dp_points_index);
-                xn_d  = desired_states[0];
-                yn_d  = desired_states[1];
-                psi_d = desired_states[2];
+                auto [xn_d, yn_d, psi_d] = dp.update(xn, yn);
                 break;
             }
-            case 2: { // ALOS heading autopilot straight-line path following
-                std::pair<double, double> ALOS_result = ALOSpsi(xn, yn, Delta_h, gamma_h, h, R_switch, wpt);
-                double psi_ref = ALOS_result.first;
+            case 2: { // ALOS heading autopilot, straight-line path following
+                auto [psi_ref, y_e, at_goal] = alos.update(xn, yn);
+
                 losObserver.update(psi_ref);
-                double currentLOSAngle = losObserver.getLOSAngle();
-                double currentLOSRate = losObserver.getLOSRate();
+                psi_d = losObserver.getLOSAngle();
+                r_d = losObserver.getLOSRate();
+
+                if (at_goal) {
+                    alos.reset();
+                    GuidanceFlag = 1;
+                }
                 break;
             }
-            case 3: { // ALOS heading autopilot spline following.
+            case 3: { // ALOS heading autopilot, spline path following.
                 break;
             }
         }
@@ -241,15 +218,13 @@ int main() {
         Eigen::Vector2d n_c     = {0.0, 0.0};
         Eigen::Vector2d alpha_c = {0.0, 0.0};
 
-        // DP mode for berthing
+        // Station Keeping
         if (GuidanceFlag==1) {
             // Motion control system
-            std::vector<double> tau_XYN = tau_XYN_PID( 
-                h,
-                xn_d, yn_d, psi_d,
-                xn, yn, psi,
-                z_xn, z_yn, z_psi,
-                prev_error_xn, prev_error_yn, prev_error_psi);
+            std::vector<double> tau_XYN = tau_XYN_PID(h, xn_d, yn_d, psi_d,
+                                                      xn, yn, psi,
+                                                      z_xn, z_yn, z_psi,
+                                                      prev_error_xn, prev_error_yn, prev_error_psi);
 
             tau_X = tau_XYN[0];
             tau_Y = tau_XYN[1];
@@ -261,13 +236,13 @@ int main() {
             alpha_c = {control_allocation[1], control_allocation[3]};
 
         } 
-        // ALOS Path following
+        // Path following
         else { 
             // Motion control system
             std::vector<double> tau_XYN = tau_XN_PID(M, psi, z_psi, psi_d, r, r_d, a_d);
-            tau_X = tau[0];
-            tau_Y = tau[1];
-            tau_N = tau[2];
+            tau_X = tau_XYN[0];
+            tau_Y = tau_XYN[1];
+            tau_N = tau_XYN[2];
 
             // Control allocation
             std::vector<double> control_allocation = NLOptControlAlloc(tau_X, tau_Y, tau_N, U);
@@ -289,8 +264,8 @@ int main() {
         // Saturate:
         double k_pos = 200*9.81;     // Positive Bollard
         double k_neg = 200*9.81;     // Negative Bollard
-        double n_max = 1;            // relative propellar speed max 
-        double n_min = 0;            // relative propellar speed min
+        double n_max =  1;            // relative propellar speed max 
+        double n_min = -1;            // relative propellar speed min
         double alpha_max = M_PI/2;   // maximum azimuth angle (rad)
         double alpha_min = -M_PI/2;  // minimum azimuth angle (rad)
         for (int i = 0; i < n.size(); ++i) {
@@ -302,20 +277,22 @@ int main() {
             else if (alpha(i) < alpha_min) alpha(i) = alpha_min;
         }
 
-        z_xn  = z_xn  + h * (pos_x_error);      // Update integral state for surge control
-        z_yn  = z_yn  + h * (pos_y_error);      // Update integral state for sway control
-        z_psi = z_psi + h * ssa(psi_d - psi);   // Update integral state for heading control
-
         // Show SIM progress once per second
-        if (i % 20 == 0) {
+        if (i % 100 == 0) {
             std::cout << std::fixed << std::setprecision(0)
             << "################################################" << std::endl
             << "Iteration: " << i << ", Time: " << t[i] << "s, "
-            << "Active WP: ("<< wpt.x[wpt_index] << "," << wpt.y[wpt_index] << ")" << std::endl
-            << "------------------------------------------------" << std::endl
-            << std::fixed << std::setprecision(1)
-            << "x_d: " << xn_d << "m, y_d: " << yn_d << "m, psi_d: " << rad2deg(psi_d) << "deg" << std::endl
-            << "x:   " << xn << "m, y:   " << yn << "m, psi:   " << rad2deg(psi) << "deg" << std::endl
+            << "Guidance flag: " << GuidanceFlag << std::endl
+            << "------------------------------------------------" << std::endl;
+            if (GuidanceFlag == 1){
+                std::cout << std::fixed << std::setprecision(1)
+                << "x_d: " << xn_d << "m, y_d: " << yn_d << "m, psi_d: " << rad2deg(psi_d) << "deg" << std::endl;
+            }
+            else {
+                std::cout << std::fixed << std::setprecision(1)
+                << "psi_ref: " << psi_ref << ", y_e: " << y_e <<std::endl;
+            }
+            std::cout << "x:   " << xn << "m, y:   " << yn << "m, psi:   " << rad2deg(psi) << "deg" << std::endl
             << "------------------------------------------------" << std::endl
             << std::fixed << std::setprecision(3)
             << "n_c(0), n_c(1):         " << n_c(0) << ", " << n_c(1) << std::endl
@@ -326,8 +303,6 @@ int main() {
             << "alpha(0), alpha(1):     " << rad2deg(alpha(0)) << ", " << rad2deg(alpha(1)) << std::endl
             << "------------------------------------------------" << std::endl
             << "tauX, tauY, tauN: " << tau_X << ", " << tau_Y << ", " << tau_N << std::endl
-            << "------------------------------------------------" << std::endl
-            << "dp_flag: " << dp_flag << std::endl
             << "" << std::endl
             << std::defaultfloat;
         }
