@@ -155,9 +155,11 @@ std::tuple<double, double, bool> ALOS::update(double x, double y) {
 
     // Determine if the vehicle is at the last waypoint (within R_switch).
     bool at_last_waypoint = false;
-    if (k_ == n - 1) {
+    if (k_ == n-1) {
         double dist_to_last = std::sqrt((x - xk_) * (x - xk_) + (y - yk_) * (y - yk_));
-        at_last_waypoint = (dist_to_last < R_switch_);
+        if (dist_to_last < R_switch_) {
+            at_last_waypoint = true;
+        }
     }
 
     return std::make_tuple(psi_ref, y_e, at_last_waypoint);

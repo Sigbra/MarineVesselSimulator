@@ -105,7 +105,7 @@ int main() {
 
     // Current waypoint
     int wpt_index  = 1;      // First waypoint (index 0) is only used for initial heading, not goal position.
-    int dp_points_index = 0; // Using angle between current and next DP point for heading
+    int dp_points_index = 1; 
 
     // Disired states in NED
     double xn_d    = wpt.x[0];        
@@ -122,25 +122,14 @@ int main() {
     double tau_Y   = 0.0;         
     double tau_N   = 0.0;         
 
-    // States for PID Motion Control
+    // Motion control classes
+    PositionPIDController posPID;
+    HeadingPIDController headPID;
+
     // - Desired rate of turn
     double r_d = 0; 
     // - Desired acceleration
     double a_d = 0;
-
-    // - Integral state for surge
-    double z_xn  = 0.0;         
-    // - Integral state for sway
-    double z_yn  = 0.0;         
-    // - Integral state for heading
-    double z_psi = 0.0;         
-
-    // - Previous surge error
-    double prev_error_xn  = 0.0;  
-    // - Previous sway error
-    double prev_error_yn  = 0.0;  
-    // - Previous heading error
-    double prev_error_psi = 0.0;  
 
     // Marine vessel Dynamics
     // - Derivative of state vector
@@ -221,10 +210,7 @@ int main() {
         // Station Keeping
         if (GuidanceFlag==1) {
             // Motion control system
-            std::vector<double> tau_XYN = tau_XYN_PID(h, xn_d, yn_d, psi_d,
-                                                      xn, yn, psi,
-                                                      z_xn, z_yn, z_psi,
-                                                      prev_error_xn, prev_error_yn, prev_error_psi);
+            std::vector<double> tau_XYN = posPID.update(h, xn_d, yn_d, psi_d, xn, yn, psi);
 
             tau_X = tau_XYN[0];
             tau_Y = tau_XYN[1];
@@ -239,7 +225,7 @@ int main() {
         // Path following
         else { 
             // Motion control system
-            std::vector<double> tau_XYN = tau_XN_PID(M, psi, z_psi, psi_d, r, r_d, a_d);
+            std::vector<double> tau_XYN = headPID.update(h, M, psi, psi_d, r, r_d, a_d);
             tau_X = tau_XYN[0];
             tau_Y = tau_XYN[1];
             tau_N = tau_XYN[2];

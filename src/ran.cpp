@@ -243,15 +243,15 @@ Eigen::Vector3d CO_Offset(double U) {
     double z = 0;
 
     // Finding offset x based on speed
-    if (U < U_lower) {
-        x = x_min;
-    }
-    else if (U > U_upper) {
-        x = x_max;
-    }
-    else {
-        x = x_min + (x_max - x_min) * (U-U_lower) / (U_upper-U_lower);
-    }
+    // if (U < U_lower) {
+    //     x = x_min;
+    // }
+    // else if (U > U_upper) {
+    //     x = x_max;
+    // }
+    // else {
+    //     x = x_min + (x_max - x_min) * (U-U_lower) / (U_upper-U_lower);
+    // }
 
     return Eigen::Vector3d(x, y, z);
 }
@@ -302,7 +302,7 @@ Eigen::VectorXd ThrustsFromRealativeN(Eigen::VectorXd n_r) {
             Thrusts(i) = k_neg * n_i * fabs(n_i);
         }
         else {
-            std::cout << "Warning: n_r[" << i << "] outside expected interval [-1, 1] with value: " << n_r(i) << std::endl;
+            std::cout << "Warning: n_r[" << i << "] outside expected interval [0, 1] with value: " << n_r(i) << std::endl;
             std::cout << "Returning 0 value for Thrust" << std::endl;
             Thrusts.setZero();
             return Thrusts;
