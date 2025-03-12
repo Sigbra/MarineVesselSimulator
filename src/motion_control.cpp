@@ -74,6 +74,7 @@ HeadingPIDController::HeadingPIDController(double T, double wn, double zeta)
 
 std::vector<double> HeadingPIDController::update(double h, const Eigen::MatrixXd& M,
                                                    double psi, double psi_d, double r, double r_d, double a_d) {
+
     // Nomoto model: compute the gain constant.
     double K = T_ / M(5,5);
 
@@ -90,12 +91,13 @@ std::vector<double> HeadingPIDController::update(double h, const Eigen::MatrixXd
     z_psi_ += error_psi * h;
 
     // Compute the control moment (tau_N) with feed-forward terms.
-    double tau_X = 3; 
-    double tau_Y = 0;
     double tau_N = (T_/K) * a_d + (1/K) * r_d - 
                    Kp * (error_psi + Td * (r - r_d) + (1/Ti) * z_psi_);
 
-    return {tau_X, tau_Y, tau_N};
+    // Tau_x, reduced when the heading error is large.
+    double tau_X = std::max(0.0, 5 - 3 * std::abs(ssa(psi_d - psi)));
+
+    return {tau_X, 0, tau_N};
 }
 
 void HeadingPIDController::reset() {

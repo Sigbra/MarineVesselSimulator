@@ -51,16 +51,14 @@ class HeadingPIDController {
         // psi: measured heading, psi_d: desired heading,
         // r: measured yaw rate, r_d: desired yaw rate,
         // a_d: desired acceleration (feedforward term)
-        // h: time step (for integrating error)
         std::vector<double> update(double h, const Eigen::MatrixXd& M,
                                    double psi, double psi_d, double r, double r_d, double a_d);
     
-        // Reset the internal (integral) state.
+        // Reset the internal (integral and previous error) state.
         void reset();
     
     private:
         double T_, wn_, zeta_;
-        // Persistent integral state for heading error
         double z_psi_;
     };
 

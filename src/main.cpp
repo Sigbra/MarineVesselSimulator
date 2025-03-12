@@ -115,12 +115,7 @@ int main() {
     // ALOS output
     double psi_ref;
     double y_e;
-    bool at_goal;
-
-    // Desired surge force, sway force and yaw moment
-    double tau_X   = 0.0;         
-    double tau_Y   = 0.0;         
-    double tau_N   = 0.0;         
+    bool at_goal;     
 
     // Motion control classes
     PositionPIDController posPID;
@@ -235,7 +230,7 @@ int main() {
 
         // Marine Craft Model
         rk4_ran_step(x, n, alpha, mp, V_c, beta_c, h);
-        //x(11) = ssa(x(11));
+        x(11) = ssa(x(11));
 
         // - Euler's method
         n = n + h/T_n * (n_c - n);                      
@@ -262,7 +257,7 @@ int main() {
         if (i % 100 == 0) {
             std::cout << std::fixed << std::setprecision(0)
             << "################################################" << std::endl
-            << "Iteration: " << i << ", Time: " << t[i] << "s, "
+            << "Iteration: " << i << ", Time: " << floor(t[i]/60) << "min, " << fmod(t[i], 60) << "s, "
             << "Guidance flag: " << GuidanceFlag << std::endl
             << "------------------------------------------------" << std::endl;
             if (GuidanceFlag == 1){
@@ -271,7 +266,7 @@ int main() {
             }
             else {
                 std::cout << std::fixed << std::setprecision(1)
-                << "psi_ref: " << psi_ref << ", y_e: " << y_e <<std::endl;
+                << "At goal: " << at_goal << ", psi_ref: " << psi_ref << ", y_e: " << y_e <<std::endl;
             }
             std::cout << "x:   " << xn << "m, y:   " << yn << "m, psi:   " << rad2deg(psi) << "deg" << std::endl
             << "------------------------------------------------" << std::endl
@@ -283,7 +278,7 @@ int main() {
             << "alpha_c(0), alpha_c(1): " << rad2deg(alpha_c(0)) << ", " << rad2deg(alpha_c(1)) << std::endl
             << "alpha(0), alpha(1):     " << rad2deg(alpha(0)) << ", " << rad2deg(alpha(1)) << std::endl
             << "------------------------------------------------" << std::endl
-            << "tauX, tauY, tauN: " << tau_X << ", " << tau_Y << ", " << tau_N << std::endl
+            << "tauX, tauY, tauN: " << tau_XYN[0] << ", " << tau_XYN[1] << ", " << tau_XYN[2] << std::endl
             << "" << std::endl
             << std::defaultfloat;
         }

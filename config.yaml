@@ -2,7 +2,7 @@
 
 simulation:
   h: 0.05               # Sampling time [s]
-  T_final: 1000          # Final simulation time [s]
+  T_final: 600          # Final simulation time [s]
 
 load_condition:
   mp: 0.0               # Payload mass (front cabin) [kg]
@@ -26,11 +26,11 @@ dp_points:
 
 path_following:
   #Additional parameter for straight-line path following
-  R_switch: 5  # Radius of switching circle
+  R_switch: 3  # Radius of switching circle
   K_f: 0.3     # LOS observer gain
 
   #ALOS and ILOS parameters
-  Delta_h: 5     # Look-ahead distance
+  Delta_h: 10    # Look-ahead distance
   gamma_h: 0.001 # ALOS adaptive gain
   kappa:   0.001 # ILOS integral gain
 
