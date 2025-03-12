@@ -140,8 +140,12 @@ int main() {
     Eigen::MatrixXd B = Eigen::MatrixXd::Zero(3, 4); 
     // - Speed (surge and sway)
     double U = 0.0;
-    
-    ran(x, n, alpha, mp, V_c, beta_c, xdot, U, M, B);
+
+    // Control system variables
+    std::vector<double> tau_XYN = {0.0, 0.0, 0.0};
+    std::vector<double> control_allocation = {0.0, 0.0, 0.0, 0.0};
+    Eigen::Vector2d n_c     = {0.0, 0.0};
+    Eigen::Vector2d alpha_c = {0.0, 0.0};
     
     // Total number of time steps
     int num_steps = static_cast<int>(T_final / h) + 1;
@@ -177,6 +181,9 @@ int main() {
             break; 
         }
 
+        // Update model dynamics
+        ran(x, n, alpha, mp, V_c, beta_c, xdot, U, M, B);
+
         // Guidance
         switch (GuidanceFlag) {
             case 1: { // Dynamic Positioning
@@ -202,58 +209,46 @@ int main() {
         }
 
         // Control System 
-        // (Finds n_c and alpha_c from the desired states)
-        std::vector<double> tau = {0.0, 0.0, 0.0};
-        Eigen::Vector2d n_c     = {0.0, 0.0};
-        Eigen::Vector2d alpha_c = {0.0, 0.0};
 
-        // Station Keeping
+        // - Station Keeping
         if (GuidanceFlag==1) {
-            // Motion control system
-            std::vector<double> tau_XYN = posPID.update(h, xn_d, yn_d, psi_d, xn, yn, psi);
+            // - Motion control system
+            tau_XYN = posPID.update(h, xn_d, yn_d, psi_d, xn, yn, psi);
 
-            tau_X = tau_XYN[0];
-            tau_Y = tau_XYN[1];
-            tau_N = tau_XYN[2];
             
-            // Control allocation
-            std::vector<double> control_allocation = NLOptControlAlloc(tau_X, tau_Y, tau_N, U);
+            // - Control allocation
+            control_allocation = NLOptControlAlloc(tau_XYN[0], tau_XYN[1], tau_XYN[2], U);
             n_c     = {control_allocation[0], control_allocation[2]};
             alpha_c = {control_allocation[1], control_allocation[3]};
 
         } 
-        // Path following
+        // - Path following
         else { 
-            // Motion control system
-            std::vector<double> tau_XYN = headPID.update(h, M, psi, psi_d, r, r_d, a_d);
-            tau_X = tau_XYN[0];
-            tau_Y = tau_XYN[1];
-            tau_N = tau_XYN[2];
+            // - Motion control system
+            tau_XYN = headPID.update(h, M, psi, psi_d, r, r_d, a_d);
 
-            // Control allocation
-            std::vector<double> control_allocation = NLOptControlAlloc(tau_X, tau_Y, tau_N, U);
+            // - Control allocation
+            control_allocation = NLOptControlAlloc(tau_XYN[0], tau_XYN[1], tau_XYN[2], U);
             n_c     = {control_allocation[0], control_allocation[2]};
             alpha_c = {control_allocation[1], control_allocation[3]};
-            //std::cout << "n_c" << n_c(0) << std::endl;
         }
 
         // Marine Craft Model
-        //  rk4 method for x(k+1)
         rk4_ran_step(x, n, alpha, mp, V_c, beta_c, h);
-        x(11) = ssa(x(11));
+        //x(11) = ssa(x(11));
 
-        //  Euler's method
-        n = n + h/T_n * (n_c - n);                      // Update propeller speeds
-        alpha = alpha + h/T_alpha * (alpha_c - alpha);  // Update azimuth angles
+        // - Euler's method
+        n = n + h/T_n * (n_c - n);                      
+        alpha = alpha + h/T_alpha * (alpha_c - alpha);  
 
 
         // Saturate:
-        double k_pos = 200*9.81;     // Positive Bollard
-        double k_neg = 200*9.81;     // Negative Bollard
-        double n_max =  1;            // relative propellar speed max 
-        double n_min = -1;            // relative propellar speed min
-        double alpha_max = M_PI/2;   // maximum azimuth angle (rad)
-        double alpha_min = -M_PI/2;  // minimum azimuth angle (rad)
+        double k_pos = 200*9.81;     
+        double k_neg = 200*9.81;     
+        double n_max =  1;             
+        double n_min = -1;           
+        double alpha_max = M_PI/2;   
+        double alpha_min = -M_PI/2;  
         for (int i = 0; i < n.size(); ++i) {
             if (n(i) > n_max) n(i) = n_max;
             else if (n(i) < n_min) n(i) = n_min;

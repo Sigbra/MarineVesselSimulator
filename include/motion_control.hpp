@@ -44,7 +44,7 @@ class PositionPIDController {
 class HeadingPIDController {
     public:
         // Constructor: T: Nomoto time constant, wn: closed-loop natural frequency, zeta: damping ratio.
-        HeadingPIDController(double T = 1, double wn = 0.5, double zeta = 2.0);
+        HeadingPIDController(double T = 15, double wn = 0.4, double zeta = 1.0);
     
         // Update method calculates control outputs given the current state.
         // M: mass (and added-mass) matrix (Eigen::MatrixXd)

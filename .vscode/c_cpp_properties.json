@@ -3,7 +3,9 @@
         {
             "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/**",
+                "/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3",
+                "${workspaceFolder}/external/matplotlib-cpp" 
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

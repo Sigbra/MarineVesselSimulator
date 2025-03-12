@@ -2,7 +2,7 @@
 
 simulation:
   h: 0.05               # Sampling time [s]
-  T_final: 500          # Final simulation time [s]
+  T_final: 1000          # Final simulation time [s]
 
 load_condition:
   mp: 0.0               # Payload mass (front cabin) [kg]
@@ -17,11 +17,11 @@ waypoints:
 # The first waypoint are only used to find the initial heading
 # The next waypoints, except the 2 last ones, are used for path following
 # The last 2 waypoints are used with DP for berthing. 
-  x: [0,  0, 40, 40, 30] 
+  x: [0,  0, 40, 40, 10] 
   y: [0, 40, 40,  0,  0] 
 
 dp_points:
-  x: [30, 30]
+  x: [10, 10]
   y: [ 0, 10]
 
 path_following:
@@ -30,7 +30,7 @@ path_following:
   K_f: 0.3     # LOS observer gain
 
   #ALOS and ILOS parameters
-  Delta_h: 10    # Look-ahead distance
+  Delta_h: 5     # Look-ahead distance
   gamma_h: 0.001 # ALOS adaptive gain
   kappa:   0.001 # ILOS integral gain
 

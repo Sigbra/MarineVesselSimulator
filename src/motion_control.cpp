@@ -90,7 +90,7 @@ std::vector<double> HeadingPIDController::update(double h, const Eigen::MatrixXd
     z_psi_ += error_psi * h;
 
     // Compute the control moment (tau_N) with feed-forward terms.
-    double tau_X = 5; 
+    double tau_X = 3; 
     double tau_Y = 0;
     double tau_N = (T_/K) * a_d + (1/K) * r_d - 
                    Kp * (error_psi + Td * (r - r_d) + (1/Ti) * z_psi_);

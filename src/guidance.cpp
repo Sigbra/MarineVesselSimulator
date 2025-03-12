@@ -92,7 +92,7 @@ ALOS::ALOS(const Waypoints &wpt, double Delta_h, double gamma_h, double h, doubl
     for (size_t i = 0; i < wpt_.x.size() - 1; i++) {
         double dx = wpt_.x[i+1] - wpt_.x[i];
         double dy = wpt_.y[i+1] - wpt_.y[i];
-        double dist = std::sqrt(dx * dx + dy * dy);
+        double dist = std::hypot(dx, dy);
         if (dist < min_dist) {
             min_dist = dist;
         }
@@ -112,19 +112,19 @@ ALOS::ALOS(const Waypoints &wpt, double Delta_h, double gamma_h, double h, doubl
 }
 
 std::tuple<double, double, bool> ALOS::update(double x, double y) {
-    int n = static_cast<int>(wpt_.x.size());
+    int index = static_cast<int>(wpt_.x.size()); // This logic does not make sence, need to find current index
     double xk_next, yk_next;
+    bool at_last_waypoint = false;
+
     // Determine the next waypoint.
-    if (k_ < n - 1) {
+    if (k_ < index - 1) {
         xk_next = wpt_.x[k_ + 1];
         yk_next = wpt_.y[k_ + 1];
     } else {
-        // At the last waypoint, define a far-off "next" waypoint using the bearing from the last two.
-        double bearing = std::atan2(wpt_.y[n - 1] - wpt_.y[n - 2],
-                                    wpt_.x[n - 1] - wpt_.x[n - 2]);
-        double R = 1e10;
-        xk_next = wpt_.x[n - 1] + R * std::cos(bearing);
-        yk_next = wpt_.y[n - 1] + R * std::sin(bearing);
+        // Next wp = current wp to make the vehicle stop at the last waypoint
+        xk_next = wpt_.x[index - 1]; 
+        yk_next = wpt_.y[index - 1];
+        
     }
 
     // Compute the path-tangential angle (pi_h) with respect to North.
@@ -136,7 +136,7 @@ std::tuple<double, double, bool> ALOS::update(double x, double y) {
 
     // Check the switching criterion: if the remaining along-track distance is less than R_switch, switch to the next waypoint.
     double d = std::sqrt((xk_next - xk_) * (xk_next - xk_) + (yk_next - yk_) * (yk_next - yk_));
-    if ((d - x_e < R_switch_) && (k_ < n - 1)) {
+    if ((d - x_e < R_switch_) && (k_ < index - 1)) {
         k_ = k_ + 1;
         xk_ = wpt_.x[k_];
         yk_ = wpt_.y[k_];
@@ -154,8 +154,7 @@ std::tuple<double, double, bool> ALOS::update(double x, double y) {
     beta_hat_ = beta_hat_ + h_ * gamma_h_ * Delta_h_ * y_e / std::sqrt(Delta_h_ * Delta_h_ + y_e * y_e);
 
     // Determine if the vehicle is at the last waypoint (within R_switch).
-    bool at_last_waypoint = false;
-    if (k_ == n-1) {
+    if (k_ == index - 1) {
         double dist_to_last = std::sqrt((x - xk_) * (x - xk_) + (y - yk_) * (y - yk_));
         if (dist_to_last < R_switch_) {
             at_last_waypoint = true;

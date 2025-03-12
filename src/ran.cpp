@@ -243,15 +243,15 @@ Eigen::Vector3d CO_Offset(double U) {
     double z = 0;
 
     // Finding offset x based on speed
-    // if (U < U_lower) {
-    //     x = x_min;
-    // }
-    // else if (U > U_upper) {
-    //     x = x_max;
-    // }
-    // else {
-    //     x = x_min + (x_max - x_min) * (U-U_lower) / (U_upper-U_lower);
-    // }
+    if (U < U_lower) {
+        x = x_min;
+    }
+    else if (U > U_upper) {
+        x = x_max;
+    }
+    else {
+        x = x_min + (x_max - x_min) * (U-U_lower) / (U_upper-U_lower);
+    }
 
     return Eigen::Vector3d(x, y, z);
 }

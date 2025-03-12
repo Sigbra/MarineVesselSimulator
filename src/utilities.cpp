@@ -208,10 +208,10 @@ void plotStateErrors() {
             double t = values[0];
             double xn = values[7];
             double yn = values[8];
-            double psi = values[12];
+            double psi = rad2deg(values[12]);
             double xn_d = values[13];
             double yn_d = values[14];
-            double psi_d = values[15];
+            double psi_d = rad2deg(values[15]);
 
             time.push_back(t);
             error_x.push_back(xn_d - xn);
@@ -252,7 +252,8 @@ void plotAngles() {
         return;
     }
     
-    std::vector<double> time, psi_d, psi, angle1_error, angle2_error;
+    std::vector<double> time, psi_d, psi;
+    //std::vector<double> angle1_error, angle2_error;
     std::string line;
     
     while (std::getline(file, line)) {
@@ -272,14 +273,14 @@ void plotAngles() {
             time.push_back(values[0]);
             psi.push_back(values[12]);
             psi_d.push_back(values[15]);
-            angle1_error.push_back(values[20]-values[22]);
-            angle2_error.push_back(values[21]-values[23]);
+            //angle1_error.push_back(values[20]-values[22]);
+            //angle2_error.push_back(values[21]-values[23]);
         }
         
     }
     file.close();
     
-    if (time.empty() || psi_d.empty() || psi.empty() || angle1_error.empty() || angle2_error.empty()) {
+    if (time.empty() || psi_d.empty() || psi.empty()) {
         std::cerr << "Error: No valid data found in " << filepath << std::endl;
         return;
     }
@@ -287,11 +288,11 @@ void plotAngles() {
     plt::figure_size(800, 600);
     plt::named_plot("psi", time, psi, "r-");
     plt::named_plot("psi_d", time, psi_d, "g-");
-    plt::named_plot("Left pod angle error", time, angle1_error, "b--");
-    plt::named_plot("Right pod angle error", time, angle2_error, "m--");
+    //plt::named_plot("Left pod angle error", time, angle1_error, "b--");
+    //plt::named_plot("Right pod angle error", time, angle2_error, "m--");
     plt::xlabel("Time (s)");
     plt::ylabel("Angle");
-    plt::title("Heading difference and pod angle errors");
+    plt::title("Heading difference");
     plt::legend();
     plt::grid(true);
     plt::show();
