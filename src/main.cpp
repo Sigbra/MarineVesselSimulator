@@ -10,6 +10,7 @@
 #include "utilities.hpp"
 #include "motion_control.hpp"
 #include "control_allocation.hpp"
+#include "mpc_guidance.hpp"
 
 
 int main() {
@@ -104,8 +105,8 @@ int main() {
     int ControlAllocFlag = controlAlloc.selectMethod();
 
     // Current waypoint
-    int wpt_index  = 1;      // First waypoint (index 0) is only used for initial heading, not goal position.
-    int dp_points_index = 1; 
+    //int wpt_index  = 1;      // First waypoint (index 0) is only used for initial heading, not goal position.
+    //int dp_points_index = 1; 
 
     // Disired states in NED
     double xn_d    = wpt.x[0];        
@@ -117,6 +118,16 @@ int main() {
     double y_e;
     bool at_goal;     
 
+    // MPC guidance variables
+    double chi_d = psi0;
+    double U_d = 0.0;
+    // MPC parameters
+    double r_max = 0.5;         // Maximum turning rate (rad/s)
+    double U_dot_max = 1.0;     // Maximum acceleration (m/s^2)
+    double T_final_mpc = 20.0;  // Time horizon for MPC - 20 seconds with 1-second steps
+    MPCGuidance mpcGuidance(h, r_max, U_dot_max, T_final_mpc);
+    mpcGuidance.setWaypoints(wpt);  // Set waypoints at initialization
+    
     // Motion control classes
     PositionPIDController posPID;
     HeadingPIDController headPID;
@@ -198,7 +209,26 @@ int main() {
                 }
                 break;
             }
-            case 3: { // ALOS heading autopilot, spline path following.
+            case 3: { // MPC guidance
+                // Update MPC guidance with current position (waypoints already set during initialization)
+                auto [chi, speed, at_final] = mpcGuidance.update(xn, yn);
+                
+                // Set desired course and speed
+                chi_d = chi;
+                U_d = speed;
+                
+                // Set desired heading
+                psi_d = chi_d;  // Assume no sideslip for now
+                
+                // Calculate desired rates for feedforward
+                r_d = losObserver.getLOSRate(); 
+                
+                // Only switch to Dynamic Positioning when truly at the final waypoint
+                if (at_final) {
+                    std::cout << "MPC: Final waypoint reached, switching to Dynamic Positioning" << std::endl;
+                    mpcGuidance.reset();
+                    GuidanceFlag = 1; // Switch to DP
+                }
                 break;
             }
         }
@@ -217,8 +247,8 @@ int main() {
             alpha_c = {control_allocation[1], control_allocation[3]};
 
         } 
-        // - Path following
-        else { 
+        // - Path following with ALOS or MPC
+        else if (GuidanceFlag==2 || GuidanceFlag==3) { 
             // - Motion control system
             tau_XYN = headPID.update(h, M, psi, psi_d, r, r_d, a_d);
 
@@ -264,9 +294,17 @@ int main() {
                 std::cout << std::fixed << std::setprecision(1)
                 << "x_d: " << xn_d << "m, y_d: " << yn_d << "m, psi_d: " << rad2deg(psi_d) << "deg" << std::endl;
             }
-            else {
+            else if (GuidanceFlag == 2) {
                 std::cout << std::fixed << std::setprecision(1)
                 << "At goal: " << at_goal << ", psi_ref: " << psi_ref << ", y_e: " << y_e <<std::endl;
+            }
+            else if (GuidanceFlag == 3) {
+                std::cout << std::fixed << std::setprecision(1)
+                << "MPC: chi_d: " << rad2deg(chi_d) << "deg, U_d: " << U_d << "m/s" 
+                << ", waypoint: " << mpcGuidance.getCurrentWaypointIdx() 
+                << ", distance: " << std::sqrt(std::pow(xn - mpcGuidance.getXTrajectory()[0], 2) + 
+                           std::pow(yn - mpcGuidance.getYTrajectory()[0], 2)) << "m"
+                << std::endl;
             }
             std::cout << "x:   " << xn << "m, y:   " << yn << "m, psi:   " << rad2deg(psi) << "deg" << std::endl
             << "------------------------------------------------" << std::endl

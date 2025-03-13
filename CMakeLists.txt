@@ -89,6 +89,7 @@ set(SOURCES
     src/control_allocation.cpp
     #src/ref_model.cpp
     src/utilities.cpp
+    src/mpc_guidance.cpp
 )
 
 # -----------------------------------

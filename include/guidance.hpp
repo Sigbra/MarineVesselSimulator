@@ -16,7 +16,8 @@ class GuidanceMethod {
     private:
         std::vector<std::string> methods = {
             "Dynamic Positioning (static heading ref)",
-            "ALOS straight line path following"
+            "ALOS straight line path following",
+            "MPC guidance"
         };
     };
 
