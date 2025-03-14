@@ -10,7 +10,6 @@
 #include "utilities.hpp"
 #include "motion_control.hpp"
 #include "control_allocation.hpp"
-#include "mpc_guidance.hpp"
 
 
 int main() {
@@ -117,16 +116,6 @@ int main() {
     double psi_ref;
     double y_e;
     bool at_goal;     
-
-    // MPC guidance variables
-    double chi_d = psi0;
-    double U_d = 0.0;
-    // MPC parameters
-    double r_max = 0.5;         // Maximum turning rate (rad/s)
-    double U_dot_max = 1.0;     // Maximum acceleration (m/s^2)
-    double T_final_mpc = 20.0;  // Time horizon for MPC - 20 seconds with 1-second steps
-    MPCGuidance mpcGuidance(h, r_max, U_dot_max, T_final_mpc);
-    mpcGuidance.setWaypoints(wpt);  // Set waypoints at initialization
     
     // Motion control classes
     PositionPIDController posPID;
@@ -209,28 +198,6 @@ int main() {
                 }
                 break;
             }
-            case 3: { // MPC guidance
-                // Update MPC guidance with current position (waypoints already set during initialization)
-                auto [chi, speed, at_final] = mpcGuidance.update(xn, yn);
-                
-                // Set desired course and speed
-                chi_d = chi;
-                U_d = speed;
-                
-                // Set desired heading
-                psi_d = chi_d;  // Assume no sideslip for now
-                
-                // Calculate desired rates for feedforward
-                r_d = losObserver.getLOSRate(); 
-                
-                // Only switch to Dynamic Positioning when truly at the final waypoint
-                if (at_final) {
-                    std::cout << "MPC: Final waypoint reached, switching to Dynamic Positioning" << std::endl;
-                    mpcGuidance.reset();
-                    GuidanceFlag = 1; // Switch to DP
-                }
-                break;
-            }
         }
 
         // Control System 
@@ -297,14 +264,6 @@ int main() {
             else if (GuidanceFlag == 2) {
                 std::cout << std::fixed << std::setprecision(1)
                 << "At goal: " << at_goal << ", psi_ref: " << psi_ref << ", y_e: " << y_e <<std::endl;
-            }
-            else if (GuidanceFlag == 3) {
-                std::cout << std::fixed << std::setprecision(1)
-                << "MPC: chi_d: " << rad2deg(chi_d) << "deg, U_d: " << U_d << "m/s" 
-                << ", waypoint: " << mpcGuidance.getCurrentWaypointIdx() 
-                << ", distance: " << std::sqrt(std::pow(xn - mpcGuidance.getXTrajectory()[0], 2) + 
-                           std::pow(yn - mpcGuidance.getYTrajectory()[0], 2)) << "m"
-                << std::endl;
             }
             std::cout << "x:   " << xn << "m, y:   " << yn << "m, psi:   " << rad2deg(psi) << "deg" << std::endl
             << "------------------------------------------------" << std::endl
