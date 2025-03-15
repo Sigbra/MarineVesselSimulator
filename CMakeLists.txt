@@ -91,7 +91,7 @@ set(SOURCES
     src/control_allocation.cpp
     #src/ref_model.cpp
     src/utilities.cpp
-    src/cubic_spline.cpp
+    src/clothoid_smoother.cpp
 )
 
 # -----------------------------------

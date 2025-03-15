@@ -36,41 +36,38 @@ double rad2deg(double radians) {
 Waypoints addIntermediateWaypoints(const Waypoints& input, double space) {
     Waypoints output;
     
-    // Check if there are any waypoints to process.
-    if (input.x.empty() || input.y.empty() || input.x.size() != input.y.size())
+    // Check if there are any waypoints to process
+    if (input.empty())
         return output;
     
-    // Always include the first waypoint.
-    output.x.push_back(input.x[0]);
-    output.y.push_back(input.y[0]);
+    // Always include the first waypoint
+    output.push_back(input[0]);
     
-    // Process each pair of consecutive waypoints.
-    for (size_t i = 1; i < input.x.size(); ++i) {
-        double x1 = input.x[i - 1];
-        double y1 = input.y[i - 1];
-        double x2 = input.x[i];
-        double y2 = input.y[i];
+    // Process each pair of consecutive waypoints
+    for (size_t i = 1; i < input.size(); ++i) {
+        double x1 = input[i-1].x;
+        double y1 = input[i-1].y;
+        double x2 = input[i].x;
+        double y2 = input[i].y;
         
-        // Compute the Euclidean distance between the two waypoints.
+        // Compute the Euclidean distance between the two waypoints
         double dist = std::hypot(x2 - x1, y2 - y1);
         
-        // If the distance exceeds 5 meters, add intermediate waypoints.
+        // If the distance exceeds the spacing, add intermediate waypoints
         if (dist > space) {
-            // Determine the number of segments required so that each segment is <= 5 meters.
+            // Determine the number of segments required
             int num_segments = static_cast<int>(std::ceil(dist / space));
-            // Insert intermediate waypoints along the line.
+            // Insert intermediate waypoints along the line
             for (int seg = 1; seg < num_segments; ++seg) {
                 double t = static_cast<double>(seg) / num_segments;
                 double new_x = x1 + t * (x2 - x1);
                 double new_y = y1 + t * (y2 - y1);
-                output.x.push_back(new_x);
-                output.y.push_back(new_y);
+                output.push_back({new_x, new_y});
             }
         }
         
-        // Add the original waypoint.
-        output.x.push_back(x2);
-        output.y.push_back(y2);
+        // Add the original waypoint
+        output.push_back(input[i]);
     }
     
     return output;
@@ -106,9 +103,7 @@ void storeSimulationData(const Eigen::MatrixXd& simdata, std::string filename) {
     }
 }
 
-
 void plotTrajectory() {
-
     std::filesystem::path filepath = std::filesystem::path(getRepositoryPath()) / "data" / "simdata.csv";
     if (!std::filesystem::exists(filepath)) {
         std::cerr << "File does not exist: " << filepath << std::endl;
@@ -120,7 +115,8 @@ void plotTrajectory() {
         return;
     }
 
-    std::vector<double> xn, yn, psi;
+    std::vector<Point2D> positions;
+    std::vector<double> psi;
     std::string line;
     
     while (std::getline(file, line)) {
@@ -137,16 +133,21 @@ void plotTrajectory() {
         }
         
         if (values.size() >= 24) {
-            xn.push_back(values[7]);  
-            yn.push_back(values[8]);   
-            psi.push_back(values[12]); 
+            positions.push_back({values[7], values[8]});
+            psi.push_back(values[12]);
         }
     }
     file.close();
     
-    if (xn.empty() || yn.empty() || psi.empty()) {
+    if (positions.empty() || psi.empty()) {
         std::cerr << "Error: No valid data found in " << filepath << std::endl;
         return;
+    }
+    
+    std::vector<double> xn, yn;
+    for (const auto& pos : positions) {
+        xn.push_back(pos.x);
+        yn.push_back(pos.y);
     }
     
     plt::figure_size(800, 600);
@@ -174,9 +175,7 @@ void plotTrajectory() {
     plt::show();
 }
 
-
 void plotStateErrors() {
-
     std::filesystem::path filepath = std::filesystem::path(getRepositoryPath()) / "data" / "simdata.csv";
     if (!std::filesystem::exists(filepath)) {
         std::cerr << "File does not exist: " << filepath << std::endl;
@@ -240,7 +239,6 @@ void plotStateErrors() {
 }
 
 void plotAngles() {
-
     std::filesystem::path filepath = std::filesystem::path(getRepositoryPath()) / "data" / "simdata.csv";
     if (!std::filesystem::exists(filepath)) {
         std::cerr << "File does not exist: " << filepath << std::endl;
@@ -253,7 +251,6 @@ void plotAngles() {
     }
     
     std::vector<double> time, psi_d, psi;
-    //std::vector<double> angle1_error, angle2_error;
     std::string line;
     
     while (std::getline(file, line)) {
@@ -273,8 +270,6 @@ void plotAngles() {
             time.push_back(values[0]);
             psi.push_back(values[12]);
             psi_d.push_back(values[15]);
-            //angle1_error.push_back(values[20]-values[22]);
-            //angle2_error.push_back(values[21]-values[23]);
         }
         
     }
@@ -288,8 +283,6 @@ void plotAngles() {
     plt::figure_size(800, 600);
     plt::named_plot("psi", time, psi, "r-");
     plt::named_plot("psi_d", time, psi_d, "g-");
-    //plt::named_plot("Left pod angle error", time, angle1_error, "b--");
-    //plt::named_plot("Right pod angle error", time, angle2_error, "m--");
     plt::xlabel("Time (s)");
     plt::ylabel("Angle");
     plt::title("Heading difference");
