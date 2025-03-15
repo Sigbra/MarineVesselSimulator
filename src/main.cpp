@@ -182,6 +182,8 @@ int main() {
         // Guidance
         switch (GuidanceFlag) {
             case 1: { // Dynamic Positioning
+
+                
                 auto [xn_d, yn_d, psi_d] = dp.update(xn, yn);
                 break;
             }

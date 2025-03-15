@@ -4,6 +4,11 @@
 #include <vector>
 #include <Eigen/Dense>
 
+struct Point {
+    double x;
+    double y;
+};
+
 struct Waypoints {
     std::vector<double> x;
     std::vector<double> y;
