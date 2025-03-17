@@ -10,13 +10,13 @@
 #include "utilities.hpp"
 #include "motion_control.hpp"
 #include "control_allocation.hpp"
-#include "clothoid_smoother.hpp"
+#include "path_generation.hpp"
 
 // Helper function to select path type
 int selectPathType() {
     std::cout << "Choose Path Type:" << std::endl;
     std::cout << "1. Straight Line Path" << std::endl;
-    std::cout << "2. Clothoid Smoothed Path" << std::endl;
+    std::cout << "2. Continuous-Curvature Path Using Fermat's Spiral" << std::endl;
     
     int choice = 0;
     while (true) {
@@ -53,28 +53,21 @@ int main() {
     double beta_c = deg2rad(config["ocean_current"]["beta_c"].as<double>());
 
     // Load original waypoints from config
-    Waypoints originalWaypoints;
+    Waypoints wpt;
     auto waypointsNode = config["waypoints"];
     for (size_t i = 0; i < waypointsNode["x"].size(); i++) {
         Point2D point;
         point.x = waypointsNode["x"][i].as<double>();
         point.y = waypointsNode["y"][i].as<double>();
-        originalWaypoints.push_back(point);
+        wpt.push_back(point);
     }
     
-    std::cout << "Original Waypoints: ";
-    for (const auto& point : originalWaypoints) {
+    std::cout << "Waypoints: ";
+    for (const auto& point : wpt) {
         std::cout << "(" << point.x << ", " << point.y << ") ";
     }
     std::cout << std::endl;
 
-    // Choose path type
-    int pathTypeChoice = selectPathType();
-    
-    // Path generation variables
-    Waypoints wpt; // Will hold our active path
-    bool pathNeedsUpdate = true;
-    ClothoidSmoother smoother(0.1); // Max curvature parameter
 
     // DP points for dynamic positioning
     Waypoints dpPoints;
@@ -99,10 +92,14 @@ int main() {
     double gamma_h = config["path_following"]["gamma_h"].as<double>();               
     double kappa = config["path_following"]["kappa"].as<double>();   
 
-    // Initialize guidance with empty waypoints (will be updated later)
-    Waypoints initialPath = {{0.0, 0.0}, {1.0, 0.0}}; // Dummy initial path
-    DynamicPositioning dp(dpPoints, 5);
-    ALOS alos(initialPath, Delta_h, gamma_h, h, 0.5);
+    // Create the Fermat spiral path.
+    // - Set the curvature constraint (κ_max in rad/m).
+    double kappa_max = 0.05;
+    FermatSpiralPath spiral(kappa_max);
+    StraightLinePath straightLinePath;
+
+    // Initialize guidance methods and LOS observer 
+    double delta = 10.0; // Lookahead distance
     LOSObserver losObserver(h, K_f);
      
     // Initial states - will be properly set after path generation
@@ -115,6 +112,26 @@ int main() {
 
     double T_alpha = 1;                              // Azimuth angle time constant (s)
     Eigen::Vector2d alpha = Eigen::Vector2d::Zero(); // Init: [angle_left, angle_right] = [0, 0]
+
+    // Choose path type
+    int pathType = selectPathType();
+
+    // Initialize path following variables
+    int wpt_index = 1;
+    PathPoint closest;
+    closest.pos = Vector2D(0.0, 0.0);
+    closest.dpos = Vector2D(0.0, 0.0);
+    closest.ddpos = Vector2D(0.0, 0.0);
+
+    double prev_path_x;
+    double prev_path_y;
+
+    double path_x = wpt[wpt_index].x;
+    double path_y = wpt[wpt_index].y;
+    double path_x_dot = 0.0;
+    double path_y_dot = 0.0;
+    double path_x_ddot = 0.0;
+    double path_y_ddot = 0.0;
 
     // Control method selection for path following
     GuidanceMethod guidance;
@@ -164,46 +181,6 @@ int main() {
     for (int i = 0; i < num_steps; ++i) {
         t[i] = i * h;
         
-        // Generate/update path if needed (initially or if waypoints change)
-        if (pathNeedsUpdate) {
-            // Generate path based on selected type
-            switch (pathTypeChoice) {
-                case 1: { // Straight line path
-                    wpt = addIntermediateWaypoints(originalWaypoints, 10.0);
-                    std::cout << "Generated straight line path with " << wpt.size() << " points" << std::endl;
-                    break;
-                }
-                case 2: { // Clothoid smoothed path
-                    auto smoothedPath = smoother.smoothPath(originalWaypoints);
-                    wpt = ClothoidSmoother::extractWaypoints(smoothedPath);
-                    std::cout << "Generated clothoid smoothed path with " << wpt.size() << " points" << std::endl;
-                    break;
-                }
-            }
-            
-            // Path is now updated
-            pathNeedsUpdate = false;
-            
-            // Calculate initial heading using first two waypoints
-            if (wpt.size() >= 2) {
-                psi0 = atan2(wpt[1].y - wpt[0].y, wpt[1].x - wpt[0].x);
-            }
-            
-            // Set initial position and heading
-            x(6) = wpt[0].x;  // Initial x position
-            x(7) = wpt[0].y;  // Initial y position
-            x(11) = psi0;     // Initial heading angle
-            
-            // Set initial desired states
-            xn_d = wpt[0].x;
-            yn_d = wpt[0].y;
-            psi_d = psi0;
-            
-            // Update guidance systems with new path
-            alos.updatePath(wpt);
-            dp.updatePath(wpt);
-        }
-        
         // Navigation (Fake measurements using noise)
         double random = ((double)rand() / RAND_MAX - 0.5);
   
@@ -230,28 +207,68 @@ int main() {
         ran(x, n, alpha, mp, V_c, beta_c, xdot, U, M, B);
 
         // Guidance
-        switch (GuidanceFlag) {
-            case 1: { // Dynamic Positioning
-                auto [xn_d_new, yn_d_new, psi_d_new] = dp.update(xn, yn);
-                xn_d = xn_d_new;
-                yn_d = yn_d_new;
-                psi_d = psi_d_new;
+
+        if (R_switch < std::sqrt(std::pow(xn - wpt[wpt_index].x, 2) + std::pow(yn - wpt[wpt_index].y, 2))) {
+            // - Wpt reached, upate waypoint index
+            if (wpt_index <= wpt.size() - 1) {
+                wpt_index++;
+            }
+            // - At goal, switch to dynamic positioning with static heading reference
+            else if (wpt_index == wpt.size()) {
+                pathType = 0;
+                GuidanceFlag = 1; 
+            }
+        }
+
+        // - Type of path
+        switch (pathType) {
+            case 0: { // Dynamic Positioning does not use path.
                 break;
             }
-            case 2: { // ALOS heading autopilot, straight-line path following
-                auto [psi_ref_new, y_e_new, at_goal_new] = alos.update(xn, yn);
-                psi_ref = psi_ref_new;
-                y_e = y_e_new;
-                at_goal = at_goal_new;
+            case 1: { // Straight line path.
+                straightLinePath.updateWaypoints(
+                    Vector2D(wpt[wpt_index-1].x, wpt[wpt_index-1].y),
+                    Vector2D(wpt[wpt_index].x, wpt[wpt_index].y),
+                    Vector2D(wpt[wpt_index+1].x, wpt[wpt_index+1].y)
+                );
+
+                closest = straightLinePath.getClosestPoint(Vector2D(xn, yn), M_PI/4);
+                break;
+            }
+            case 2: { // Continuous-Curvature Path Using Fermat's Spiral.
+                spiral.updateWaypoints(
+                    Vector2D(wpt[wpt_index-1].x, wpt[wpt_index-1].y),
+                    Vector2D(wpt[wpt_index].x, wpt[wpt_index].y),   
+                    Vector2D(wpt[wpt_index+1].x, wpt[wpt_index+1].y)
+                    );
+
+                closest = spiral.getCompletePathPoint(Vector2D(xn, yn));
+                break;
+            }
+        }
+        
+        path_x = closest.pos.x;
+        path_y = closest.pos.y;
+        path_x_dot = closest.dpos.x;
+        path_y_dot = closest.dpos.y;
+        path_x_ddot = closest.ddpos.x;
+        path_y_ddot = closest.ddpos.y;
+
+
+        // - Guidance law
+        switch (GuidanceFlag) {
+            case 1: { // Dynamic Positioning
+                auto [xn_d, yn_d, psi_d] = DP(xn, yn, wpt[wpt_index].x, wpt[wpt_index].y, wpt[wpt_index-1].x, wpt[wpt_index-1].y);
+
+                break;
+            }
+            case 2: { // LOS heading autopilot
+                auto [psi_ref, y_e] = LOS(path_x, path_y, path_x_dot, path_y_dot, xn, yn, delta);
 
                 losObserver.update(psi_ref);
                 psi_d = losObserver.getLOSAngle();
                 r_d = losObserver.getLOSRate();
 
-                if (at_goal) {
-                    alos.reset();
-                    GuidanceFlag = 1;
-                }
                 break;
             }
         }
@@ -267,8 +284,8 @@ int main() {
             n_c     = {control_allocation[0], control_allocation[2]};
             alpha_c = {control_allocation[1], control_allocation[3]};
         } 
-        // - Path following with ALOS or MPC
-        else if (GuidanceFlag==2 || GuidanceFlag==3) { 
+        // - Path following 
+        else if (GuidanceFlag==2) { 
             // - Motion control system
             tau_XYN = headPID.update(h, M, psi, psi_d, r, r_d, a_d);
 

@@ -13,9 +13,6 @@ struct Point2D {
 // List of waypoints as a vector of Point2D
 using Waypoints = std::vector<Point2D>;
 
-// For backward compatibility with existing Point struct
-using Point = Point2D;
-
 double ssa(double angle);
 
 double deg2rad(double degrees);

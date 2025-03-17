@@ -26,7 +26,7 @@ dp_points:
 
 path_following:
   #Additional parameter for straight-line path following
-  R_switch: 3  # Radius of switching circle
+  R_switch: 5  # Radius of switching circle
   K_f: 0.3     # LOS observer gain
 
   #ALOS and ILOS parameters

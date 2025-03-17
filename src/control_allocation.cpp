@@ -39,6 +39,12 @@ int ControlAllocationMethod::selectMethod() {
 std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N, double U) {
     using namespace casadi;
 
+    // Check for NaN inputs and replace with safe values
+    if (std::isnan(tau_X)) tau_X = 0.0;
+    if (std::isnan(tau_Y)) tau_Y = 0.0;
+    if (std::isnan(tau_N)) tau_N = 0.0;
+    if (std::isnan(U)) U = 0.1;  // Small positive value
+
     // Define symbolic decision variables
     MX n1 = MX::sym("F1");        // Thruster 1 force
     MX alpha1 = MX::sym("phi1");  // Thruster 1 angle
