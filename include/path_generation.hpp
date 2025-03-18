@@ -64,7 +64,7 @@ struct PathPoint {
 class StraightLinePath {
 public:
     StraightLinePath();
-    void updateWaypoints(const Vector2D &wpt_prev, const Vector2D &wpt, const Vector2D &wpt_next);
+    void updateWaypoints(const Vector2D &wpt_prev, const Vector2D &wpt);
     Vector2D getPoint(double u) const;
     Vector2D getDerivative(double u) const;
     Vector2D getSecondDerivative(double u) const;
@@ -73,7 +73,8 @@ public:
     void printParameters() const;
 
 private:
-    Vector2D wpt_prev_, wpt_, wpt_next_;
+    Vector2D wpt_prev_;
+    Vector2D wpt_;
 };
 
 //----------------------------------------------------------

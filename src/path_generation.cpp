@@ -9,22 +9,20 @@ StraightLinePath::StraightLinePath() {
     // Initialize waypoints to (0,0); they will be updated later.
     wpt_prev_ = Vector2D(0.0, 0.0);
     wpt_      = Vector2D(0.0, 0.0);
-    wpt_next_ = Vector2D(0.0, 0.0);
 }
 
-void StraightLinePath::updateWaypoints(const Vector2D &wpt_prev, const Vector2D &wpt, const Vector2D &wpt_next) {
+void StraightLinePath::updateWaypoints(const Vector2D &wpt_prev, const Vector2D &wpt) {
     // Update the waypoints.
     wpt_prev_ = wpt_prev;
     wpt_      = wpt;
-    wpt_next_ = wpt_next;
 }
 
 Vector2D StraightLinePath::getPoint(double u) const {
-    return wpt_prev_ + (wpt_next_ - wpt_prev_).normalized() * u;
+    return wpt_prev_ + (wpt_ - wpt_prev_).normalized() * u;
 }
 
 Vector2D StraightLinePath::getDerivative(double u) const {
-    return (wpt_next_ - wpt_prev_).normalized();
+    return (wpt_ - wpt_prev_).normalized();
 }
 
 Vector2D StraightLinePath::getSecondDerivative(double u) const {
@@ -33,9 +31,25 @@ Vector2D StraightLinePath::getSecondDerivative(double u) const {
 
 PathPoint StraightLinePath::getClosestPoint(const Vector2D &vessel, double normal_angle) const {
     PathPoint pp;
-    pp.pos = getPoint(0.0);
-    pp.dpos = getDerivative(0.0);
-    pp.ddpos = getSecondDerivative(0.0);
+    // Compute the vector from the previous waypoint to the current one.
+    Vector2D d = wpt_ - wpt_prev_;
+    double d_squared = d.dot(d);
+    double u = 0.0;
+    
+    if(d_squared > 0.0) {
+        // Projection factor: how far along the line (as a fraction) the projection is.
+        u = (vessel - wpt_prev_).dot(d) / d_squared;
+        // Clamp u to the interval [0, 1] so the result lies on the segment.
+        if(u < 0.0) {
+            u = 0.0;
+        } else if(u > 1.0) {
+            u = 1.0;
+        }
+    }
+    
+    pp.pos = getPoint(u);
+    pp.dpos = getDerivative(u);
+    pp.ddpos = getSecondDerivative(u);
     return pp;
 }
 
@@ -50,7 +64,6 @@ void StraightLinePath::printParameters() const {
     std::cout << "Straight line path parameters:\n";
     std::cout << "wpt_prev: (" << wpt_prev_.x << ", " << wpt_prev_.y << ")\n";
     std::cout << "wpt: (" << wpt_.x << ", " << wpt_.y << ")\n";
-    std::cout << "wpt_next: (" << wpt_next_.x << ", " << wpt_next_.y << ")\n";
 }
 
 

@@ -99,7 +99,7 @@ int main() {
     StraightLinePath straightLinePath;
 
     // Initialize guidance methods and LOS observer 
-    double delta = 10.0; // Lookahead distance
+    double delta = 5.0; // Lookahead distance
     LOSObserver losObserver(h, K_f);
      
     // Initial states - will be properly set after path generation
@@ -123,11 +123,8 @@ int main() {
     closest.dpos = Vector2D(0.0, 0.0);
     closest.ddpos = Vector2D(0.0, 0.0);
 
-    double prev_path_x;
-    double prev_path_y;
-
-    double path_x = wpt[wpt_index].x;
-    double path_y = wpt[wpt_index].y;
+    double path_x = wpt[wpt_index-1].x;
+    double path_y = wpt[wpt_index-1].y;
     double path_x_dot = 0.0;
     double path_y_dot = 0.0;
     double path_x_ddot = 0.0;
@@ -147,8 +144,7 @@ int main() {
 
     // ALOS variables
     double psi_ref = 0.0;
-    double y_e = 0.0;
-    bool at_goal = false;     
+    double y_e = 0.0; 
     
     // Motion control classes
     PositionPIDController posPID;
@@ -208,13 +204,13 @@ int main() {
 
         // Guidance
 
-        if (R_switch < std::sqrt(std::pow(xn - wpt[wpt_index].x, 2) + std::pow(yn - wpt[wpt_index].y, 2))) {
+        if (R_switch > std::sqrt(std::pow(xn - wpt[wpt_index].x, 2) + std::pow(yn - wpt[wpt_index].y, 2))) {
             // - Wpt reached, upate waypoint index
-            if (wpt_index <= wpt.size() - 1) {
+            if (wpt_index < wpt.size() - 1) {
                 wpt_index++;
             }
             // - At goal, switch to dynamic positioning with static heading reference
-            else if (wpt_index == wpt.size()) {
+            else if (wpt_index == wpt.size()-1) {
                 pathType = 0;
                 GuidanceFlag = 1; 
             }
@@ -228,8 +224,7 @@ int main() {
             case 1: { // Straight line path.
                 straightLinePath.updateWaypoints(
                     Vector2D(wpt[wpt_index-1].x, wpt[wpt_index-1].y),
-                    Vector2D(wpt[wpt_index].x, wpt[wpt_index].y),
-                    Vector2D(wpt[wpt_index+1].x, wpt[wpt_index+1].y)
+                    Vector2D(wpt[wpt_index].x, wpt[wpt_index].y)
                 );
 
                 closest = straightLinePath.getClosestPoint(Vector2D(xn, yn), M_PI/4);
@@ -263,7 +258,7 @@ int main() {
                 break;
             }
             case 2: { // LOS heading autopilot
-                auto [psi_ref, y_e] = LOS(path_x, path_y, path_x_dot, path_y_dot, xn, yn, delta);
+                auto [psi_ref, y_e] = LOS(xn, yn, delta, path_x, path_y, path_x_dot, path_y_dot);
 
                 losObserver.update(psi_ref);
                 psi_d = losObserver.getLOSAngle();
@@ -332,7 +327,7 @@ int main() {
             }
             else if (GuidanceFlag == 2) {
                 std::cout << std::fixed << std::setprecision(1)
-                << "At goal: " << at_goal << ", psi_ref: " << psi_ref << ", y_e: " << y_e <<std::endl;
+                << "psi_ref: " << psi_ref << ", psi_d: " << psi_d << ", y_e: " << y_e <<std::endl;
             }
             std::cout << "x:   " << xn << "m, y:   " << yn << "m, psi:   " << rad2deg(psi) << "deg" << std::endl
             << "------------------------------------------------" << std::endl
