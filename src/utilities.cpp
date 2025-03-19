@@ -10,6 +10,8 @@
 #include "utilities.hpp"
 #include <filesystem>
 
+#include "path_generation.hpp"
+
 namespace plt = matplotlibcpp;
 
 double ssa(double angle)
@@ -33,45 +35,45 @@ double rad2deg(double radians) {
     return radians * 180.0 / M_PI;
 }
 
-Waypoints addIntermediateWaypoints(const Waypoints& input, double space) {
-    Waypoints output;
+// Waypoints addIntermediateWaypoints(const Waypoints& input, double space) {
+//     Waypoints output;
     
-    // Check if there are any waypoints to process
-    if (input.empty())
-        return output;
+//     // Check if there are any waypoints to process
+//     if (input.empty())
+//         return output;
     
-    // Always include the first waypoint
-    output.push_back(input[0]);
+//     // Always include the first waypoint
+//     output.push_back(input[0]);
     
-    // Process each pair of consecutive waypoints
-    for (size_t i = 1; i < input.size(); ++i) {
-        double x1 = input[i-1].x;
-        double y1 = input[i-1].y;
-        double x2 = input[i].x;
-        double y2 = input[i].y;
+//     // Process each pair of consecutive waypoints
+//     for (size_t i = 1; i < input.size(); ++i) {
+//         double x1 = input[i-1].x;
+//         double y1 = input[i-1].y;
+//         double x2 = input[i].x;
+//         double y2 = input[i].y;
         
-        // Compute the Euclidean distance between the two waypoints
-        double dist = std::hypot(x2 - x1, y2 - y1);
+//         // Compute the Euclidean distance between the two waypoints
+//         double dist = std::hypot(x2 - x1, y2 - y1);
         
-        // If the distance exceeds the spacing, add intermediate waypoints
-        if (dist > space) {
-            // Determine the number of segments required
-            int num_segments = static_cast<int>(std::ceil(dist / space));
-            // Insert intermediate waypoints along the line
-            for (int seg = 1; seg < num_segments; ++seg) {
-                double t = static_cast<double>(seg) / num_segments;
-                double new_x = x1 + t * (x2 - x1);
-                double new_y = y1 + t * (y2 - y1);
-                output.push_back({new_x, new_y});
-            }
-        }
+//         // If the distance exceeds the spacing, add intermediate waypoints
+//         if (dist > space) {
+//             // Determine the number of segments required
+//             int num_segments = static_cast<int>(std::ceil(dist / space));
+//             // Insert intermediate waypoints along the line
+//             for (int seg = 1; seg < num_segments; ++seg) {
+//                 double t = static_cast<double>(seg) / num_segments;
+//                 double new_x = x1 + t * (x2 - x1);
+//                 double new_y = y1 + t * (y2 - y1);
+//                 output.push_back({new_x, new_y});
+//             }
+//         }
         
-        // Add the original waypoint
-        output.push_back(input[i]);
-    }
+//         // Add the original waypoint
+//         output.push_back(input[i]);
+//     }
     
-    return output;
-}
+//     return output;
+// }
 
 std::string getRepositoryPath() {
     const char* home = std::getenv("HOME");  // Get the user's home directory
@@ -100,6 +102,34 @@ void storeSimulationData(const Eigen::MatrixXd& simdata, std::string filename) {
         std::cout << "Simulation data stored to: " << filepath << std::endl;
     } else {
         std::cerr << "Error opening file for writing!" << std::endl;
+    }
+}
+
+void plotPath(const Waypoints& path) {
+
+    // Check if the path is empty.
+    if (path.empty()) {
+        std::cerr << "Warning: The path is empty. Nothing to plot." << std::endl;
+        return;
+    }
+    
+    // Extract x and y coordinates.
+    std::vector<double> x, y;
+    for (const auto &pt : path) {
+        x.push_back(pt.x);
+        y.push_back(pt.y);
+    }
+    
+    try {
+        plt::figure();
+        plt::plot(x, y, "b-");  // Plot with a blue line.
+        plt::title("Fermat Spiral Path");
+        plt::xlabel("X");
+        plt::ylabel("Y");
+        plt::grid(true);
+        plt::show();
+    } catch (const std::exception &e) {
+        std::cerr << "Exception during plotting: " << e.what() << std::endl;
     }
 }
 

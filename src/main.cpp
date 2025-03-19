@@ -56,7 +56,7 @@ int main() {
     Waypoints wpt;
     auto waypointsNode = config["waypoints"];
     for (size_t i = 0; i < waypointsNode["x"].size(); i++) {
-        Point2D point;
+        Vector2D point;
         point.x = waypointsNode["x"][i].as<double>();
         point.y = waypointsNode["y"][i].as<double>();
         wpt.push_back(point);
@@ -73,7 +73,7 @@ int main() {
     Waypoints dpPoints;
     auto dpPointsNode = config["dp_points"];
     for (size_t i = 0; i < dpPointsNode["x"].size(); i++) {
-        Point2D point;
+        Vector2D point;
         point.x = dpPointsNode["x"][i].as<double>();
         point.y = dpPointsNode["y"][i].as<double>();
         dpPoints.push_back(point);
@@ -94,8 +94,13 @@ int main() {
 
     // Create the Fermat spiral path.
     // - Set the curvature constraint (κ_max in rad/m).
-    double kappa_max = 0.05;
+    double kappa_max = 0.2;
     FermatSpiralPath spiral(kappa_max);
+    spiral.updateWaypoints(wpt);
+    Waypoints path = spiral.samplePath(0.01);
+    std::cout << "Path size: " << path.size() << std::endl;
+    plotPath(path);
+
     StraightLinePath straightLinePath;
 
     // Initialize guidance methods and LOS observer 
@@ -219,7 +224,7 @@ int main() {
         // - Type of path
         switch (pathType) {
             case 0: { // Dynamic Positioning does not use path.
-                break;
+                break; 
             }
             case 1: { // Straight line path.
                 straightLinePath.updateWaypoints(
@@ -231,12 +236,7 @@ int main() {
                 break;
             }
             case 2: { // Continuous-Curvature Path Using Fermat's Spiral.
-                spiral.updateWaypoints(
-                    Vector2D(wpt[wpt_index-1].x, wpt[wpt_index-1].y),
-                    Vector2D(wpt[wpt_index].x, wpt[wpt_index].y),   
-                    Vector2D(wpt[wpt_index+1].x, wpt[wpt_index+1].y)
-                    );
-
+                spiral.updateWaypoints(wpt);
                 closest = spiral.getCompletePathPoint(Vector2D(xn, yn));
                 break;
             }

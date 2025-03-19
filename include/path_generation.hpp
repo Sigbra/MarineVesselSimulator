@@ -50,6 +50,12 @@ inline int sign(double x) {
 }
 
 //----------------------------------------------
+// List of waypoints as a vector of Point2D
+//----------------------------------------------
+using Waypoints = std::vector<Vector2D>;
+
+
+//----------------------------------------------
 // Structure to Return a Path Point and Derivatives
 //----------------------------------------------
 struct PathPoint {
@@ -89,56 +95,66 @@ public:
     //  - kappa_max: the curvature constraint (rad/m).
     FermatSpiralPath(double kappa_max);
 
-    void updateWaypoints(const Vector2D &wpt_prev, const Vector2D &wpt, const Vector2D &wpt_next);
-
-    // Returns the point on the spiral for a given parameter u ∈ [0, u_max].
-    Vector2D getPoint(double u) const;
-
-    // Returns the first derivative with respect to u.
-    Vector2D getDerivative(double u) const;
-
-    // Returns the second derivative with respect to u.
-    Vector2D getSecondDerivative(double u) const;
+    void updateWaypoints(const Waypoints& waypoints);
 
     PathPoint getCompletePathPoint(const Vector2D &vessel);
 
-    // Samples the path from u = 0 to u = u_max with step delta_u.
-    std::vector<Vector2D> samplePath(double delta_u) const;
-
-    // --- Mirrored FS segment functions (for the exiting curve) ---
-    // The mirrored curve (eq. (20)) is reparameterized (letting u = sqrt(theta_end - theta)):
-    // p_mir(u) = [ x_end + k*u*cos(χ_end - ρ*u^2), y_end + k*u*sin(χ_end - ρ*u^2) ]
-    // where (x_end, y_end) = p( u_max ) is the end of the entering curve.
-    Vector2D getMirroredPoint(double u) const;
-    Vector2D getMirroredDerivative(double u) const;
-    Vector2D getMirroredSecondDerivative(double u) const;
-    double getUMax() const { return u_max_; }
-
+    // Samples the path segments from u = 0 to u = u_max with step delta_u.
+    Waypoints samplePath(double delta_u) const;
 
     // For debugging: print key parameters.
     void printParameters() const;
 
 private:
     // Input waypoints.
-    Vector2D wpt_prev_, wpt_, wpt_next_;
+    Waypoints waypoints_;
+
+    // Maximum curvature.
     double kappa_max_;
 
-    // Computed course change and angles.
-    double delta_chi_; // |Δχ|
-    double rho_;       // turning direction (+1 for anticlockwise, -1 for clockwise)
-    double chi0_;
-    double chi_end_;
+    // Structure to store FS parameters
+    struct FSParameters {
+        // - |Δχ|
+        double delta_chi; 
+        // - Turning direction (+1 for anticlockwise, -1 for clockwise)
+        double rho;    
+        // - Initial course angle for forward FS.
+        double chi0;
+        // - Final course angle for forward FS (mirrored segment uses this)
+        double chi_end;
+        // - Solution of θ + arctan(2θ) = |Δχ|
+        double theta_end; 
+        // - u_max = sqrt(theta_end)
+        double u_max;    
+        //Meeting point of two FS segments
+        double u_mid;
+        // - Scaling constant.
+        double k;         
+        // - Starting point of the spiral.
+        double x0, y0;
+        // - End point of the entering FS segment (used for the mirrored/exiting segment).
+        double x_end, y_end; 
+    };
 
-    // Domain and scaling parameters.
-    double theta_end_; // θ_end (from solving θ + arctan(2θ) = |Δχ|)
-    double u_max_;     // u_max = sqrt(theta_end_)
-    double k_;         // Scaling constant (see eq. (51))
 
-    // Starting point of the spiral.
-    double x0_, y0_;
+    // Helper: compute FS parameters from three waypoints (A, B, C).
+    FSParameters computeFSParameters(const Vector2D &A, const Vector2D &B, const Vector2D &C) const;
 
-    // End point of the entering FS segment (used for the mirrored/exiting segment).
-    double x_end_, y_end_; 
+    // Compute the FS point.
+    // When lambda > 0, we assume a forward FS segment and theta_end is ignored.
+    // When lambda < 0, we assume a mirrored FS segment and use theta_end to define τ = theta_end - theta.
+    Vector2D computeSpiralPoint(double theta, double base_angle, double lambda,
+                                double k, double rho, double x, double y, double theta_end) const;
+
+    // Compute the derivative of the FS point with respect to theta.
+    Vector2D computeSpiralDerivative(double theta, double base_angle, double lambda,
+                                     double k, double rho, double theta_end) const;
+
+    // Compute the second derivative of the FS point with respect to theta.
+    Vector2D computeSpiralSecondDerivative(double theta, double base_angle, double lambda,
+                                           double k, double rho, double theta_end) const;
+
+    PathPoint projectOntoLine(const Vector2D &A, const Vector2D &B, const Vector2D &vessel);
 
     // Helper functions.
     double f(double theta, double delta_chi) const;
@@ -147,13 +163,11 @@ private:
     double computeThetaEnd(double delta_chi) const;
     double computeScalingConstant(double theta_kappa_max, double kappa_max) const;
 
-    // Given a vessel's position and a desired normal angle (radians),
-    // returns the point on the path (with derivatives) closest to the vessel.
-    PathPoint getClosestPoint(const Vector2D &vessel, double normal_angle) const;
-
-    PathPoint getMirroredClosestPoint(const Vector2D &vessel, double normal_angle) const;
-
-    PathPoint projectOntoLine(const Vector2D &A, const Vector2D &B, const Vector2D &vessel);
+    // Newton–Raphson routine to find the closest point on a spiral segment.
+    // The search is limited to theta in [theta_lower, theta_upper].
+    PathPoint getClosestSpiralPoint(const FSParameters &params, bool mirrored,
+                                    const Vector2D &vessel, double normal_angle,
+                                    double theta_lower, double theta_upper) const;
 };
 
 // Add this non-member function after the Vector2D class definition
