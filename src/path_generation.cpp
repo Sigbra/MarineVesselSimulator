@@ -68,10 +68,14 @@ void StraightLinePath::printParameters() const {
 }
 
 
+
 //------------------------------------------------------
 // FermatSpiralPath Class Implementation
 //------------------------------------------------------
-FermatSpiralPath::FermatSpiralPath(double kappa_max) : kappa_max_(kappa_max){}
+FermatSpiralPath::FermatSpiralPath(double kappa_max) : kappa_max_(kappa_max){
+    theta_kappa_max = 0.2699549107922; //compute_local_theta_kappa_max(kappa_max);
+    std::cout << "theta_kappa_max: " << theta_kappa_max << std::endl;
+}
 
 void FermatSpiralPath::updateWaypoints(const Waypoints& waypoints) {
     if (waypoints.size() < 2)
@@ -79,109 +83,107 @@ void FermatSpiralPath::updateWaypoints(const Waypoints& waypoints) {
     waypoints_ = waypoints;
 }
 
-FermatSpiralPath::FSParameters FermatSpiralPath::computeFSParameters(const Vector2D &A, 
-                                                                      const Vector2D &B, 
-                                                                      const Vector2D &C) const {
+FermatSpiralPath::FSParameters FermatSpiralPath::computeFSParameters(const Vector2D &A,
+                                                                       const Vector2D &B,
+                                                                       const Vector2D &C) const
+{
     FSParameters params;
+
+    // 1) Compute normalized directions v_in, v_out.
     Vector2D v_in  = (B - A).normalized();
     Vector2D v_out = (C - B).normalized();
-    double dotVal = std::max(-1.0, std::min(1.0, v_in.dot(v_out)));
+
+    // 2) Compute the course change and turning direction.
+    double dotVal = v_in.dot(v_out);
     params.delta_chi = std::acos(dotVal);
+    std::cout << "delta_chi: " << params.delta_chi << std::endl;
     params.rho = - sign(v_in.y * v_out.x - v_in.x * v_out.y);
-    params.chi0 = std::atan2(v_in.y, v_in.x);
+
+    // 3) Initial/final course angles.
+    params.chi0    = std::atan2(v_in.y,  v_in.x);
     params.chi_end = std::atan2(v_out.y, v_out.x);
-    // Compute theta_end using Halley's method:
+
+    // 4) Solve for θ_end via Halley's method.
     params.theta_end = computeThetaEnd(params.delta_chi);
-    // Now the parameter θ itself spans [0, theta_end].
-    params.u_max = params.theta_end;  // now u_max is theta_end
-    const double theta_max_intrinsic = 0.27;
-    double theta_kappa_max = (params.theta_end < theta_max_intrinsic) ? params.theta_end : theta_max_intrinsic;
-    params.k = computeScalingConstant(theta_kappa_max, kappa_max_);
+    std::cout << "theta_end: " << params.theta_end << std::endl;
+
+    double local_theta_kappa_max = std::min(params.theta_end, theta_kappa_max);
+
+    // 6) Compute scaling constant k using eq. (51) in the paper.
+    params.k = computeScalingConstant(local_theta_kappa_max, kappa_max_);
+    std::cout << "k: " << params.k << std::endl;
+
+    double l = computeDistanceForCorner(params.k, params.theta_end, params.delta_chi);
+    std::cout << "l: " << l << std::endl;
+    std::cout << "v_in: " << v_in.x << " " << v_in.y << std::endl;
+    std::cout << "v_out: " << v_out.x << " " << v_out.y << std::endl;
     
-    // Compute the wheel-over point p0:
-    double l1 = params.k * std::sqrt(params.theta_end) * std::cos(params.theta_end);
-    Vector2D p0 = B - v_in * l1;
-    params.x0 = p0.x;
-    params.y0 = p0.y;
-    
-    // Compute the pull-out point p_end (using the forward FS equation at theta = theta_end).
-    Vector2D pend = computeSpiralPoint(params.theta_end, params.chi0, +1, params.k, params.rho, params.x0, params.y0, 0.0);
-    params.x_end = pend.x;
-    params.y_end = pend.y;
-    
-    // Compute the meeting parameter θ_mid so that the forward FS covers half the turn.
-    double halfTurn = (params.chi_end - params.chi0) / 2.0;
-    params.u_mid = std::sqrt(std::fabs(halfTurn));  // note: with ρ = ±1, this is √(|χ_end-χ0|/2)
-    
+    params.point1 = B - v_in * l; 
+    params.point2 = B + v_out * l;
+    params.x0 = params.point1.x;
+    params.y0 = params.point1.y;
+    params.x_end = params.point2.x;
+    params.y_end = params.point2.y;
+
+    params.u_max = std::sqrt(params.theta_end);
+    params.u_mid = std::sqrt(params.theta_end/2);
+
     return params;
 }
 
+
 // Forward: use lambda > 0; mirrored: lambda < 0.
-// When lambda > 0, theta_end is not used (pass 0).
-Vector2D FermatSpiralPath::computeSpiralPoint(double theta, double base_angle, double lambda,
-                                                double k, double rho, double x, double y, double theta_end) const {
+Vector2D FermatSpiralPath::computeSpiralPoint(double u, double base_angle, double lambda,
+                                              double k, double rho, double x, double y, double u_max) const {
     if (lambda > 0) {
-        // Forward FS:
-        // p_FS(θ) = [ x + k*sqrt(θ) cos(ρθ + base_angle);
-        //             y + k*sqrt(θ) sin(ρθ + base_angle) ]
-        return Vector2D(x + k * std::sqrt(theta) * std::cos(rho * theta + base_angle),
-                        y + k * std::sqrt(theta) * std::sin(rho * theta + base_angle));
+        // Forward FS: u ∈ [0, u_max]
+        // Here, u replaces sqrt(theta) and u*u replaces theta.
+        return Vector2D(x + k * u * std::cos(rho * u * u + base_angle),
+                        y + k * u * std::sin(rho * u * u + base_angle));
     } else {
-        // Mirrored FS:
-        // Let τ = theta_end - theta.
-        double tau = theta_end - theta;
-        // p_FS_M(θ) = [ x + k*sqrt(τ) cos(ρ(θ - theta_end) + base_angle);
-        //               y + k*sqrt(τ) sin(ρ(θ - theta_end) + base_angle) ]
-        return Vector2D(x + k * std::sqrt(tau) * std::cos(rho * (theta - theta_end) + base_angle),
-                        y + k * std::sqrt(tau) * std::sin(rho * (theta - theta_end) + base_angle));
+        // Mirrored FS: we define u' = u_max - u so that the parameter increases from 0 to u_max.
+        double u_prime = u_max - u;
+        return Vector2D(x + k * u_prime * std::cos(rho * u_prime * u_prime + base_angle),
+                        y + k * u_prime * std::sin(rho * u_prime * u_prime + base_angle));
     }
 }
 
-
-Vector2D FermatSpiralPath::computeSpiralDerivative(double theta, double base_angle, double lambda,
-                                                     double k, double rho, double theta_end) const {
+Vector2D FermatSpiralPath::computeSpiralDerivative(double u, double base_angle, double lambda,
+                                                     double k, double rho, double u_max) const {
     if (lambda > 0) {
-        // Forward FS derivative:
-        // p_FS_dot(θ) = k/(2√θ)*[ cos(ρθ+base_angle) - 2ρθ sin(ρθ+base_angle);
-        //                         sin(ρθ+base_angle) + 2ρθ cos(ρθ+base_angle) ]
-        return Vector2D( k/(2.0 * std::sqrt(theta)) *
-                         ( std::cos(rho*theta + base_angle) - 2.0 * rho * theta * std::sin(rho*theta + base_angle) ),
-                         k/(2.0 * std::sqrt(theta)) *
-                         ( std::sin(rho*theta + base_angle) + 2.0 * rho * theta * std::cos(rho*theta + base_angle) ));
+        // Forward FS derivative with respect to u:
+        double common = rho * u * u + base_angle;
+        double dx_du = k * std::cos(common) - 2.0 * k * rho * u * u * std::sin(common);
+        double dy_du = k * std::sin(common) + 2.0 * k * rho * u * u * std::cos(common);
+        return Vector2D(dx_du, dy_du);
     } else {
-        // Mirrored FS derivative:
-        double tau = theta_end - theta;
-        // p_FS_M_dot(θ) = -k/(2√τ)*[ cos(ρ(θ-θ_end)+base_angle) + 2ρτ sin(ρ(θ-θ_end)+base_angle);
-        //                           sin(ρ(θ-θ_end)+base_angle) - 2ρτ cos(ρ(θ-θ_end)+base_angle) ]
-        return Vector2D( -k/(2.0 * std::sqrt(tau)) *
-                         ( std::cos(rho*(theta - theta_end) + base_angle) + 2.0 * rho * tau * std::sin(rho*(theta - theta_end) + base_angle) ),
-                         -k/(2.0 * std::sqrt(tau)) *
-                         ( std::sin(rho*(theta - theta_end) + base_angle) - 2.0 * rho * tau * std::cos(rho*(theta - theta_end) + base_angle) ));
+        // For mirrored FS, let u' = u_max - u. Then the derivative with respect to u is:
+        double u_prime = u_max - u;
+        double common = rho * u_prime * u_prime + base_angle;
+        double dx_du_prime = k * std::cos(common) - 2.0 * k * rho * u_prime * u_prime * std::sin(common);
+        double dy_du_prime = k * std::sin(common) + 2.0 * k * rho * u_prime * u_prime * std::cos(common);
+        return Vector2D(dx_du_prime, dy_du_prime);
     }
 }
 
-Vector2D FermatSpiralPath::computeSpiralSecondDerivative(double theta, double base_angle, double lambda,
-                                                           double k, double rho, double theta_end) const {
+Vector2D FermatSpiralPath::computeSpiralSecondDerivative(double u, double base_angle, double lambda,
+                                                           double k, double rho, double u_max) const {
+
     if (lambda > 0) {
-        // Forward FS second derivative:
-        // p_FS_ddot(θ) = -k/(4θ^(3/2))*[ (4θ^2+1)*cos(ρθ+base_angle) + 4ρθ sin(ρθ+base_angle);
-        //                               (4θ^2+1)*sin(ρθ+base_angle) - 4ρθ cos(ρθ+base_angle) ]
-        return Vector2D( -k/(4.0 * std::pow(theta, 3.0/2.0)) *
-                         ( (4.0*theta*theta + 1.0) * std::cos(rho*theta + base_angle) + 4.0 * rho * theta * std::sin(rho*theta + base_angle) ),
-                         -k/(4.0 * std::pow(theta, 3.0/2.0)) *
-                         ( (4.0*theta*theta + 1.0) * std::sin(rho*theta + base_angle) - 4.0 * rho * theta * std::cos(rho*theta + base_angle) ));
+        double common = rho * u * u + base_angle;
+        double d2x_du2 = -6.0 * k * rho * u * std::sin(common) - 4.0 * k * rho * rho * u * u * u * std::cos(common);
+        double d2y_du2 =  6.0 * k * rho * u * std::cos(common) - 4.0 * k * rho * rho * u * u * u * std::sin(common);
+        return Vector2D(d2x_du2, d2y_du2);
     } else {
-        // Mirrored FS second derivative:
-        double tau = theta_end - theta;
-        // p_FS_M_ddot(θ) = -k/(4τ^(3/2))*[ (4τ^2+1)*cos(ρ(θ-θ_end)+base_angle) - 4ρτ sin(ρ(θ-θ_end)+base_angle);
-        //                                (4τ^2+1)*sin(ρ(θ-θ_end)+base_angle) + 4ρτ cos(ρ(θ-θ_end)+base_angle) ]
-        return Vector2D( -k/(4.0 * std::pow(tau, 3.0/2.0)) *
-                         ( (4.0*tau*tau + 1.0) * std::cos(rho*(theta - theta_end) + base_angle) - 4.0 * rho * tau * std::sin(rho*(theta - theta_end) + base_angle) ),
-                         -k/(4.0 * std::pow(tau, 3.0/2.0)) *
-                         ( (4.0*tau*tau + 1.0) * std::sin(rho*(theta - theta_end) + base_angle) + 4.0 * rho * tau * std::cos(rho*(theta - theta_end) + base_angle) ));
+        double u_prime = u_max - u;
+        double common = rho * u_prime * u_prime + base_angle;
+        double d2x_duprime2 = -6.0 * k * rho * u_prime * std::sin(common) - 4.0 * k * rho * rho * u_prime * u_prime * u_prime * std::cos(common);
+        double d2y_duprime2 =  6.0 * k * rho * u_prime * std::cos(common) - 4.0 * k * rho * rho * u_prime * u_prime * u_prime * std::sin(common);
+        return Vector2D(d2x_duprime2, d2y_duprime2);
     }
 }
 
+// Helper functions for computing theta_end
 double FermatSpiralPath::f(double theta, double delta_chi) const {
     return theta + std::atan(2.0 * theta) - delta_chi;
 }
@@ -214,10 +216,66 @@ double FermatSpiralPath::computeThetaEnd(double delta_chi) const {
     return theta;
 }
 
+double FermatSpiralPath::computeThetaMid(FSParameters params) const {
+    double theta_mid = params.theta_end / 2.0;  // initial guess
+    double tol = 1e-6;
+    int maxIter = 20;
+    double rho = params.rho;
+    double k = params.k;
+    double chi0 = params.chi0;
+    double x0 = params.point1.x;
+    double y0 = params.point1.y;
+
+    for (int iter = 0; iter < maxIter; iter++) {
+    double sqrt_theta = std::sqrt(theta_mid);
+    double cos_term = std::cos(rho * theta_mid + chi0);
+    double sin_term = std::sin(rho * theta_mid + chi0);
+
+    // Compute current spiral position at theta_mid
+    Vector2D p_theta(x0 + k * sqrt_theta * cos_term, 
+                     y0 + k * sqrt_theta * sin_term);
+
+    // Residual: difference between current and desired midpoint_pos
+    Vector2D r = p_theta - params.midpoint_pos;
+
+    double f_norm = r.norm();
+
+    // Check convergence
+    if (f_norm < tol) {
+        break;
+    }
+
+    // Derivative calculation explicitly
+    Vector2D dp_dtheta = Vector2D(
+        k * (0.5 / sqrt_theta * cos_term - sqrt_theta * rho * sin_term),
+        k * (0.5 / sqrt_theta * sin_term + sqrt_theta * rho * cos_term)
+    );
+
+    // Newton step explicitly calculated
+    double dtheta = -(r.dot(dp_dtheta)) / dp_dtheta.dot(dp_dtheta);
+
+    // Update theta_mid
+    theta_mid += dtheta;
+
+    // Ensure theta_mid remains positive
+    theta_mid = std::max(theta_mid, 1e-6);
+    }
+
+    return theta_mid;
+}
+
 double FermatSpiralPath::computeScalingConstant(double theta_kappa_max, double kappa_max) const {
     return (1.0 / kappa_max) * 2 * std::sqrt(theta_kappa_max) * 
            ((3.0 + 4.0 * theta_kappa_max * theta_kappa_max) /
            std::pow(1.0 + 4.0 * theta_kappa_max * theta_kappa_max, 1.5));
+}
+
+double FermatSpiralPath::computeDistanceForCorner(double k, double theta_end, double delta_chi) const {
+    double l1 = k * std::sqrt(theta_end) * std::cos(theta_end);
+    double h  = k * std::sqrt(theta_end) * std::sin(theta_end);
+    double alpha = (M_PI - delta_chi) / 2.0;
+    double l2 = h / std::tan(alpha);
+    return l1 + l2;
 }
 
 PathPoint FermatSpiralPath::projectOntoLine(const Vector2D &A, const Vector2D &B, const Vector2D &vessel) {
@@ -232,66 +290,83 @@ PathPoint FermatSpiralPath::projectOntoLine(const Vector2D &A, const Vector2D &B
 }
 
 // Newton–Raphson for finding the closest point on an FS segment.
-// Revised getClosestSpiralPoint.
-// We now constrain the search to theta ∈ [theta_lower, theta_upper].
+
 PathPoint FermatSpiralPath::getClosestSpiralPoint(const FSParameters &params, bool mirrored,
                                                   const Vector2D &vessel, double normal_angle,
                                                   double theta_lower, double theta_upper) const {
+    // Reparameterize the search interval:
+    // For a given original θ interval [theta_lower, theta_upper],
+    // we define u_lower = √(theta_lower) and u_upper = √(theta_upper).
     double lambda = mirrored ? -1.0 : +1.0;
     double base_angle = mirrored ? params.chi_end : params.chi0;
     double x0 = mirrored ? params.x_end : params.x0;
     double y0 = mirrored ? params.y_end : params.y0;
-    // Initial guess: the midpoint of the interval.
-    double theta_val = (theta_lower + theta_upper) / 2.0;
+    double u_lower = std::sqrt(theta_lower);
+    double u_upper = std::sqrt(theta_upper);
+    // For the forward case, we let u_max = u_upper;
+    // for the mirrored case, u_max = √(θₑₙd)
+    double u_max = mirrored ? std::sqrt(params.theta_end) : u_upper;
+    // Initial guess for u (midpoint of the u interval)
+    double u_val = (u_lower + u_upper) / 2.0;
     const double tol = 1e-4;
     const int maxIter = 20;
     for (int iter = 0; iter < maxIter; ++iter) {
-        Vector2D diff = computeSpiralPoint(theta_val, base_angle, lambda, params.k, params.rho, x0, y0, params.theta_end) - vessel;
+        Vector2D diff = computeSpiralPoint(u_val, base_angle, lambda, params.k, params.rho, x0, y0, u_max) - vessel;
         double f_val = std::atan2(diff.y, diff.x) - normal_angle;
+        // Normalize the angle to (–π, π)
         while (f_val > M_PI)  f_val -= 2 * M_PI;
         while (f_val < -M_PI) f_val += 2 * M_PI;
-        Vector2D dP = computeSpiralDerivative(theta_val, base_angle, lambda, params.k, params.rho, params.theta_end);
+        Vector2D dP = computeSpiralDerivative(u_val, base_angle, lambda, params.k, params.rho, u_max);
         double f_der = (dP.x * diff.y - dP.y * diff.x) / (diff.x * diff.x + diff.y * diff.y);
-        double dtheta = -f_val / f_der;
-        theta_val += dtheta;
-        if (theta_val < theta_lower) theta_val = theta_lower;
-        if (theta_val > theta_upper) theta_val = theta_upper;
-        if (std::abs(dtheta) < tol)
+        double du = -f_val / f_der;
+        u_val += du;
+        if (u_val < u_lower) u_val = u_lower;
+        if (u_val > u_upper) u_val = u_upper;
+        if (std::abs(du) < tol)
             break;
     }
     PathPoint pp;
-    pp.pos   = computeSpiralPoint(theta_val, base_angle, lambda, params.k, params.rho, x0, y0, params.theta_end);
-    pp.dpos  = computeSpiralDerivative(theta_val, base_angle, lambda, params.k, params.rho, params.theta_end);
-    pp.ddpos = computeSpiralSecondDerivative(theta_val, base_angle, lambda, params.k, params.rho, params.theta_end);
+    pp.pos   = computeSpiralPoint(u_val, base_angle, lambda, params.k, params.rho, x0, y0, u_max);
+    pp.dpos  = computeSpiralDerivative(u_val, base_angle, lambda, params.k, params.rho, u_max);
+    pp.ddpos = computeSpiralSecondDerivative(u_val, base_angle, lambda, params.k, params.rho, u_max);
     return pp;
 }
 
 PathPoint FermatSpiralPath::getCompletePathPoint(const Vector2D &vessel) {
     std::vector<PathPoint> candidates;
-    // Candidate from straight-line segments.
+
+    // Project vessel onto all straight-line segments.
     for (size_t i = 1; i < waypoints_.size(); ++i) {
         candidates.push_back(projectOntoLine(waypoints_[i-1], waypoints_[i], vessel));
     }
-    // For interior corners, consider FS transitions.
+
+    // Consider Fermat Spiral (FS) transitions at corners (B).
     if (waypoints_.size() >= 3) {
         for (size_t i = 1; i < waypoints_.size() - 1; ++i) {
-            FSParameters params = computeFSParameters(waypoints_[i-1], waypoints_[i], waypoints_[i+1]);
-            // Forward candidate: search in [0, θ_mid].
-            double theta_mid = params.u_mid; // u_mid stored from computeFSParameters
+            const Vector2D &A = waypoints_[i-1];
+            const Vector2D &B = waypoints_[i];
+            const Vector2D &C = waypoints_[i+1];
+
+            FSParameters params = computeFSParameters(A, B, C);
+            double theta_mid = params.theta_end;
+
+            // Forward FS candidate:
             Vector2D forward_start = computeSpiralPoint(0.0, params.chi0, +1, params.k, params.rho, params.x0, params.y0, 0.0);
             double normal_angle_forward = std::atan2(vessel.y - forward_start.y, vessel.x - forward_start.x);
             PathPoint pp_forward = getClosestSpiralPoint(params, false, vessel, normal_angle_forward, 0.0, theta_mid);
             candidates.push_back(pp_forward);
-            
-            // Mirrored candidate: search in [θ_mid, θ_end].
+
+            // Mirrored FS candidate:
             Vector2D mirrored_start = computeSpiralPoint(params.theta_end, params.chi_end, -1, params.k, params.rho, params.x_end, params.y_end, params.theta_end);
             double normal_angle_mirrored = std::atan2(vessel.y - mirrored_start.y, vessel.x - mirrored_start.x);
             PathPoint pp_mirrored = getClosestSpiralPoint(params, true, vessel, normal_angle_mirrored, theta_mid, params.theta_end);
             candidates.push_back(pp_mirrored);
         }
     }
+
     if (candidates.empty())
         throw std::runtime_error("No segments available for projection.");
+
     PathPoint best = candidates[0];
     double dmin = (best.pos - vessel).norm();
     for (const auto &pp : candidates) {
@@ -304,77 +379,91 @@ PathPoint FermatSpiralPath::getCompletePathPoint(const Vector2D &vessel) {
     return best;
 }
 
-Waypoints FermatSpiralPath::samplePath(double delta_u) const {
+Waypoints FermatSpiralPath::samplePath(double delta_u) const
+{
     Waypoints path;
-    size_t N = waypoints_.size();
-    if (N < 2)
-        return path;
-    
-    // Lambda to sample a straight line between two points.
-    auto sampleLine = [&](const Vector2D &start, const Vector2D &end, int numSamples) {
-        for (int j = 0; j <= numSamples; ++j) {
-            double t = double(j) / numSamples;
-            Vector2D pt = start + t * (end - start);
-            path.push_back(pt);
-        }
-    };
+    double step_line = 0.5;  // step for straight segments
 
-    // If exactly two waypoints, sample a straight line.
-    if (N == 2) {
-        sampleLine(waypoints_.front(), waypoints_.back(), 20);
-        return path;
-    }
-    
-    // --- First corner (at waypoint[1]) ---
-    FSParameters params = computeFSParameters(waypoints_[0], waypoints_[1], waypoints_[2]);
-    double theta_mid = params.u_mid;  // meeting parameter
-    // (A) Straight line from waypoint[0] to FS entry point (p0).
-    Vector2D p0(params.x0, params.y0);
-    sampleLine(waypoints_[0], p0, 10);
-    // (B) Forward FS segment from θ=0 to θ=θ_mid.
-    for (double theta = 0.0; theta <= theta_mid + 1e-9; theta += delta_u) {
-        Vector2D pt = computeSpiralPoint(theta, params.chi0, +1, params.k, params.rho, params.x0, params.y0, 0.0);
-        path.push_back(pt);
-    }
-    // (C) Mirrored FS segment from θ=θ_mid to θ=θ_end.
-    for (double theta = theta_mid; theta <= params.theta_end + 1e-9; theta += delta_u) {
-        Vector2D pt = computeSpiralPoint(theta, params.chi_end, -1, params.k, params.rho, params.x_end, params.y_end, params.theta_end);
-        path.push_back(pt);
-    }
-    // (D) Straight line from FS exit (at θ=θ_end) to waypoint[1].
-    Vector2D p_exit = computeSpiralPoint(params.theta_end, params.chi_end, -1, params.k, params.rho, params.x_end, params.y_end, params.theta_end);
-    sampleLine(p_exit, waypoints_[1], 10);
-    
-    Vector2D prev_exit = p_exit;
-    
-    // --- Interior corners (i = 2 to N-2) ---
-    for (size_t i = 2; i < N - 1; ++i) {
-        FSParameters curr_params = computeFSParameters(waypoints_[i-1], waypoints_[i], waypoints_[i+1]);
-        double curr_theta_mid = curr_params.u_mid;
-        Vector2D curr_p0(curr_params.x0, curr_params.y0);
-        // (A) Straight line from previous FS exit to current FS entry.
-        sampleLine(prev_exit, curr_p0, 10);
-        // (B) Forward FS segment for current corner: θ from 0 to θ_mid.
-        for (double theta = 0.0; theta <= curr_theta_mid + 1e-9; theta += delta_u) {
-            Vector2D pt = computeSpiralPoint(theta, curr_params.chi0, +1, curr_params.k, curr_params.rho, curr_params.x0, curr_params.y0, 0.0);
-            path.push_back(pt);
+    // Start from the first waypoint
+    Vector2D prev_end = waypoints_[0];
+    path.push_back(prev_end);
+
+    // Loop over each corner (the middle waypoint of each triplet)
+    for (size_t i = 1; i < waypoints_.size() - 1; ++i)
+    {
+        // A, B, C are consecutive waypoints
+        const Vector2D &A = waypoints_[i - 1];
+        const Vector2D &B = waypoints_[i];
+        const Vector2D &C = waypoints_[i + 1];
+
+        // Compute Fermat Spiral parameters for this corner
+        FSParameters params = computeFSParameters(A, B, C);
+
+        // 1) Straight line from the last end to the wheel‐over point1
+        {
+            Vector2D dir = (params.point1 - prev_end).normalized();
+            double dist = (params.point1 - prev_end).norm();
+            for (double d = 0.0; d < dist; d += step_line) {
+                path.push_back(prev_end + dir * d);
+            }
+            // ensure the exact endpoint
+            path.push_back(params.point1);
         }
-        // (C) Mirrored FS segment for current corner: θ from θ_mid to θ_end.
-        for (double theta = curr_theta_mid; theta <= curr_params.theta_end + 1e-9; theta += delta_u) {
-            Vector2D pt = computeSpiralPoint(theta, curr_params.chi_end, -1, curr_params.k, curr_params.rho, curr_params.x_end, curr_params.y_end, curr_params.theta_end);
-            path.push_back(pt);
+
+        // 2) Forward FS: u ∈ [0..u_max]
+        {
+            for (double u = 0.0; u <= params.u_max; u += delta_u)
+            {
+                Vector2D pt = computeSpiralPoint(
+                    u,
+                    params.chi0,     
+                    +1.0,           
+                    params.k,
+                    params.rho,
+                    params.x0,
+                    params.y0,
+                    params.u_max    
+                );
+                path.push_back(pt);
+            }
         }
-        // (D) Straight line from current FS exit to waypoint[i].
-        Vector2D curr_exit = computeSpiralPoint(curr_params.theta_end, curr_params.chi_end, -1, curr_params.k, curr_params.rho, curr_params.x_end, curr_params.y_end, curr_params.theta_end);
-        sampleLine(curr_exit, waypoints_[i], 10);
-        prev_exit = curr_exit;
+
+        // 3) Mirrored FS: u ∈ [0..u_max]
+        {
+            for (double u = 0.0; u <= params.u_max; u += delta_u)
+            {
+                Vector2D pt = computeSpiralPoint(
+                    u,
+                    params.chi_end,  
+                    -1.0,            
+                    params.k,
+                    params.rho,
+                    params.x_end,
+                    params.y_end,
+                    params.u_max
+                );
+                path.push_back(pt);
+            }
+        }
+
+        // 4) Update prev_end to the final “pull‐out” point2
+        prev_end = params.point2;
     }
-    
-    // --- Final segment: straight line from last interior FS exit to final waypoint.
-    sampleLine(prev_exit, waypoints_.back(), 20);
-    
+
+    // Final straight line from last corner to the last waypoint
+    if (!waypoints_.empty()) {
+        Vector2D last_wp = waypoints_.back();
+        Vector2D dir = (last_wp - prev_end).normalized();
+        double dist = (last_wp - prev_end).norm();
+        for (double d = 0.0; d < dist; d += step_line) {
+            path.push_back(prev_end + dir * d);
+        }
+        path.push_back(last_wp);
+    }
+
     return path;
 }
+
 
 
 void FermatSpiralPath::printParameters() const {
@@ -384,4 +473,36 @@ void FermatSpiralPath::printParameters() const {
     for (size_t i = 0; i < std::min(waypoints_.size(), size_t(5)); ++i) {
         std::cout << "Waypoint " << i << ": (" << waypoints_[i].x << ", " << waypoints_[i].y << ")\n";
     }
+}
+
+double SpiralCurvature(double theta, double kappa_max) {
+    return (2.0 * std::sqrt(theta) * (3.0 + 4.0 * theta * theta)) /
+           (kappa_max * std::pow(1.0 + 4.0 * theta * theta, 1.5));
+}
+
+double SpiralCurvatureDerivative(double theta, double kappa_max) {
+    double numerator = (3.0 - 24.0 * theta * theta - 16.0 * theta * theta * theta * theta);
+    double denominator = kappa_max * std::sqrt(theta) * std::pow(1.0 + 4.0 * theta * theta, 2.5);
+    return numerator / denominator;
+}
+
+// Newton-Raphson method to find theta_kappa_max for given kappa_max
+double compute_local_theta_kappa_max(double kappa_max, double initial_guess, double tol, int max_iter) {
+    double theta = initial_guess;
+
+    for (int i = 0; i < max_iter; ++i) {
+        double g_prime_val = SpiralCurvatureDerivative(theta, kappa_max);
+        double h = 1e-5; // Finite difference for second derivative approximation
+        double g_prime_prime_val = (SpiralCurvatureDerivative(theta + h, kappa_max) - SpiralCurvatureDerivative(theta - h, kappa_max)) / (2 * h);
+
+        double theta_next = theta - g_prime_val / g_prime_prime_val;
+
+        if (std::abs(theta_next - theta) < tol)
+            return theta_next;
+
+        theta = theta_next;
+    }
+
+    std::cerr << "Warning: compute_theta_kappa_max did not converge" << std::endl;
+    return theta;
 }

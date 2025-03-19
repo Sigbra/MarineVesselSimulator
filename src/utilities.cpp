@@ -106,7 +106,6 @@ void storeSimulationData(const Eigen::MatrixXd& simdata, std::string filename) {
 }
 
 void plotPath(const Waypoints& path) {
-
     // Check if the path is empty.
     if (path.empty()) {
         std::cerr << "Warning: The path is empty. Nothing to plot." << std::endl;
@@ -127,11 +126,13 @@ void plotPath(const Waypoints& path) {
         plt::xlabel("X");
         plt::ylabel("Y");
         plt::grid(true);
+        plt::axis("equal");    // Ensure equal scaling for x and y.
         plt::show();
     } catch (const std::exception &e) {
         std::cerr << "Exception during plotting: " << e.what() << std::endl;
     }
 }
+
 
 void plotTrajectory() {
     std::filesystem::path filepath = std::filesystem::path(getRepositoryPath()) / "data" / "simdata.csv";

@@ -65,7 +65,7 @@ struct PathPoint {
 };
 
 //----------------------------------------------------------
-// Path Generation Class Declaration
+// StraightLinePath Class Declaration
 //----------------------------------------------------------
 class StraightLinePath {
 public:
@@ -111,6 +111,7 @@ private:
 
     // Maximum curvature.
     double kappa_max_;
+    double theta_kappa_max;
 
     // Structure to store FS parameters
     struct FSParameters {
@@ -128,11 +129,15 @@ private:
         double u_max;    
         //Meeting point of two FS segments
         double u_mid;
+        //Midpoint position of the FS segment
+        Vector2D midpoint_pos;
         // - Scaling constant.
         double k;         
-        // - Starting point of the spiral.
+        // - Starting point and end point of the spiral.
+        Vector2D point1, point2;
+        // - Previous waypoint.
         double x0, y0;
-        // - End point of the entering FS segment (used for the mirrored/exiting segment).
+        // - Next waypoint.
         double x_end, y_end; 
     };
 
@@ -140,19 +145,23 @@ private:
     // Helper: compute FS parameters from three waypoints (A, B, C).
     FSParameters computeFSParameters(const Vector2D &A, const Vector2D &B, const Vector2D &C) const;
 
+    // FSParameters computeFSParametersCorner(const Vector2D &point1,
+    //                                         const Vector2D &B,
+    //                                         const Vector2D &point2) const;
+
     // Compute the FS point.
     // When lambda > 0, we assume a forward FS segment and theta_end is ignored.
     // When lambda < 0, we assume a mirrored FS segment and use theta_end to define τ = theta_end - theta.
-    Vector2D computeSpiralPoint(double theta, double base_angle, double lambda,
-                                double k, double rho, double x, double y, double theta_end) const;
+    Vector2D computeSpiralPoint(double u, double base_angle, double lambda,
+                                double k, double rho, double x, double y, double u_max) const;
 
     // Compute the derivative of the FS point with respect to theta.
-    Vector2D computeSpiralDerivative(double theta, double base_angle, double lambda,
-                                     double k, double rho, double theta_end) const;
+    Vector2D computeSpiralDerivative(double u, double base_angle, double lambda,
+                                     double k, double rho, double u_max) const;
 
     // Compute the second derivative of the FS point with respect to theta.
-    Vector2D computeSpiralSecondDerivative(double theta, double base_angle, double lambda,
-                                           double k, double rho, double theta_end) const;
+    Vector2D computeSpiralSecondDerivative(double u, double base_angle, double lambda,
+                                           double k, double rho, double u_max) const;
 
     PathPoint projectOntoLine(const Vector2D &A, const Vector2D &B, const Vector2D &vessel);
 
@@ -161,18 +170,27 @@ private:
     double fprime(double theta) const;
     double fsecond(double theta) const;
     double computeThetaEnd(double delta_chi) const;
+    double computeThetaMid(FSParameters params) const;
     double computeScalingConstant(double theta_kappa_max, double kappa_max) const;
+    double computeDistanceForCorner(double k, double theta_end, double delta_chi) const;
 
     // Newton–Raphson routine to find the closest point on a spiral segment.
     // The search is limited to theta in [theta_lower, theta_upper].
     PathPoint getClosestSpiralPoint(const FSParameters &params, bool mirrored,
                                     const Vector2D &vessel, double normal_angle,
-                                    double theta_lower, double theta_upper) const;
+                                    double u_lower, double u_upper) const;
 };
 
 // Add this non-member function after the Vector2D class definition
 inline Vector2D operator*(double s, const Vector2D& v) {
     return v * s;  // Reuse the existing Vector2D * double operator
 }
+
+double SpiralCurvature(double theta, double kappa_max);
+
+double SpiralCurvatureDerivative(double theta, double kappa_max);
+
+// Newton-Raphson method to find theta_kappa_max for given kappa_max
+double compute_local_theta_kappa_max(double kappa_max, double initial_guess = 0.3, double tol = 1e-6, int max_iter = 20);
 
 #endif // FERMAT_SPIRAL_PATH_HPP

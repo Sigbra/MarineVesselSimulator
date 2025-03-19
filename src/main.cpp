@@ -17,6 +17,7 @@ int selectPathType() {
     std::cout << "Choose Path Type:" << std::endl;
     std::cout << "1. Straight Line Path" << std::endl;
     std::cout << "2. Continuous-Curvature Path Using Fermat's Spiral" << std::endl;
+    std::cout << "3. Clothoid Path" << std::endl;
     
     int choice = 0;
     while (true) {
@@ -94,7 +95,7 @@ int main() {
 
     // Create the Fermat spiral path.
     // - Set the curvature constraint (κ_max in rad/m).
-    double kappa_max = 0.2;
+    double kappa_max = 1; //Do not change this value without changing the theta_kappa_max in the path_generation.cpp file.
     FermatSpiralPath spiral(kappa_max);
     spiral.updateWaypoints(wpt);
     Waypoints path = spiral.samplePath(0.01);
@@ -102,6 +103,7 @@ int main() {
     plotPath(path);
 
     StraightLinePath straightLinePath;
+    
 
     // Initialize guidance methods and LOS observer 
     double delta = 5.0; // Lookahead distance
