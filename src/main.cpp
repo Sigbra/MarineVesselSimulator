@@ -98,7 +98,7 @@ int main() {
     double kappa_max = 1; //Do not change this value without changing the theta_kappa_max in the path_generation.cpp file.
     FermatSpiralPath spiral(kappa_max);
     spiral.updateWaypoints(wpt);
-    Waypoints path = spiral.samplePath(0.01);
+    Waypoints path = spiral.samplePath(0.001);
     std::cout << "Path size: " << path.size() << std::endl;
     plotPath(path);
 
