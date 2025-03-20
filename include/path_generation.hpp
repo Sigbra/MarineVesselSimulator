@@ -85,24 +85,28 @@ private:
 
 //----------------------------------------------------------
 // FermatSpiralPath Class Declaration
+//----------------------------------------------------------
+// Generates a path/trajectory combining straight line segments and Fermat's spiral curves.
+//
 // Based on the paper "Continuous-Curvature Path Generation Using Fermat's Spiral"
 // by Anastasios M. Lekkas, Andreas R. Dahl, Morten Breivik, Thor I. Fossen.
 // Modeling, Identification and Control, Vol. 34, No. 4, 2013, pp. 183–198, ISSN 1890–1328
 //----------------------------------------------------------
 class FermatSpiralPath {
 public:
-    // Constructor:
-    //  - kappa_max: the curvature constraint (rad/m).
     FermatSpiralPath(double kappa_max);
 
     void updateWaypoints(const Waypoints& waypoints);
 
+    //Path following
     PathPoint getCompletePathPoint(const Vector2D &vessel);
 
-    // Samples the path segments from u = 0 to u = u_max with step delta_u.
-    Waypoints samplePath(double delta_u) const;
+    // Trajectory tracking
+    // - Not yet implemented
 
-    // For debugging: print key parameters.
+    // Data access
+    Waypoints samplePath(double delta) const;
+
     void printParameters() const;
 
 private:
@@ -111,11 +115,12 @@ private:
 
     // Maximum curvature.
     double kappa_max_;
+    // Maximum theta given kappa_max.
     double theta_kappa_max;
 
     // Structure to store FS parameters
     struct FSParameters {
-        // - |Δχ|
+        // - |delta chi|
         double delta_chi; 
         // - Turning direction (+1 for anticlockwise, -1 for clockwise)
         double rho;    
@@ -123,7 +128,7 @@ private:
         double chi0;
         // - Final course angle for forward FS (mirrored segment uses this)
         double chi_end;
-        // - Solution of θ + arctan(2θ) = |Δχ|
+        // - Solution of theta + arctan(2*theta) = |delta chi|
         double theta_end; 
         // - u_max = sqrt(theta_end)
         double u_max;    
@@ -142,27 +147,22 @@ private:
     };
 
 
-    // Helper: compute FS parameters from three waypoints (A, B, C).
+    // Compute FS parameters from three waypoints (A, B, C).
     FSParameters computeFSParameters(const Vector2D &A, const Vector2D &B, const Vector2D &C) const;
 
-    // FSParameters computeFSParametersCorner(const Vector2D &point1,
-    //                                         const Vector2D &B,
-    //                                         const Vector2D &point2) const;
-
-    // Compute the FS point.
-    // When lambda > 0, we assume a forward FS segment and theta_end is ignored.
-    // When lambda < 0, we assume a mirrored FS segment and use theta_end to define τ = theta_end - theta.
+    // Parameterization of FS and FS mirrored curves
+    // - Forward FS segment; lambda > 0 
+    // - Mirrored FS segment; lambda < 0
     Vector2D computeSpiralPoint(double u, double base_angle, double lambda,
                                 double k, double rho, double x, double y, double u_max) const;
 
-    // Compute the derivative of the FS point with respect to theta.
     Vector2D computeSpiralDerivative(double u, double base_angle, double lambda,
                                      double k, double rho, double u_max) const;
 
-    // Compute the second derivative of the FS point with respect to theta.
     Vector2D computeSpiralSecondDerivative(double u, double base_angle, double lambda,
                                            double k, double rho, double u_max) const;
 
+    
     PathPoint projectOntoLine(const Vector2D &A, const Vector2D &B, const Vector2D &vessel);
 
     // Helper functions.
@@ -170,12 +170,10 @@ private:
     double fprime(double theta) const;
     double fsecond(double theta) const;
     double computeThetaEnd(double delta_chi) const;
-    double computeThetaMid(FSParameters params) const;
     double computeScalingConstant(double theta_kappa_max, double kappa_max) const;
     double computeDistanceForCorner(double k, double theta_end, double delta_chi) const;
 
     // Newton–Raphson routine to find the closest point on a spiral segment.
-    // The search is limited to theta in [theta_lower, theta_upper].
     PathPoint getClosestSpiralPoint(const FSParameters &params, bool mirrored,
                                     const Vector2D &vessel, double normal_angle,
                                     double u_lower, double u_upper) const;
