@@ -72,7 +72,8 @@ void StraightLinePath::printParameters() const {
 // FermatSpiralPath Class Implementation
 //------------------------------------------------------
 FermatSpiralPath::FermatSpiralPath(double kappa_max) : kappa_max_(kappa_max){
-    theta_kappa_max = 0.2699549107922; //compute_local_theta_kappa_max(kappa_max);
+    //theta_kappa_max = 0.2699549107922; 
+    theta_kappa_max = std::sqrt(std::sqrt(7)/2 - 5/4);
     std::cout << "theta_kappa_max: " << theta_kappa_max << std::endl;
 }
 
@@ -83,8 +84,8 @@ void FermatSpiralPath::updateWaypoints(const Waypoints& waypoints) {
 }
 
 FermatSpiralPath::FSParameters FermatSpiralPath::computeFSParameters(const Vector2D &A,
-                                                                       const Vector2D &B,
-                                                                       const Vector2D &C) const
+                                                                     const Vector2D &B,
+                                                                     const Vector2D &C) const
 {
     FSParameters params;
 
@@ -397,10 +398,6 @@ void FermatSpiralPath::printParameters() const {
     }
 }
 
-double SpiralCurvature(double theta, double kappa_max) {
-    return (2.0 * std::sqrt(theta) * (3.0 + 4.0 * theta * theta)) /
-           (kappa_max * std::pow(1.0 + 4.0 * theta * theta, 1.5));
-}
 
 double SpiralCurvatureDerivative(double theta, double kappa_max) {
     double numerator = (3.0 - 24.0 * theta * theta - 16.0 * theta * theta * theta * theta);
@@ -409,7 +406,7 @@ double SpiralCurvatureDerivative(double theta, double kappa_max) {
 }
 
 // Newton-Raphson method to find theta_kappa_max for given kappa_max
-double compute_local_theta_kappa_max(double kappa_max, double initial_guess, double tol, int max_iter) {
+double compute_theta_kappa_max(double kappa_max, double initial_guess, double tol, int max_iter) {
     double theta = initial_guess;
 
     for (int i = 0; i < max_iter; ++i) {

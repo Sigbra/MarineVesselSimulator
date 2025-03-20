@@ -69,22 +69,6 @@ int main() {
     }
     std::cout << std::endl;
 
-
-    // DP points for dynamic positioning
-    Waypoints dpPoints;
-    auto dpPointsNode = config["dp_points"];
-    for (size_t i = 0; i < dpPointsNode["x"].size(); i++) {
-        Vector2D point;
-        point.x = dpPointsNode["x"][i].as<double>();
-        point.y = dpPointsNode["y"][i].as<double>();
-        dpPoints.push_back(point);
-    }
-    
-    std::cout << "DP Points: ";
-    for (const auto& point : dpPoints) {
-        std::cout << "(" << point.x << ", " << point.y << ") ";
-    }
-    std::cout << std::endl;
     
     // Parameters for path following
     double R_switch = config["path_following"]["R_switch"].as<double>();
@@ -95,7 +79,7 @@ int main() {
 
     // Create the Fermat spiral path.
     // - Set the curvature constraint (κ_max in rad/m).
-    double kappa_max = 1; //Do not change this value without changing the theta_kappa_max in the path_generation.cpp file.
+    double kappa_max = 0.2; //Do not change this value without changing the theta_kappa_max in the path_generation.cpp file.
     FermatSpiralPath spiral(kappa_max);
     spiral.updateWaypoints(wpt);
     Waypoints path = spiral.samplePath(0.001);
@@ -111,7 +95,7 @@ int main() {
      
     // Initial states - will be properly set after path generation
     Eigen::VectorXd x = Eigen::VectorXd::Zero(12);  // x = [u v w p q r xn yn zn phi theta psi]'
-    double psi0 = 0.0;
+    x(11) = std::atan2(wpt[1].y - wpt[0].y, wpt[1].x - wpt[0].x);
     
     // Azimuth pod dynamics
     double T_n = 0.5;                                // Propeller time constant (s)

@@ -184,11 +184,9 @@ inline Vector2D operator*(double s, const Vector2D& v) {
     return v * s;  // Reuse the existing Vector2D * double operator
 }
 
-double SpiralCurvature(double theta, double kappa_max);
-
 double SpiralCurvatureDerivative(double theta, double kappa_max);
 
 // Newton-Raphson method to find theta_kappa_max for given kappa_max
-double compute_local_theta_kappa_max(double kappa_max, double initial_guess = 0.3, double tol = 1e-6, int max_iter = 20);
+double compute_theta_kappa_max(double kappa_max, double initial_guess = 0.3, double tol = 1e-6, int max_iter = 20);
 
 #endif // FERMAT_SPIRAL_PATH_HPP
