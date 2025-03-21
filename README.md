@@ -47,7 +47,10 @@ git push
  Fix the calculation of input matrix B in ran().
  Check that the numbers used in equations make sence for ran. 
 
- ### MPC guidance 
+ ## MPC planning of path using control allocation knowlegde
+ 
+
+ ### MPC guidance (not doing this)
  Not MPC for guidance, but to follow the best path possible.
  Can be calculated by a thread in the background and updated once in a while.
 

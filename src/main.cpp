@@ -17,7 +17,6 @@ int selectPathType() {
     std::cout << "Choose Path Type:" << std::endl;
     std::cout << "1. Straight Line Path" << std::endl;
     std::cout << "2. Continuous-Curvature Path Using Fermat's Spiral" << std::endl;
-    std::cout << "3. Clothoid Path" << std::endl;
     
     int choice = 0;
     while (true) {
@@ -209,7 +208,7 @@ int main() {
 
         // - Type of path
         switch (pathType) {
-            case 0: { // Dynamic Positioning does not use path.
+            case 0: { // Dynamic Positioning does not use a path.
                 break; 
             }
             case 1: { // Straight line path.
@@ -223,7 +222,7 @@ int main() {
             }
             case 2: { // Continuous-Curvature Path Using Fermat's Spiral.
                 spiral.updateWaypoints(wpt);
-                closest = spiral.getCompletePathPoint(Vector2D(xn, yn));
+                closest = spiral.getClosestPoint(Vector2D(xn, yn), wpt_index);
                 break;
             }
         }

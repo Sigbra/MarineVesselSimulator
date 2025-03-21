@@ -119,7 +119,7 @@ FermatSpiralPath::FSParameters FermatSpiralPath::computeFSParameters(const Vecto
     return params;
 }
 
-
+// Convert to using u for mirrored
 Vector2D FermatSpiralPath::computeSpiralPoint(double theta, double base_angle, double lambda,
                                               double k, double rho, double x, double y, double theta_max) const {
 
@@ -134,6 +134,7 @@ Vector2D FermatSpiralPath::computeSpiralPoint(double theta, double base_angle, d
     }
 }
 
+// Probably an error in this implementation
 Vector2D FermatSpiralPath::computeSpiralDerivative(double theta, double base_angle, double lambda,
                                                      double k, double rho, double theta_max) const {
     double u = std::sqrt(theta);
@@ -229,89 +230,115 @@ PathPoint FermatSpiralPath::projectOntoLine(const Vector2D &A, const Vector2D &B
     return pp;
 }
 
-PathPoint FermatSpiralPath::getClosestSpiralPoint(const FSParameters &params, bool mirrored,
-                                                  const Vector2D &vessel, double normal_angle,
-                                                  double theta_lower, double theta_upper) const {
+PathPoint FermatSpiralPath::projectOntoSpiral(Vector2D vessel, FSParameters params, double lamda) {
+    double tolerance = 1e-6;
+    double thetaGuess = params.theta_end / 2.0;
+    double maxIterations = 10;
 
-    double lambda = mirrored ? -1.0 : +1.0;
-    double base_angle = mirrored ? params.chi_end : params.chi0;
-    double x0 = mirrored ? params.x_end : params.x0;
-    double y0 = mirrored ? params.y_end : params.y0;
-    double u_lower = std::sqrt(theta_lower);
-    double u_upper = std::sqrt(theta_upper);
+    double base_angle = (lamda > 0) ? params.chi0 : (params.chi_end);
+    double xCenter    = (lamda > 0) ? params.x0  : params.x_end;
+    double yCenter    = (lamda > 0) ? params.y0  : params.y_end;
 
-    double u_max = mirrored ? std::sqrt(params.theta_end) : u_upper;
+    double k = params.k;
+    double rho = params.rho;
+    double theta_end = params.theta_end;
 
-    double u_val = (u_lower + u_upper) / 2.0; //initial guess
-    const double tol = 1e-4;
-    const int maxIter = 20;
-    for (int iter = 0; iter < maxIter; ++iter) {
-        Vector2D diff = computeSpiralPoint(u_val, base_angle, lambda, params.k, params.rho, x0, y0, u_max) - vessel;
-        double f_val = std::atan2(diff.y, diff.x) - normal_angle;
+    auto f = [&](double th) {
+        Vector2D pos = computeSpiralPoint(th, base_angle, lamda, k, rho, xCenter, yCenter, theta_end);
+        Vector2D d1  = computeSpiralDerivative(th, base_angle, lamda, k, rho, theta_end);
+        double dx = vessel.x - pos.x;
+        double dy = vessel.y - pos.y;
+        return d1.y * dy + d1.x * dx;
+    };
+    auto fprime = [&](double th) {
+        Vector2D pos = computeSpiralPoint(th, base_angle, lamda, k, rho, xCenter, yCenter, theta_end);
+        Vector2D d1  = computeSpiralDerivative(th, base_angle, lamda, k, rho, theta_end);
+        Vector2D d2  = computeSpiralSecondDerivative(th, base_angle, lamda, k, rho, theta_end);
 
-        while (f_val > M_PI)  f_val -= 2 * M_PI;
-        while (f_val < -M_PI) f_val += 2 * M_PI;
-        Vector2D dP = computeSpiralDerivative(u_val, base_angle, lambda, params.k, params.rho, u_max);
-        double f_der = (dP.x * diff.y - dP.y * diff.x) / (diff.x * diff.x + diff.y * diff.y);
-        double du = -f_val / f_der;
-        u_val += du;
-        if (u_val < u_lower) u_val = u_lower;
-        if (u_val > u_upper) u_val = u_upper;
-        if (std::abs(du) < tol)
+        double dx = vessel.x - pos.x;
+        double dy = vessel.y - pos.y;
+        return d2.y * dy + d2.x * dx - d2.x * d2.x - d2.y * d2.y;
+    };
+
+    double theta = thetaGuess;
+    for (int i = 0; i < maxIterations; ++i)
+    {
+        double val = f(theta);
+        double der = fprime(theta);
+
+        // Avoid division by a near-zero derivative.
+        if (std::fabs(der) < 1e-14)
+            break;
+
+        double step = val / der;
+        theta -= step;
+
+        // Clamp theta to the valid interval [thetaMin, thetaMax].
+        const double epsilon = 1e-8;
+        if (theta < epsilon)
+            theta = epsilon;
+        if (theta > theta_end)
+            theta = theta_end;
+
+        if (std::fabs(step) < tolerance)
             break;
     }
-    PathPoint pp;
-    pp.pos   = computeSpiralPoint(u_val, base_angle, lambda, params.k, params.rho, x0, y0, u_max);
-    pp.dpos  = computeSpiralDerivative(u_val, base_angle, lambda, params.k, params.rho, u_max);
-    pp.ddpos = computeSpiralSecondDerivative(u_val, base_angle, lambda, params.k, params.rho, u_max);
-    return pp;
+
+    PathPoint closest_point;
+    closest_point.pos = computeSpiralPoint(theta, base_angle, lamda, k, rho, xCenter, yCenter, theta_end);
+    closest_point.dpos = computeSpiralDerivative(theta, base_angle, lamda, k, rho, theta_end);
+    closest_point.ddpos = computeSpiralSecondDerivative(theta, base_angle, lamda, k, rho, theta_end);
+
+    return closest_point;
 }
 
-PathPoint FermatSpiralPath::getCompletePathPoint(const Vector2D &vessel) {
-    std::vector<PathPoint> candidates;
+double FermatSpiralPath::crossTrackError(Vector2D vessel, PathPoint path_point) {
+    double lamda = std::atan2(path_point.dpos.y, path_point.dpos.x);
+    double y_e = -(vessel.x - path_point.pos.x)*std::sin(lamda) 
+                 +(vessel.y - path_point.pos.y)*std::cos(lamda);
+    return y_e;
+}
 
-    // Project vessel onto all straight-line segments.
-    for (size_t i = 1; i < waypoints_.size(); ++i) {
-        candidates.push_back(projectOntoLine(waypoints_[i-1], waypoints_[i], vessel));
+PathPoint FermatSpiralPath::getClosestPoint(const Vector2D vessel_position, int index) {
+
+    Vector2D vessel_pos = vessel_position;
+    Vector2D wpt_prev   = waypoints_[index-1];
+    Vector2D wpt        = waypoints_[index];
+    Vector2D wpt_next   = waypoints_[index+1];
+
+    FSParameters params = computeFSParameters(wpt_prev, wpt, wpt_next);
+    Vector2D wheel_over = params.point1;
+    Vector2D pull_out   = params.point2;
+
+    PathPoint line_segment_point;
+    if (index == 1){
+        line_segment_point = projectOntoLine(wpt_prev, wheel_over, vessel_position);
     }
-
-    // Consider Fermat Spiral (FS) transitions at corners (B).
-    if (waypoints_.size() >= 3) {
-        for (size_t i = 1; i < waypoints_.size() - 1; ++i) {
-            const Vector2D &A = waypoints_[i-1];
-            const Vector2D &B = waypoints_[i];
-            const Vector2D &C = waypoints_[i+1];
-
-            FSParameters params = computeFSParameters(A, B, C);
-            double theta_mid = params.theta_end;
-
-            // Forward FS candidate:
-            Vector2D forward_start = computeSpiralPoint(0.0, params.chi0, +1, params.k, params.rho, params.x0, params.y0, 0.0);
-            double normal_angle_forward = std::atan2(vessel.y - forward_start.y, vessel.x - forward_start.x);
-            PathPoint pp_forward = getClosestSpiralPoint(params, false, vessel, normal_angle_forward, 0.0, theta_mid);
-            candidates.push_back(pp_forward);
-
-            // Mirrored FS candidate:
-            Vector2D mirrored_start = computeSpiralPoint(params.theta_end, params.chi_end, -1, params.k, params.rho, params.x_end, params.y_end, params.theta_end);
-            double normal_angle_mirrored = std::atan2(vessel.y - mirrored_start.y, vessel.x - mirrored_start.x);
-            PathPoint pp_mirrored = getClosestSpiralPoint(params, true, vessel, normal_angle_mirrored, theta_mid, params.theta_end);
-            candidates.push_back(pp_mirrored);
-        }
+    else {
+        line_segment_point = projectOntoLine(point2_prev, pull_out, vessel_position);
     }
+    point2_prev = params.point2;
+    double y_e_line = crossTrackError(vessel_position, line_segment_point);
 
-    if (candidates.empty())
-        throw std::runtime_error("No segments available for projection.");
+    PathPoint FS_point = projectOntoSpiral(vessel_pos, params, +1);
+    double y_e_FS = crossTrackError(vessel_position, FS_point);
 
-    PathPoint best = candidates[0];
-    double dmin = (best.pos - vessel).norm();
-    for (const auto &pp : candidates) {
-        double d = (pp.pos - vessel).norm();
-        if (d < dmin) {
-            dmin = d;
-            best = pp;
-        }
+    PathPoint FS_mirrored_point = projectOntoSpiral(vessel_pos, params, -1);;
+    double y_e_FS_mirrored = crossTrackError(vessel_position, FS_mirrored_point);
+
+    // Return the point from the segment with smallest y_e
+    PathPoint closest_point;
+    if (y_e_line < y_e_FS && y_e_line < y_e_FS_mirrored){ 
+        closest_point = line_segment_point;
+    } 
+    else if (y_e_FS < y_e_FS_mirrored){
+        closest_point = FS_point;
+    } 
+    else {
+        closest_point = FS_mirrored_point;
     }
-    return best;
+    std::cout << "closest_point: " << closest_point.pos.x << ", " << closest_point.pos.y << std::endl;
+    return closest_point;
 }
 
 Waypoints FermatSpiralPath::samplePath(double delta) const
@@ -396,32 +423,4 @@ void FermatSpiralPath::printParameters() const {
     for (size_t i = 0; i < std::min(waypoints_.size(), size_t(5)); ++i) {
         std::cout << "Waypoint " << i << ": (" << waypoints_[i].x << ", " << waypoints_[i].y << ")\n";
     }
-}
-
-
-double SpiralCurvatureDerivative(double theta, double kappa_max) {
-    double numerator = (3.0 - 24.0 * theta * theta - 16.0 * theta * theta * theta * theta);
-    double denominator = kappa_max * std::sqrt(theta) * std::pow(1.0 + 4.0 * theta * theta, 2.5);
-    return numerator / denominator;
-}
-
-// Newton-Raphson method to find theta_kappa_max for given kappa_max
-double compute_theta_kappa_max(double kappa_max, double initial_guess, double tol, int max_iter) {
-    double theta = initial_guess;
-
-    for (int i = 0; i < max_iter; ++i) {
-        double g_prime_val = SpiralCurvatureDerivative(theta, kappa_max);
-        double h = 1e-5; // Finite difference for second derivative approximation
-        double g_prime_prime_val = (SpiralCurvatureDerivative(theta + h, kappa_max) - SpiralCurvatureDerivative(theta - h, kappa_max)) / (2 * h);
-
-        double theta_next = theta - g_prime_val / g_prime_prime_val;
-
-        if (std::abs(theta_next - theta) < tol)
-            return theta_next;
-
-        theta = theta_next;
-    }
-
-    std::cerr << "Warning: compute_theta_kappa_max did not converge" << std::endl;
-    return theta;
 }

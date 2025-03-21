@@ -98,11 +98,8 @@ public:
 
     void updateWaypoints(const Waypoints& waypoints);
 
-    //Path following
-    PathPoint getCompletePathPoint(const Vector2D &vessel);
-
-    // Trajectory tracking
-    // - Not yet implemented
+    // Returns point on the path with the smallest cross-track error.
+    PathPoint getClosestPoint(const Vector2D vessel_position, int index);
 
     // Data access
     Waypoints samplePath(double delta) const;
@@ -117,6 +114,8 @@ private:
     double kappa_max_;
     // Maximum theta given kappa_max.
     double theta_kappa_max;
+
+    Vector2D point2_prev;
 
     // Structure to store FS parameters
     struct FSParameters {
@@ -162,31 +161,27 @@ private:
     Vector2D computeSpiralSecondDerivative(double u, double base_angle, double lambda,
                                            double k, double rho, double u_max) const;
 
-    
-    PathPoint projectOntoLine(const Vector2D &A, const Vector2D &B, const Vector2D &vessel);
 
     // Helper functions.
     double f(double theta, double delta_chi) const;
     double fprime(double theta) const;
     double fsecond(double theta) const;
+
     double computeThetaEnd(double delta_chi) const;
     double computeScalingConstant(double theta_kappa_max, double kappa_max) const;
     double computeDistanceForCorner(double k, double theta_end, double delta_chi) const;
 
-    // Newton–Raphson routine to find the closest point on a spiral segment.
-    PathPoint getClosestSpiralPoint(const FSParameters &params, bool mirrored,
-                                    const Vector2D &vessel, double normal_angle,
-                                    double u_lower, double u_upper) const;
+    PathPoint projectOntoLine(const Vector2D &A, const Vector2D &B, const Vector2D &vessel);
+
+    PathPoint projectOntoSpiral(Vector2D vessel, FSParameters params, double lamda);
+
+    double crossTrackError(Vector2D vessel, PathPoint path_point);
+
 };
 
 // Add this non-member function after the Vector2D class definition
 inline Vector2D operator*(double s, const Vector2D& v) {
     return v * s;  // Reuse the existing Vector2D * double operator
 }
-
-double SpiralCurvatureDerivative(double theta, double kappa_max);
-
-// Newton-Raphson method to find theta_kappa_max for given kappa_max
-double compute_theta_kappa_max(double kappa_max, double initial_guess = 0.3, double tol = 1e-6, int max_iter = 20);
 
 #endif // FERMAT_SPIRAL_PATH_HPP

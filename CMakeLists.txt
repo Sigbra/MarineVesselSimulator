@@ -91,7 +91,6 @@ set(SOURCES
     src/control_allocation.cpp
     #src/ref_model.cpp
     src/utilities.cpp
-    #src/clothoid_smoother.cpp
     src/path_generation.cpp
 )
 
