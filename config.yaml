@@ -25,10 +25,10 @@ waypoints:
 
 path_following:
   #Additional parameter for straight-line path following
-  R_switch: 5  # Radius of switching circle
+  R_switch: 3  # Radius for mode switch on last waypoint [m]
   K_f: 0.3     # LOS observer gain
 
-  #ALOS and ILOS parameters
+  #LOS, ALOS and ILOS parameters
   Delta_h: 10    # Look-ahead distance
   gamma_h: 0.001 # ALOS adaptive gain
   kappa:   0.001 # ILOS integral gain

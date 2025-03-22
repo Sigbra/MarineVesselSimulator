@@ -92,7 +92,7 @@ std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N, 
     // - Penalty for both pods forward, leading to loss of sway control.
     MX a1 = exp( -pow( abs(eff_alpha1), 2 ) / 0.1 ); 
     MX a2 = exp( -pow( abs(eff_alpha2), 2 ) / 0.1 );
-    MX penalty_both_zero = 10 * a1 * a2; // a1_max * a2_max = 1  
+    MX penalty_both_zero = 1 * a1 * a2; // a1_max * a2_max = 1  
     
     // - Penalty for pods in complete opposite directions, leading to loss of surge control.
     MX b1 = exp( -pow((M_PI/2 - abs(eff_alpha1)), 2) / 0.1 ); 

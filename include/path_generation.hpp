@@ -70,17 +70,23 @@ struct PathPoint {
 class StraightLinePath {
 public:
     StraightLinePath();
-    void updateWaypoints(const Vector2D &wpt_prev, const Vector2D &wpt);
-    Vector2D getPoint(double u) const;
-    Vector2D getDerivative(double u) const;
-    Vector2D getSecondDerivative(double u) const;
-    PathPoint getClosestPoint(const Vector2D &vessel, double normal_angle) const;
-    std::vector<Vector2D> samplePath(double delta_u) const;
+
+    void updateWaypoints(const Waypoints& waypoints);
+
+    PathPoint getClosestPoint(const Vector2D vessel, int& wpt_index);
+
+    std::vector<Vector2D> samplePath(double delta) const;
+
     void printParameters() const;
 
 private:
-    Vector2D wpt_prev_;
-    Vector2D wpt_;
+    Waypoints waypoints_;
+
+    PathPoint projectOntoLine(const Vector2D &A, const Vector2D &B, const Vector2D &vessel);
+
+    double alongTrackError(Vector2D vessel, PathPoint path_point);
+    
+    double crossTrackError(Vector2D vessel, PathPoint path_point);
 };
 
 //----------------------------------------------------------
@@ -98,8 +104,15 @@ public:
 
     void updateWaypoints(const Waypoints& waypoints);
 
-    // Returns point on the path with the smallest cross-track error.
-    PathPoint getClosestPoint(const Vector2D vessel_position, int index);
+    // Path Following:
+    // - Finds the point minimizing cross_track error on 4 "active" segments,
+    //   and returns the point with less positional error of the 4.
+    //   When on the last segment, the waypoint index is updated. To ensure 
+    //   a continous path, the line segments overlap by one waypoint.
+    PathPoint getClosestPoint(const Vector2D vessel_position, int& index);
+
+    // Trajectory tracking:
+    // - Not yet implemented
 
     // Data access
     Waypoints samplePath(double delta) const;
@@ -172,9 +185,9 @@ private:
     double computeDistanceForCorner(double k, double theta_end, double delta_chi) const;
 
     PathPoint projectOntoLine(const Vector2D &A, const Vector2D &B, const Vector2D &vessel);
-
     PathPoint projectOntoSpiral(Vector2D vessel, FSParameters params, double lamda);
 
+    double alongTrackError(Vector2D vessel, PathPoint path_point);
     double crossTrackError(Vector2D vessel, PathPoint path_point);
 
 };

@@ -76,16 +76,23 @@ int main() {
     double gamma_h = config["path_following"]["gamma_h"].as<double>();               
     double kappa = config["path_following"]["kappa"].as<double>();   
 
+
+    // Create the straight line path.
+    StraightLinePath straightLinePath;
+    straightLinePath.updateWaypoints(wpt);
+    Waypoints pathLine = straightLinePath.samplePath(0.1);
+    std::cout << "Path size: " << pathLine.size() << std::endl;
+    plotPath(pathLine);
+
     // Create the Fermat spiral path.
     // - Set the curvature constraint (κ_max in rad/m).
     double kappa_max = 0.2; //Do not change this value without changing the theta_kappa_max in the path_generation.cpp file.
     FermatSpiralPath spiral(kappa_max);
     spiral.updateWaypoints(wpt);
-    Waypoints path = spiral.samplePath(0.001);
-    std::cout << "Path size: " << path.size() << std::endl;
-    plotPath(path);
+    Waypoints pathFS = spiral.samplePath(0.001);
+    std::cout << "Path size: " << pathFS.size() << std::endl;
+    plotPath(pathFS);
 
-    StraightLinePath straightLinePath;
     
 
     // Initialize guidance methods and LOS observer 
@@ -194,30 +201,23 @@ int main() {
 
         // Guidance
 
-        if (R_switch > std::sqrt(std::pow(xn - wpt[wpt_index].x, 2) + std::pow(yn - wpt[wpt_index].y, 2))) {
-            // - Wpt reached, upate waypoint index
-            if (wpt_index < wpt.size() - 1) {
-                wpt_index++;
-            }
-            // - At goal, switch to dynamic positioning with static heading reference
-            else if (wpt_index == wpt.size()-1) {
+        // - Mode switching condition
+        if (wpt_index == wpt.size()-1) {
+            if (R_switch > std::sqrt(std::pow(xn - wpt[wpt_index].x, 2) + std::pow(yn - wpt[wpt_index].y, 2))) {
                 pathType = 0;
                 GuidanceFlag = 1; 
             }
         }
 
         // - Type of path
+        // - path functions responsible for wpt_index increment
         switch (pathType) {
-            case 0: { // Dynamic Positioning does not use a path.
+            case 0: { // Dynamic Positioning does not use a path. Use Voronoi space with MPC
                 break; 
             }
             case 1: { // Straight line path.
-                straightLinePath.updateWaypoints(
-                    Vector2D(wpt[wpt_index-1].x, wpt[wpt_index-1].y),
-                    Vector2D(wpt[wpt_index].x, wpt[wpt_index].y)
-                );
-
-                closest = straightLinePath.getClosestPoint(Vector2D(xn, yn), M_PI/4);
+                straightLinePath.updateWaypoints(wpt);
+                closest = straightLinePath.getClosestPoint(Vector2D(xn, yn), wpt_index);
                 break;
             }
             case 2: { // Continuous-Curvature Path Using Fermat's Spiral.

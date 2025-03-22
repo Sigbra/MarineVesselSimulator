@@ -6,65 +6,105 @@
 //------------------------------------------------------
 // StraightLinePath Class Implementation
 //------------------------------------------------------
-StraightLinePath::StraightLinePath() {
-    // Initialize waypoints to (0,0); they will be updated later.
-    wpt_prev_ = Vector2D(0.0, 0.0);
-    wpt_      = Vector2D(0.0, 0.0);
+StraightLinePath::StraightLinePath() {}
+
+void StraightLinePath::updateWaypoints(const Waypoints& waypoints) {
+    if (waypoints.size() < 2)
+        throw std::runtime_error("At least two waypoints are required.");
+    waypoints_ = waypoints;
 }
 
-void StraightLinePath::updateWaypoints(const Vector2D &wpt_prev, const Vector2D &wpt) {
-    // Update the waypoints.
-    wpt_prev_ = wpt_prev;
-    wpt_      = wpt;
+double StraightLinePath::alongTrackError(Vector2D vessel, PathPoint path_point) {
+    double lamda = std::atan2(path_point.dpos.y, path_point.dpos.x);
+    double x_e = (vessel.x - path_point.pos.x)*std::cos(lamda) 
+                +(vessel.y - path_point.pos.y)*std::sin(lamda);
+    return x_e;
 }
 
-Vector2D StraightLinePath::getPoint(double u) const {
-    return wpt_prev_ + (wpt_ - wpt_prev_).normalized() * u;
+double StraightLinePath::crossTrackError(Vector2D vessel, PathPoint path_point) {
+    double lamda = std::atan2(path_point.dpos.y, path_point.dpos.x);
+    double y_e = -(vessel.x - path_point.pos.x)*std::sin(lamda) 
+                 +(vessel.y - path_point.pos.y)*std::cos(lamda);
+    return y_e;
 }
 
-Vector2D StraightLinePath::getDerivative(double u) const {
-    return (wpt_ - wpt_prev_).normalized();
-}
-
-Vector2D StraightLinePath::getSecondDerivative(double u) const {
-    return Vector2D(0.0, 0.0);
-}
-
-PathPoint StraightLinePath::getClosestPoint(const Vector2D &vessel, double normal_angle) const {
-    PathPoint pp;
-    // Compute the vector from the previous waypoint to the current one.
-    Vector2D d = wpt_ - wpt_prev_;
-    double d_squared = d.dot(d);
-    double u = 0.0;
+PathPoint StraightLinePath::getClosestPoint(const Vector2D vessel_position, int& wpt_index) {
     
-    if(d_squared > 0.0) {
-        // Projection factor: how far along the line (as a fraction) the projection is.
-        u = (vessel - wpt_prev_).dot(d) / d_squared;
-        // Clamp u to the interval [0, 1] so the result lies on the segment.
-        if(u < 0.0) {
-            u = 0.0;
-        } else if(u > 1.0) {
-            u = 1.0;
-        }
+    Vector2D vessel_pos = vessel_position;
+    Vector2D wpt_prev   = waypoints_[wpt_index-1];
+    Vector2D wpt        = waypoints_[wpt_index];
+    Vector2D wpt_next   = waypoints_[wpt_index+1];
+
+    PathPoint line_prev_point;
+    double x_e_line_prev;
+    double y_e_line_prev;
+    double line_prev_error;
+
+    PathPoint line_point;
+    double x_e_line;
+    double y_e_line;
+    double line_error;
+
+    PathPoint closest_point;
+
+    if (wpt_index > 1){
+
+        line_prev_point = projectOntoLine(wpt_prev, wpt, vessel_position);
+        x_e_line_prev = alongTrackError(vessel_position, line_prev_point);
+        y_e_line_prev = crossTrackError(vessel_position, line_prev_point);
+        line_prev_error = std::sqrt(x_e_line_prev*x_e_line_prev + y_e_line_prev*y_e_line_prev);
     }
-    
-    pp.pos = getPoint(u);
-    pp.dpos = getDerivative(u);
-    pp.ddpos = getSecondDerivative(u);
+
+    line_point = projectOntoLine(wpt, wpt_next, vessel_position);
+    x_e_line = alongTrackError(vessel_position, line_point); 
+    y_e_line = crossTrackError(vessel_position, line_point);
+    line_error = std::sqrt(x_e_line*x_e_line + y_e_line*y_e_line);
+
+    if (wpt_index == 1){
+        closest_point = line_point;
+        if (wpt_index < waypoints_.size()-1){
+        wpt_index++;
+        }
+        return closest_point;
+    }
+
+    if (line_prev_error < line_error){
+        closest_point = line_prev_point;    
+    } 
+    else {
+        closest_point = line_point;
+        if (wpt_index < waypoints_.size()-1){
+            wpt_index++;
+        }
+    } 
+
+    //std::cout << "closest_point: " << closest_point.pos.x << ", " << closest_point.pos.y << "\n" <<std::endl;
+    //std::cout << "y_e_line: " << y_e_line << "\n" <<std::endl;
+    return closest_point;
+}
+
+
+PathPoint StraightLinePath::projectOntoLine(const Vector2D &A, const Vector2D &B, const Vector2D &vessel) {
+    PathPoint pp;
+    Vector2D AB = B - A;
+    double t = ((vessel - A).dot(AB)) / (AB.dot(AB));
+    t = std::max(0.0, std::min(1.0, t));
+    pp.pos = A + AB * t;
+    pp.dpos = AB.normalized();
+    pp.ddpos = Vector2D(0.0, 0.0);
     return pp;
 }
 
-std::vector<Vector2D> StraightLinePath::samplePath(double delta_u) const {
-    std::vector<Vector2D> points;
-    for (double u = 0.0; u <= 1.0; u += delta_u)
-        points.push_back(getPoint(u));
-    return points;
+
+std::vector<Vector2D> StraightLinePath::samplePath(double delta) const {
+    return waypoints_;
 }
 
 void StraightLinePath::printParameters() const {
-    std::cout << "Straight line path parameters:\n";
-    std::cout << "wpt_prev: (" << wpt_prev_.x << ", " << wpt_prev_.y << ")\n";
-    std::cout << "wpt: (" << wpt_.x << ", " << wpt_.y << ")\n";
+    std::cout << "Total waypoints: " << waypoints_.size() << "\n";
+    for (size_t i = 0; i < std::min(waypoints_.size(), size_t(5)); ++i) {
+        std::cout << "Waypoint " << i << ": (" << waypoints_[i].x << ", " << waypoints_[i].y << ")\n";
+    }
 }
 
 
@@ -124,13 +164,13 @@ Vector2D FermatSpiralPath::computeSpiralPoint(double theta, double base_angle, d
                                               double k, double rho, double x, double y, double theta_max) const {
 
     double u = std::sqrt(theta);
-    double u_max = std::sqrt(theta_max);
+    double u_m = std::sqrt(theta_max - theta);
     if (lambda > 0) {
         return Vector2D(x + k * u * std::cos(rho * u * u + base_angle),
                         y + k * u * std::sin(rho * u * u + base_angle));
     } else {
-        return Vector2D(x + k * std::sqrt(theta_max - theta) * std::cos(rho * (theta - theta_max) + base_angle),
-                        y + k * std::sqrt(theta_max - theta) * std::sin(rho * (theta - theta_max) + base_angle));
+        return Vector2D(x + k * u_m * std::cos(rho * (- u_m * u_m) + base_angle),
+                        y + k * u_m * std::sin(rho * (- u_m * u_m) + base_angle));
     }
 }
 
@@ -138,39 +178,36 @@ Vector2D FermatSpiralPath::computeSpiralPoint(double theta, double base_angle, d
 Vector2D FermatSpiralPath::computeSpiralDerivative(double theta, double base_angle, double lambda,
                                                      double k, double rho, double theta_max) const {
     double u = std::sqrt(theta);
-    double u_m = std::sqrt(theta - theta_max);
-    double u_m2 = std::sqrt(theta_max - theta);    
+    double u_m = std::sqrt(theta_max - theta);  
 
     if (lambda > 0) {
         double common = rho * u * u + base_angle;
         double dx_du = std::cos(common) - 2.0 * rho * u * u * std::sin(common);
         double dy_du = std::sin(common) + 2.0 * rho * u * u * std::cos(common);
-        return (k/(2*u)) * Vector2D(dx_du, dy_du);
+        return k * Vector2D(dx_du, dy_du);
     } else {
-        double common_m = rho * u_m * u_m + base_angle;
-        double common_m2 = rho * u_m2 * u_m2 + base_angle;
-        double dx_du_prime = std::cos(common_m) - 2.0 * rho * u_m2 * u_m2 * std::sin(common_m);
-        double dy_du_prime = std::sin(common_m) + 2.0 * rho * u_m2 * u_m2 * std::cos(common_m);
-        return (-k/(2*u_m2)) * Vector2D(dx_du_prime, dy_du_prime);
+        double common = rho * (- u_m * u_m) + base_angle;
+        double dx_du_prime = std::cos(common) + 2.0 * rho * u_m * u_m * std::sin(common);
+        double dy_du_prime = std::sin(common) + 2.0 * rho * u_m * u_m * std::cos(common);
+        return (-k/(2*u_m)) * Vector2D(dx_du_prime, dy_du_prime);
     }
 }
 
 Vector2D FermatSpiralPath::computeSpiralSecondDerivative(double theta, double base_angle, double lambda,
                                                            double k, double rho, double theta_max) const {
     double u = std::sqrt(theta);
-    double u_m = std::sqrt(theta - theta_max);
-    double u_m2 = std::sqrt(theta_max - theta);       
+    double u_m = std::sqrt(theta_max - theta);      
 
     if (lambda > 0) {
         double common = rho * u * u + base_angle;
         double d2x_du2 = (4*u*u*u*u + 1) * std::cos(common) + 4*rho*u*u*std::sin(common);
         double d2y_du2 = (4*u*u*u*u + 1) * std::sin(common) - 4*rho*u*u*std::cos(common);
-        return (-k/(4*u*u*u)) * Vector2D(d2x_du2, d2y_du2);
+        return (-k/(4*std::pow(u*u, 3/2))) * Vector2D(d2x_du2, d2y_du2);
     } else {
-        double common = rho * u_m * u_m + base_angle;
-        double d2x_duprime2 = (4*(u_m*u_m*u_m*u_m) + 1) * std::cos(common) - 4*rho*u_m2*u_m2*std::sin(common);
-        double d2y_duprime2 = (4*(u_m*u_m*u_m*u_m) + 1) * std::sin(common) + 4*rho*u_m2*u_m2*std::cos(common);
-        return (-k / (4*u_m2*u_m2*u_m2)) * Vector2D(d2x_duprime2, d2y_duprime2);
+        double common = rho * (- u_m * u_m) + base_angle;
+        double d2x_duprime2 = (4*(u_m*u_m*u_m*u_m) + 1) * std::cos(common) - 4*rho*u_m*u_m*std::sin(common);
+        double d2y_duprime2 = (4*(u_m*u_m*u_m*u_m) + 1) * std::sin(common) + 4*rho*u_m*u_m*std::cos(common);
+        return (-k / (4*std::pow(u_m*u_m, 3/2))) * Vector2D(d2x_duprime2, d2y_duprime2);
     }
 }
 
@@ -218,6 +255,7 @@ double FermatSpiralPath::computeDistanceForCorner(double k, double theta_end, do
     double l2 = h / std::tan(alpha);
     return l1 + l2;
 }
+
 
 PathPoint FermatSpiralPath::projectOntoLine(const Vector2D &A, const Vector2D &B, const Vector2D &vessel) {
     PathPoint pp;
@@ -292,6 +330,14 @@ PathPoint FermatSpiralPath::projectOntoSpiral(Vector2D vessel, FSParameters para
     return closest_point;
 }
 
+
+double FermatSpiralPath::alongTrackError(Vector2D vessel, PathPoint path_point) {
+    double lamda = std::atan2(path_point.dpos.y, path_point.dpos.x);
+    double x_e = (vessel.x - path_point.pos.x)*std::cos(lamda) 
+                +(vessel.y - path_point.pos.y)*std::sin(lamda);
+    return x_e;
+}
+
 double FermatSpiralPath::crossTrackError(Vector2D vessel, PathPoint path_point) {
     double lamda = std::atan2(path_point.dpos.y, path_point.dpos.x);
     double y_e = -(vessel.x - path_point.pos.x)*std::sin(lamda) 
@@ -299,45 +345,96 @@ double FermatSpiralPath::crossTrackError(Vector2D vessel, PathPoint path_point) 
     return y_e;
 }
 
-PathPoint FermatSpiralPath::getClosestPoint(const Vector2D vessel_position, int index) {
 
+PathPoint FermatSpiralPath::getClosestPoint(const Vector2D vessel_position, int& wpt_index) {
+    
     Vector2D vessel_pos = vessel_position;
-    Vector2D wpt_prev   = waypoints_[index-1];
-    Vector2D wpt        = waypoints_[index];
-    Vector2D wpt_next   = waypoints_[index+1];
+    Vector2D wpt_prev   = waypoints_[wpt_index-1];
+    Vector2D wpt        = waypoints_[wpt_index];
+    Vector2D wpt_next   = waypoints_[wpt_index+1];
+
+    PathPoint line_prev_point;
+    double x_e_line_prev;
+    double y_e_line_prev;
+    double line_prev_error;
+
+    PathPoint FS_point;
+    double x_e_FS;
+    double y_e_FS;
+    double FS_error;
+
+    PathPoint FS_mirrored_point;
+    double x_e_FS_mirrored;
+    double y_e_FS_mirrored;
+    double FS_mirrored_error;
+
+    PathPoint line_point;
+    double x_e_line;
+    double y_e_line;
+    double line_error;
+
+    PathPoint closest_point;
+
+    if (wpt_index > 1){
+        Vector2D wpt_prev2  = waypoints_[wpt_index-2];
+        FSParameters params = computeFSParameters(wpt_prev2, wpt_prev, wpt);
+
+        line_prev_point = projectOntoLine(point2_prev, params.point1, vessel_position);
+        x_e_line_prev = alongTrackError(vessel_position, line_prev_point);
+        y_e_line_prev = crossTrackError(vessel_position, line_prev_point);
+        line_prev_error = std::sqrt(x_e_line_prev*x_e_line_prev + y_e_line_prev*y_e_line_prev);
+        point2_prev = params.point2;
+
+        FS_point = projectOntoSpiral(vessel_pos, params, +1);
+        x_e_FS = alongTrackError(vessel_position, FS_point);
+        y_e_FS = crossTrackError(vessel_position, FS_point);
+        FS_error = std::sqrt(x_e_FS*x_e_FS + y_e_FS*y_e_FS);
+
+        FS_mirrored_point = projectOntoSpiral(vessel_pos, params, -1);
+        x_e_FS_mirrored = alongTrackError(vessel_position, FS_mirrored_point);
+        y_e_FS_mirrored = crossTrackError(vessel_position, FS_mirrored_point);
+        FS_mirrored_error = std::sqrt(x_e_FS_mirrored*x_e_FS_mirrored+ y_e_FS_mirrored*y_e_FS_mirrored);
+    }
 
     FSParameters params = computeFSParameters(wpt_prev, wpt, wpt_next);
     Vector2D wheel_over = params.point1;
     Vector2D pull_out   = params.point2;
 
-    PathPoint line_segment_point;
-    if (index == 1){
-        line_segment_point = projectOntoLine(wpt_prev, wheel_over, vessel_position);
+    if (wpt_index > 1){
+        line_point = projectOntoLine(point2_prev, pull_out, vessel_position);
+    } else{
+        line_point = projectOntoLine(wpt_prev, wheel_over, vessel_position);
     }
-    else {
-        line_segment_point = projectOntoLine(point2_prev, pull_out, vessel_position);
+    x_e_line = alongTrackError(vessel_position, line_point); 
+    y_e_line = crossTrackError(vessel_position, line_point);
+    line_error = std::sqrt(x_e_line*x_e_line + y_e_line*y_e_line);
+
+
+    if (wpt_index == 1){
+        closest_point = line_point;
+        if (wpt_index < waypoints_.size()-1){
+        wpt_index++;
+        }
+        return closest_point;
     }
-    point2_prev = params.point2;
-    double y_e_line = crossTrackError(vessel_position, line_segment_point);
 
-    PathPoint FS_point = projectOntoSpiral(vessel_pos, params, +1);
-    double y_e_FS = crossTrackError(vessel_position, FS_point);
-
-    PathPoint FS_mirrored_point = projectOntoSpiral(vessel_pos, params, -1);;
-    double y_e_FS_mirrored = crossTrackError(vessel_position, FS_mirrored_point);
-
-    // Return the point from the segment with smallest y_e
-    PathPoint closest_point;
-    if (y_e_line < y_e_FS && y_e_line < y_e_FS_mirrored){ 
-        closest_point = line_segment_point;
+    if (line_prev_error < FS_error && line_prev_error < FS_mirrored_error && line_prev_error < line_error){
+        closest_point = line_prev_point; 
     } 
-    else if (y_e_FS < y_e_FS_mirrored){
+    else if (FS_mirrored_error < FS_error && FS_mirrored_error < line_error){
+        closest_point = FS_mirrored_point;
+    } 
+    else if (FS_error < line_error){
         closest_point = FS_point;
     } 
-    else {
-        closest_point = FS_mirrored_point;
+    else{
+        closest_point = line_point;
+        if (wpt_index < waypoints_.size()-1){
+        wpt_index++;
+        }
     }
-    std::cout << "closest_point: " << closest_point.pos.x << ", " << closest_point.pos.y << std::endl;
+    //std::cout << "closest_point: " << closest_point.pos.x << ", " << closest_point.pos.y << "\n" <<std::endl;
+    //std::cout << "y_e_line: " << y_e_line << "\n" <<std::endl;
     return closest_point;
 }
 
@@ -413,7 +510,6 @@ Waypoints FermatSpiralPath::samplePath(double delta) const
 
     return path;
 }
-
 
 
 void FermatSpiralPath::printParameters() const {
