@@ -251,6 +251,15 @@ int main() {
 
                 break;
             }
+            case 3: { // ALOS heading autopilot
+                auto [psi_ref, y_e] = ALOS(xn, yn, delta, path_x, path_y, path_x_dot, path_y_dot);
+
+                losObserver.update(psi_ref);
+                psi_d = losObserver.getLOSAngle();
+                r_d = losObserver.getLOSRate();
+
+                break;
+            }
         }
 
         // Control System 

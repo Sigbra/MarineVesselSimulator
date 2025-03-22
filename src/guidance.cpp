@@ -79,7 +79,15 @@ std::tuple<double, double> LOS(double xn, double yn, double delta,
     return std::make_tuple(psi_ref, y_e);
 }
 
-//----------------------------LOS Observer---------------------------
+//--------------------------------ALOS--------------------------------
+std::tuple<double, double> ALOS(double xn, double yn, double delta,
+                                double path_x, double path_y,
+                                double path_x_dot, double path_y_dot)
+{
+    return std::make_tuple(0.0, 0.0);
+}
+
+//----------------------------LOS Observer----------------------------
 
 LOSObserver::LOSObserver(double h, double K_f)
     : h(h), K_f(K_f), LOSangle(0.0), LOSrate(0.0) {

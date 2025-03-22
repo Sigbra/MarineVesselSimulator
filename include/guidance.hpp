@@ -16,17 +16,22 @@ class GuidanceMethod {
     private:
         std::vector<std::string> methods = {
             "Dynamic Positioning",
-            "LOS"
+            "LOS",
+            "ALOS"
         };
     };
 
-    std::tuple<double, double, double> DP(double path_x, double path_y,
-                                          double prev_path_x, double prev_path_y,
-                                          double xn, double yn);
+std::tuple<double, double, double> DP(double path_x, double path_y,
+                                      double prev_path_x, double prev_path_y,
+                                    double xn, double yn);
 
-    std::tuple<double, double> LOS(double xn, double yn, double delta,
-                                   double path_x, double path_y,
-                                   double path_x_dot, double path_y_dot);
+std::tuple<double, double> LOS(double xn, double yn, double delta,
+                               double path_x, double path_y,
+                               double path_x_dot, double path_y_dot);
+
+std::tuple<double, double> ALOS(double xn, double yn, double delta,
+                                double path_x, double path_y,
+                                double path_x_dot, double path_y_dot);
 
 class LOSObserver {
     public:
