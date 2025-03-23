@@ -1,56 +1,56 @@
-# Optimal Constraint Thruster Allocation README
+# Marine Vessel Simulator
+
+This repository contains code for simulation of marine vessels.
+The "Handbook of Marine Craft Hydrodynamics and Motion Control" by Thor I. Fossen was used actively for theoretical background material, as well as papers mentioned in the "placeholder.pdf" in the literature folder. 
+
+The repository is implemented using c++ for fast computations and open-source purposes. 
+
+#### Implemented models;
+- ran(), a reserch boat with catamaran hull.
+
+#### Implemented path generation algorithms;
+- Straight line path (For path following)
+- Continuous-purvature path based on "Continuous-Curvature Path Generation Using Fermat's Spiral" by Anastasios M. Lekkas, Andreas R. Dahl, Morten Breivik, Thor I. Fossen. In Modeling, Identification and Control, Vol. 34, No. 4, 2013, pp. 183–198, ISSN 1890–1328. (For path following and trajectory tracking). 
+
+#### Implemented guidance laws; 
+- Dynamic Positioning (DP) (at stationary waypoint).
+- Line-of-sight (LOS).
+- Adaptive Line-of-sight (ALOS). 
+
+#### Motion Control
+- PID for force (surge X and sway Y) and moment (yaw N) control.
+- Heading PID based on Nomoto model. 
+
+#### Control Allocation
+- Nonlinear constrained optimization using Casadi.
+- TODO: MPC using Casadi.
 
 
-## Dependancy installation guide
-Recreation of environment used to run this repository on a new computer; 
-Install Anaconda
-'''
-source ~/anaconda3/bin/activate
-conda --version
-conda env create -f environment.yml
-conda activate cpp_env
-conda activate cpp_env
-mkdir build && cd build
-cmake ..
-make
-'''
+## Pictures of performance
 
-## Usage of conda environment
-Do this when new terminal is used;
-'''
-source ~/anaconda3/bin/activate thrust_alloc_cpp_env
-'''
+#### Straight-line path following using LOS, Heading PID and nonlinear constrained optimization. 
+![Straight-line path, LOS](data/StraightLineLOS.png)
 
-When done with terminal, close it or do
-'''
-conda deactivate
-'''
+#### Straight-line path following using ALOS, Heading PID and nonlinear constrained optimization. 
+![Straight-line path, ALOS](data/StraightLineALOS.png)
 
-### Dependancy update guide
-Exporting environment to a YAML file; 
-'''
-conda env export > environment.yml
-'''
+#### Fermat's Spiral path following using LOS, Heading PID and nonlinear constrained optimization. 
+![Fermat's Spiral path, LOS](data/FSCurveLOS.png)
 
-Adding or updating environment.yml after chenging dependancies
-'''
-git add environment.yml
-git commit -m "Dependacy update in environment.yml file"
-git pull
-git push
-'''
-
+#### Fermat's Spiral path following using ALOS, Heading PID and nonlinear constrained optimization. 
+![Fermat's Spiral path, ALOS](data/FSCurveALOS.png)
 
 ## TODO:
  
- ### Fix calculation ran()
+ #### Fix calculation ran()
  Fix the calculation of input matrix B in ran().
  Check that the numbers used in equations make sence for ran. 
 
- ## MPC planning of path using control allocation knowlegde
- 
+ #### MPC control allocation to handle time delay of actuators better
 
- ### MPC guidance (not doing this)
+ #### MPC planning of path using control allocation knowlegde
+ 
+ #### MPC guidance 
  Not MPC for guidance, but to follow the best path possible.
  Can be calculated by a thread in the background and updated once in a while.
 

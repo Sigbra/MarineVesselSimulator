@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(Optimal-Constraint-Thruster-Allocation)
+project(MarineVesselSimulator)
 
 # Set C++ standard to C++17
 set(CMAKE_CXX_STANDARD 17)
@@ -139,3 +139,9 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ${YAML_CPP_LIBRARIES})
 # GSL (add its include directory and link the libraries along with the math library)
 target_include_directories(${PROJECT_NAME} PRIVATE ${GSL_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${GSL_LIBRARIES} m)
+
+# Target the external matplotlib-cpp
+
+target_include_directories(MarineVesselSimulator PRIVATE
+    ${CMAKE_SOURCE_DIR}/external/matplotlib-cpp
+)
