@@ -5,9 +5,9 @@
 #include <iostream>
 #include <map>
 #include <Eigen/Dense>
-#include "control_allocation.hpp"
-#include "ran.hpp"
-#include "utilities.hpp"
+#include "Control/control_allocation.hpp"
+#include "Models/ran.hpp"
+#include "Utilities/utilities.hpp"
 
 ControlAllocationMethod::ControlAllocationMethod(){}
     

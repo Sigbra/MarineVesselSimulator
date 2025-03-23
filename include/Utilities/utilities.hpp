@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <Eigen/Dense>
-#include "path_generation.hpp"
+#include "Planning/path_generation.hpp"
 // Basic 2D point structure
 struct Point2D {
     double x;

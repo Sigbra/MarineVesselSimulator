@@ -7,10 +7,10 @@
 #include <vector>
 #include <string>
 #include <cstdlib> 
-#include "utilities.hpp"
+#include "Utilities/utilities.hpp"
 #include <filesystem>
 
-#include "path_generation.hpp"
+#include "Planning/path_generation.hpp"
 
 namespace plt = matplotlibcpp;
 

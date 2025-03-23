@@ -1,6 +1,6 @@
 // ran.cpp
-#include "ran.hpp"       
-#include "utilities.hpp"     
+#include "Models/ran.hpp"       
+#include "Utilities/utilities.hpp"     
 #include <Eigen/Dense>
 #include <cmath>
 #include <array>

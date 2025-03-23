@@ -1,4 +1,4 @@
-#include "path_generation.hpp"
+#include "Planning/path_generation.hpp"
 #include <matplotlibcpp.h>
 #include <iostream>
 #include <iomanip>

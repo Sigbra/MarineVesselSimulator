@@ -1,5 +1,5 @@
-#include "motion_control.hpp"
-#include "utilities.hpp"
+#include "Control/motion_control.hpp"
+#include "Utilities/utilities.hpp"
 #include <Eigen/Dense>
 #include <cmath>
 #include <vector>

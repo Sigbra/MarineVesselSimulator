@@ -83,15 +83,13 @@ link_directories(/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib)
 # -----------------------------------
 set(SOURCES
     src/main.cpp
-    src/ran.cpp
-    #src/hermite_spline.cpp
-    src/guidance.cpp
-    src/motion_control.cpp
-    #src/crosstrack_hermite.cpp
-    src/control_allocation.cpp
-    #src/ref_model.cpp
-    src/utilities.cpp
-    src/path_generation.cpp
+    src/Models/ran.cpp
+    src/Guidance/guidance.cpp
+    src/Control/motion_control.cpp
+    src/Control/control_allocation.cpp
+    #src/Models/ref_model.cpp
+    src/Utilities/utilities.cpp
+    src/Planning/path_generation.cpp
 )
 
 # -----------------------------------

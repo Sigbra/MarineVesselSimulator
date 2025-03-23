@@ -1,5 +1,5 @@
-#include "ref_model.hpp"
-#include "utilities.hpp"  
+#include "Models/ref_model.hpp"
+#include "Utilities/utilities.hpp"  
 #include <cmath>        // For std::pow, std::abs, and std::copysign
 
 void refModel(double &x_d, double &v_d, double &a_d,

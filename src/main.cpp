@@ -5,12 +5,12 @@
 #include <iomanip>
 #include <yaml-cpp/yaml.h>
 
-#include "ran.hpp"
-#include "guidance.hpp"
-#include "utilities.hpp"
-#include "motion_control.hpp"
-#include "control_allocation.hpp"
-#include "path_generation.hpp"
+#include "Models/ran.hpp"
+#include "Guidance/guidance.hpp"
+#include "Utilities/utilities.hpp"
+#include "Control/motion_control.hpp"
+#include "Control/control_allocation.hpp"
+#include "Planning/path_generation.hpp"
 
 // Helper function to select path type
 int selectPathType() {
