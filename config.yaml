@@ -29,7 +29,7 @@ path_following:
   K_f: 0.3     # LOS observer gain
 
   #LOS, ALOS and ILOS parameters
-  Delta_h: 20    # Look-ahead distance
+  Delta_h: 15    # Look-ahead distance
   gamma_h: 0.001 # ALOS adaptive gain
   kappa:   0.001 # ILOS integral gain
 

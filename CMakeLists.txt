@@ -83,13 +83,28 @@ link_directories(/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib)
 # -----------------------------------
 set(SOURCES
     src/main.cpp
+
+    src/Control/control_alloc_selector.cpp
+    src/Control/non_lin_constrained_control_alloc.cpp
+    src/Control/PID_heading_motion_control.cpp
+    src/Control/PID_position_motion_control.cpp
+
+    src/Guidance/LOS.cpp
+    src/Guidance/ALOS.cpp
+    src/Guidance/LOS_observer.cpp
+    src/Guidance/dynamic_positioning.cpp
+    src/Guidance/guidance_selector.cpp
+
     src/Models/ran.cpp
-    src/Guidance/guidance.cpp
-    src/Control/motion_control.cpp
-    src/Control/control_allocation.cpp
-    #src/Models/ref_model.cpp
-    src/Utilities/utilities.cpp
-    src/Planning/path_generation.cpp
+    src/Models/ref_model.cpp
+    src/Models/model_utilities.cpp
+
+    src/Planning/fermat_spiral_planning.cpp
+    src/Planning/straight_line_planning.cpp
+    src/Planning/plan_selector.cpp
+
+    src/Utilities/calculations.cpp
+    src/Utilities/plotting.cpp
 )
 
 # -----------------------------------

@@ -1,5 +1,5 @@
-#ifndef CONTROLALLOCATION_HPP
-#define CONTROLALLOCATION_HPP
+#ifndef CONTROLALLOCSELECTOR_HPP
+#define CONTROLALLOCSELECTOR_HPP
 
 #include <vector>
 #include <string>
@@ -18,8 +18,5 @@ class ControlAllocationMethod {
             "Model Predictive Control (MPC)"
         };
     };
-
-std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N, double U);
-
 
 #endif

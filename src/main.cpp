@@ -5,37 +5,31 @@
 #include <iomanip>
 #include <yaml-cpp/yaml.h>
 
-#include "Models/ran.hpp"
-#include "Guidance/guidance.hpp"
-#include "Utilities/utilities.hpp"
-#include "Control/motion_control.hpp"
-#include "Control/control_allocation.hpp"
-#include "Planning/path_generation.hpp"
+#include <chrono>
+#include <thread>
 
-// Helper function to select path type
-int selectPathType() {
-    std::cout << "Choose Path Type:" << std::endl;
-    std::cout << "1. Straight Line Path" << std::endl;
-    std::cout << "2. Continuous-Curvature Path Using Fermat's Spiral" << std::endl;
-    
-    int choice = 0;
-    while (true) {
-        std::cout << "Enter the number of your choice: ";
-        std::cin >> choice;
-        if (std::cin.fail()) {
-            std::cin.clear();
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-            std::cout << "Invalid input. Please enter a number." << std::endl;
-        }
-        else if (choice >= 1 && choice <= 2) {
-            break;
-        }
-        else {
-            std::cout << "Invalid choice. Please try again." << std::endl;
-        }
-    }
-    return choice;
-}
+#include "Control/control_alloc_selector.hpp"
+#include "Control/PID_position_motion_control.hpp"
+#include "Control/PID_heading_motion_control.hpp"
+#include "Control/non_lin_constrained_control_alloc.hpp"
+
+#include "Guidance/guidance_selector.hpp"
+#include "Guidance/LOS.hpp"
+#include "Guidance/ALOS.hpp"
+#include "Guidance/LOS_observer.hpp"
+#include "Guidance/dynamic_positioning.hpp"
+
+#include "Models/ran.hpp"
+#include "Models/ref_model.hpp"
+#include "Models/model_utilities.hpp"
+
+#include "Planning/plan_selector.hpp"
+#include "Planning/straight_line_planning.hpp"
+#include "Planning/fermat_spiral_planning.hpp"
+
+#include "Utilities/calculations.hpp"
+#include "Utilities/plotting.hpp"
+
 
 int main() {
     srand(time(0)); 
@@ -85,18 +79,16 @@ int main() {
     plotPath(pathLine);
 
     // Create the Fermat spiral path.
-    // - Set the curvature constraint (κ_max in rad/m).
-    double kappa_max = 0.2; //Do not change this value without changing the theta_kappa_max in the path_generation.cpp file.
+    // - Set the curvature constraint (k_max in rad/m).
+    double kappa_max = 0.2; 
     FermatSpiralPath spiral(kappa_max);
     spiral.updateWaypoints(wpt);
-    Waypoints pathFS = spiral.samplePath(0.001);
+    Waypoints pathFS = spiral.samplePath(0.01);
     std::cout << "Path size: " << pathFS.size() << std::endl;
     plotPath(pathFS);
 
-    
-
     // Initialize guidance methods and LOS observer 
-    double delta = 5.0; // Lookahead distance
+    ALOS ALOS(Delta_h, gamma_h, 0.1);
     LOSObserver losObserver(h, K_f);
      
     // Initial states - will be properly set after path generation
@@ -212,27 +204,32 @@ int main() {
         // - Type of path
         // - path functions responsible for wpt_index increment
         switch (pathType) {
-            case 0: { // Dynamic Positioning does not use a path. Use Voronoi space with MPC
+            case 1: { // Dynamic Positioning does not currently use a path.
+                // TODO; Dynamic positioning for beerthing in a Voronoi space with MPC.
                 break; 
             }
-            case 1: { // Straight line path.
-                straightLinePath.updateWaypoints(wpt);
+            case 2: { // Straight line path.
                 closest = straightLinePath.getClosestPoint(Vector2D(xn, yn), wpt_index);
                 break;
             }
-            case 2: { // Continuous-Curvature Path Using Fermat's Spiral.
-                spiral.updateWaypoints(wpt);
+            case 3: { // Continuous-Curvature Path Using Fermat's Spiral.
                 closest = spiral.getClosestPoint(Vector2D(xn, yn), wpt_index);
                 break;
             }
         }
-        
         path_x = closest.pos.x;
         path_y = closest.pos.y;
         path_x_dot = closest.dpos.x;
         path_y_dot = closest.dpos.y;
         path_x_ddot = closest.ddpos.x;
         path_y_ddot = closest.ddpos.y;
+
+        // std::cout << "Closest point on curve:\n";
+        // std::cout << "  Position: (" << path_x << ", " << path_y << ")\n";
+        // std::cout << "  Velocity: (" << path_x_dot << ", " << path_y_dot << ")\n";
+        // std::cout << "  Acceleration: (" << path_x_ddot << ", " << path_y_ddot << ")\n";
+        // std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
 
 
         // - Guidance law
@@ -243,7 +240,7 @@ int main() {
                 break;
             }
             case 2: { // LOS heading autopilot
-                auto [psi_ref, y_e] = LOS(xn, yn, delta, path_x, path_y, path_x_dot, path_y_dot);
+                auto [psi_ref, y_e] = LOS(xn, yn, Delta_h, path_x, path_y, path_x_dot, path_y_dot);
 
                 losObserver.update(psi_ref);
                 psi_d = losObserver.getLOSAngle();
@@ -252,7 +249,7 @@ int main() {
                 break;
             }
             case 3: { // ALOS heading autopilot
-                auto [psi_ref, y_e] = ALOS(xn, yn, delta, path_x, path_y, path_x_dot, path_y_dot);
+                auto [psi_ref, y_e] = ALOS.update(xn, yn, path_x, path_y, path_x_dot, path_y_dot);
 
                 losObserver.update(psi_ref);
                 psi_d = losObserver.getLOSAngle();
@@ -312,8 +309,8 @@ int main() {
         if (i % 100 == 0) {
             std::cout << std::fixed << std::setprecision(0)
             << "################################################" << std::endl
-            << "Iteration: " << i << ", Time: " << floor(t[i]/60) << "min, " << fmod(t[i], 60) << "s, "
-            << "Guidance flag: " << GuidanceFlag << std::endl
+            << "Iteration: " << i << ", Time: " << floor(t[i]/60) << "min, " << fmod(t[i], 60) << "s, " <<std::endl
+            << "Guidance flag: " << GuidanceFlag << ", wpt index: " << wpt_index <<std::endl
             << "------------------------------------------------" << std::endl;
             if (GuidanceFlag == 1){
                 std::cout << std::fixed << std::setprecision(1)
