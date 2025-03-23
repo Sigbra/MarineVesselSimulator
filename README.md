@@ -10,7 +10,7 @@ The repository is implemented using c++ for fast computations and open-source pu
 
 #### Implemented path generation algorithms;
 - Straight line path (For path following)
-- Continuous-purvature path based on "Continuous-Curvature Path Generation Using Fermat's Spiral" by Anastasios M. Lekkas, Andreas R. Dahl, Morten Breivik, Thor I. Fossen. In Modeling, Identification and Control, Vol. 34, No. 4, 2013, pp. 183–198, ISSN 1890–1328. (For path following and trajectory tracking). 
+- Continuous-curvature path based on "Continuous-Curvature Path Generation Using Fermat's Spiral" by Anastasios M. Lekkas, Andreas R. Dahl, Morten Breivik, Thor I. Fossen. In Modeling, Identification and Control, Vol. 34, No. 4, 2013, pp. 183–198, ISSN 1890–1328. (For path following and trajectory tracking). 
 
 #### Implemented guidance laws; 
 - Dynamic Positioning (DP) (at stationary waypoint).
