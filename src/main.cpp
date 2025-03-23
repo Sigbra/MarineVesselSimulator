@@ -224,14 +224,6 @@ int main() {
         path_x_ddot = closest.ddpos.x;
         path_y_ddot = closest.ddpos.y;
 
-        // std::cout << "Closest point on curve:\n";
-        // std::cout << "  Position: (" << path_x << ", " << path_y << ")\n";
-        // std::cout << "  Velocity: (" << path_x_dot << ", " << path_y_dot << ")\n";
-        // std::cout << "  Acceleration: (" << path_x_ddot << ", " << path_y_ddot << ")\n";
-        // std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-
-
         // - Guidance law
         switch (GuidanceFlag) {
             case 1: { // Dynamic Positioning
@@ -271,7 +263,7 @@ int main() {
             alpha_c = {control_allocation[1], control_allocation[3]};
         } 
         // - Path following 
-        else if (GuidanceFlag==2) { 
+        else if (GuidanceFlag==2 || GuidanceFlag==3) { 
             // - Motion control system
             tau_XYN = headPID.update(h, M, psi, psi_d, r, r_d, a_d);
 
