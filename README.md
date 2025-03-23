@@ -40,11 +40,40 @@ git pull
 git push
 '''
 
-## Questions
 
-- Forslag som er bedre enn PID-en jeg bruker som motion_controller nå?
-- Er ran() modellen riktig implementert, se spessielt på forskjellene fra otter.m (azimuth fuksjonaliteten)
-- Sliter med endring av heading, har satt opp tidskonstanten for yaw i ran modellen og begrenset U_max til 0.1 for å unngå problematikk forårsaket av treg endring i heading. Jeg veit båten på ekte kan snu seg på stedet veldig fort, så det er ikke urealistisk å implementere.
-- Er guidance ok? Har implementert veldig enkel guidance, men fungerer DP og stationkeeping        prinsippene over avtander på 20 m? 
+## TODO:
+ 
+ ### Fix calculation ran()
+ Fix the calculation of input matrix B in ran().
+ Check that the numbers used in equations make sence for ran. 
 
-- Mange parametere er en gjetning, har ikke alle ekte tall (Som tall fra Bollard) ennå. 
+ ## MPC planning of path using control allocation knowlegde
+ 
+
+ ### MPC guidance (not doing this)
+ Not MPC for guidance, but to follow the best path possible.
+ Can be calculated by a thread in the background and updated once in a while.
+
+ Minimization based on the inputs 
+ - chi_d (Desired Course angle)
+ - U_d (Desired speed)
+ - Tf (final time)
+
+ chi = psi + beta_c 
+ U = sqrt(u² + v²)
+ beta_c = atan(v/u)
+ 
+ Finding:
+ X_d_dot = U_d * cos(chi_d)
+ Y_d_dot = U_d * sin(chi_d)
+
+ Inequality Constraints:
+ abs(chi_d[k+1] - chi_d[k]) / h <= r_max (max turning)
+ abs(U_d[k+1] - U_d[k]) / h <= U_dot_max (max desired acceleration)
+
+ Equality constraints:
+ X_d(0)
+ Y_d(0)
+ X_d(Tf)
+ Y_d(Tf)
+ Tf = 60 seconds (example value)
