@@ -48,10 +48,12 @@ The repository is implemented using c++ for fast computations and open-source pu
 
  #### MPC control allocation to handle time delay of actuators better
 
- #### MPC planning of path using control allocation knowlegde
+ #### MPC guidance 1: 
+ For DP mainly. 
+ MPC using control allocation knowlegde, to improve performance over a horizon.
  
- #### MPC guidance 
- Not MPC for guidance, but to follow the best path possible.
+ #### MPC guidance 2
+ For path following/trajectory tracking
  Can be calculated by a thread in the background and updated once in a while.
 
  Minimization based on the inputs 
