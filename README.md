@@ -6,14 +6,14 @@ The "Handbook of Marine Craft Hydrodynamics and Motion Control" by Thor I. Fosse
 The repository is implemented using c++ for fast computations and open-source purposes. 
 
 #### Implemented models;
-- ran(), a reserch boat with catamaran hull.
+- ran(), a marine reserch vessel with a catamaran hull.
 
 #### Implemented path generation algorithms;
-- Straight line path (For path following)
-- Continuous-curvature path based on "Continuous-Curvature Path Generation Using Fermat's Spiral" by Anastasios M. Lekkas, Andreas R. Dahl, Morten Breivik, Thor I. Fossen. In Modeling, Identification and Control, Vol. 34, No. 4, 2013, pp. 183–198, ISSN 1890–1328. (For path following and trajectory tracking). 
+- Straight line path. (For path following.)
+- Continuous-curvature path based on "Continuous-Curvature Path Generation Using Fermat's Spiral" by Anastasios M. Lekkas, Andreas R. Dahl, Morten Breivik, Thor I. Fossen. In Modeling, Identification and Control, Vol. 34, No. 4, 2013, pp. 183–198, ISSN 1890–1328. (For path following and trajectory tracking.)
 
 #### Implemented guidance laws; 
-- Dynamic Positioning (DP) (at stationary waypoint).
+- Dynamic positioning (DP) (at stationary waypoint).
 - Line-of-sight (LOS).
 - Adaptive Line-of-sight (ALOS). 
 
