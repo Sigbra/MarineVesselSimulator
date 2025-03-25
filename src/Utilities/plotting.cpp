@@ -17,7 +17,7 @@ namespace plt = matplotlibcpp;
 std::string getRepositoryPath() {
     const char* home = std::getenv("HOME");  // Get the user's home directory
     if (home) {
-        return std::string(home) + "/Optimal-Constraint-Thruster-Allocation/";
+        return std::string(home) + "/MarineVesselSimulator/";
     } else {
         std::cerr << "HOME environment variable is not set!" << std::endl;
         exit(1);

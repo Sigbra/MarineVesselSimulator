@@ -258,7 +258,12 @@ int main() {
             tau_XYN = posPID.update(h, xn_d, yn_d, psi_d, xn, yn, psi);
             
             // - Control allocation
-            control_allocation = NLOptControlAlloc(tau_XYN[0], tau_XYN[1], tau_XYN[2], U);
+            if (ControlAllocFlag==1) {
+                control_allocation = NLOptControlAlloc(tau_XYN[0], tau_XYN[1], tau_XYN[2], U);
+            }
+            else {
+                //MPC control alloc
+            }
             n_c     = {control_allocation[0], control_allocation[2]};
             alpha_c = {control_allocation[1], control_allocation[3]};
         } 
@@ -268,7 +273,12 @@ int main() {
             tau_XYN = headPID.update(h, M, psi, psi_d, r, r_d, a_d);
 
             // - Control allocation
-            control_allocation = NLOptControlAlloc(tau_XYN[0], tau_XYN[1], tau_XYN[2], U);
+            if (ControlAllocFlag==1) {
+                control_allocation = NLOptControlAlloc(tau_XYN[0], tau_XYN[1], tau_XYN[2], U);
+            }
+            else {
+                //MPC control alloc
+            }
             n_c     = {control_allocation[0], control_allocation[2]};
             alpha_c = {control_allocation[1], control_allocation[3]};
         }
