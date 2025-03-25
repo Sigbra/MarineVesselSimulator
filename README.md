@@ -1,6 +1,6 @@
 # Marine Vessel Simulator
 
-This repository contains code for simulation of marine vessels.
+This repository contains c++ code for simulation of marine vessels, currently for a catamaran model only.
 
 The "Handbook of Marine Craft Hydrodynamics and Motion Control" by Thor I. Fossen was used actively for theoretical background material, as well as papers mentioned in "placeholder.pdf" in the literature folder. 
 
