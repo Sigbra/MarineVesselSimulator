@@ -11,6 +11,7 @@
 #include "Control/control_alloc_selector.hpp"
 #include "Control/PID_position_motion_control.hpp"
 #include "Control/PID_heading_motion_control.hpp"
+#include "Control/MPC_control_alloc.hpp"
 #include "Control/non_lin_constrained_control_alloc.hpp"
 
 #include "Guidance/guidance_selector.hpp"
@@ -262,7 +263,9 @@ int main() {
                 control_allocation = NLOptControlAlloc(tau_XYN[0], tau_XYN[1], tau_XYN[2], U);
             }
             else {
-                //MPC control alloc
+                control_allocation = MPC_control_alloc(tau_XYN[0], tau_XYN[1], tau_XYN[2],
+                                                       U, T_n, T_alpha,
+                                                       n, alpha);
             }
             n_c     = {control_allocation[0], control_allocation[2]};
             alpha_c = {control_allocation[1], control_allocation[3]};
@@ -277,7 +280,9 @@ int main() {
                 control_allocation = NLOptControlAlloc(tau_XYN[0], tau_XYN[1], tau_XYN[2], U);
             }
             else {
-                //MPC control alloc
+                control_allocation = MPC_control_alloc(tau_XYN[0], tau_XYN[1], tau_XYN[2],
+                                                       U, T_n, T_alpha,
+                                                       n, alpha);
             }
             n_c     = {control_allocation[0], control_allocation[2]};
             alpha_c = {control_allocation[1], control_allocation[3]};

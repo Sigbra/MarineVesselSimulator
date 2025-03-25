@@ -87,6 +87,15 @@
     "stop_token": "cpp",
     "thread": "cpp",
     "cinttypes": "cpp",
-    "variant": "cpp"
+    "variant": "cpp",
+    "csignal": "cpp",
+    "any": "cpp",
+    "strstream": "cpp",
+    "cfenv": "cpp",
+    "source_location": "cpp",
+    "shared_mutex": "cpp",
+    "stdfloat": "cpp",
+    "typeindex": "cpp",
+    "valarray": "cpp"
 }
 }
