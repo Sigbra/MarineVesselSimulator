@@ -417,7 +417,7 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input, const Eigen::Ve
 
 
 // Specialized RK4 integrator for the RAN model. 
-void rk4_ran_step(Eigen::VectorXd& x, const Eigen::VectorXd& n, const Eigen::VectorXd& alpha,
+void rk4_ran_step(Eigen::VectorXd& x, const Eigen::VectorXd n, const Eigen::VectorXd alpha,
                   double mp, double V_c, double beta_c, double h) {
 
     // Initialize output variables

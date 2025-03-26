@@ -11,6 +11,7 @@
 #include "Control/control_alloc_selector.hpp"
 #include "Control/PID_position_motion_control.hpp"
 #include "Control/PID_heading_motion_control.hpp"
+#include "Control/MPC_control_alloc.hpp"
 #include "Control/non_lin_constrained_control_alloc.hpp"
 
 #include "Guidance/guidance_selector.hpp"
@@ -80,7 +81,7 @@ int main() {
 
     // Create the Fermat spiral path.
     // - Set the curvature constraint (k_max in rad/m).
-    double kappa_max = 0.2; 
+    double kappa_max = 0.3; 
     FermatSpiralPath spiral(kappa_max);
     spiral.updateWaypoints(wpt);
     Waypoints pathFS = spiral.samplePath(0.01);
@@ -93,6 +94,10 @@ int main() {
      
     // Initial states - will be properly set after path generation
     Eigen::VectorXd x = Eigen::VectorXd::Zero(12);  // x = [u v w p q r xn yn zn phi theta psi]'
+    // x(0) = 0.1;
+    // x(1) = 0.01;
+    // x(6) = -0.1;
+    // x(7) = -0.1;
     x(11) = std::atan2(wpt[1].y - wpt[0].y, wpt[1].x - wpt[0].x);
     
     // Azimuth pod dynamics
@@ -258,7 +263,14 @@ int main() {
             tau_XYN = posPID.update(h, xn_d, yn_d, psi_d, xn, yn, psi);
             
             // - Control allocation
-            control_allocation = NLOptControlAlloc(tau_XYN[0], tau_XYN[1], tau_XYN[2], U);
+            if (ControlAllocFlag==1) {
+                control_allocation = NLOptControlAlloc(tau_XYN[0], tau_XYN[1], tau_XYN[2], U);
+            }
+            else if (ControlAllocFlag==2){
+                control_allocation = MPC_control_alloc(tau_XYN[0], tau_XYN[1], tau_XYN[2],
+                                                       U, T_n, T_alpha,
+                                                       n, alpha);
+            }
             n_c     = {control_allocation[0], control_allocation[2]};
             alpha_c = {control_allocation[1], control_allocation[3]};
         } 
@@ -268,7 +280,14 @@ int main() {
             tau_XYN = headPID.update(h, M, psi, psi_d, r, r_d, a_d);
 
             // - Control allocation
-            control_allocation = NLOptControlAlloc(tau_XYN[0], tau_XYN[1], tau_XYN[2], U);
+            if (ControlAllocFlag==1) {
+                control_allocation = NLOptControlAlloc(tau_XYN[0], tau_XYN[1], tau_XYN[2], U);
+            }
+            else if (ControlAllocFlag==2){
+                control_allocation = MPC_control_alloc(tau_XYN[0], tau_XYN[1], tau_XYN[2],
+                                                       U, T_n, T_alpha,
+                                                       n, alpha);
+            }
             n_c     = {control_allocation[0], control_allocation[2]};
             alpha_c = {control_allocation[1], control_allocation[3]};
         }
