@@ -81,7 +81,7 @@ int main() {
 
     // Create the Fermat spiral path.
     // - Set the curvature constraint (k_max in rad/m).
-    double kappa_max = 0.2; 
+    double kappa_max = 0.3; 
     FermatSpiralPath spiral(kappa_max);
     spiral.updateWaypoints(wpt);
     Waypoints pathFS = spiral.samplePath(0.01);
@@ -266,7 +266,7 @@ int main() {
             if (ControlAllocFlag==1) {
                 control_allocation = NLOptControlAlloc(tau_XYN[0], tau_XYN[1], tau_XYN[2], U);
             }
-            else {
+            else if (ControlAllocFlag==2){
                 control_allocation = MPC_control_alloc(tau_XYN[0], tau_XYN[1], tau_XYN[2],
                                                        U, T_n, T_alpha,
                                                        n, alpha);
@@ -283,7 +283,7 @@ int main() {
             if (ControlAllocFlag==1) {
                 control_allocation = NLOptControlAlloc(tau_XYN[0], tau_XYN[1], tau_XYN[2], U);
             }
-            else {
+            else if (ControlAllocFlag==2){
                 control_allocation = MPC_control_alloc(tau_XYN[0], tau_XYN[1], tau_XYN[2],
                                                        U, T_n, T_alpha,
                                                        n, alpha);

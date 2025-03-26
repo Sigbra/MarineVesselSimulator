@@ -99,7 +99,7 @@ std::vector<double> MPC_control_alloc(double tau_X, double tau_Y, double tau_N,
     // Set initial guesses for optimization variables
     opti.set_initial(n_vars, repmat(DM::vertcat({n_input(0), n_input(1)}), 1, N+1));
     opti.set_initial(alpha_vars, repmat(DM::vertcat({alpha_input(0), alpha_input(1)}), 1, N+1));
-    
+
     opti.set_initial(n_cmd, repmat(DM::vertcat({0.1, 0.1}), 1, N));
     opti.set_initial(alpha_cmd, repmat(DM::vertcat({alpha_input(0), alpha_input(1)}), 1, N));
 
@@ -117,7 +117,6 @@ std::vector<double> MPC_control_alloc(double tau_X, double tau_Y, double tau_N,
     try {
         OptiSol sol = opti.solve();
 
-        // Extract solution
         DM n_cmd_sol = opti.value(n_cmd);
         DM alpha_cmd_sol = opti.value(alpha_cmd);
 
