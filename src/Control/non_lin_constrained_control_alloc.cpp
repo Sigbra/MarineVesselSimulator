@@ -58,7 +58,7 @@ std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N, 
     // - Mean square error minimization of each tau component
     MX penalty_tau = 0.5  * pow(tau_X - tau_X_model, 2)
                    + 0.5  * pow(tau_Y - tau_Y_model, 2)
-                   + 0.8  * pow(tau_N - tau_N_model, 2);
+                   + 0.5  * pow(tau_N - tau_N_model, 2);
                    
     MX eff_alpha1 = if_else(n1 >= 0, alpha1, alpha1 + M_PI);
     MX eff_alpha2 = if_else(n2 >= 0, alpha2, alpha2 + M_PI);

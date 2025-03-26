@@ -11,8 +11,8 @@ std::vector<double> MPC_control_alloc(double tau_X, double tau_Y, double tau_N,
                                       Eigen::Vector2d n_input, Eigen::Vector2d alpha_input) 
 {
 
-    double horizon = 10.0;
-    double delta   =  0.5;
+    double horizon = 2.0;
+    double delta   = 0.1;
     int N = static_cast<int>(horizon/delta); 
 
     Eigen::Vector3d CO_offset = CO_Offset(U);
@@ -24,7 +24,7 @@ std::vector<double> MPC_control_alloc(double tau_X, double tau_Y, double tau_N,
     double g = 9.81;
     double k_pos = 200*g;         // Positive Bollard
     double k_neg = 200*g;         // Negative Bollard
-    double n_max =  1;            // Relative propellar speed max (representing max positive  revs)
+    double n_max =  1;            // Relative propellar speed max (representing max positive revs)
     double n_min = -1;            // Relative propellar speed min (representing max negative revs)
     double alpha_max = M_PI/2; 
     double alpha_min = -M_PI/2;
@@ -53,17 +53,13 @@ std::vector<double> MPC_control_alloc(double tau_X, double tau_Y, double tau_N,
     }
 
     MX J = 0;
-    
-    // Add regularization terms to improve numerical stability
-    double reg_n_cmd = 0.01;        // Regularization weight for control rate
-    double reg_alpha_cmd = 0.01;    // Regularization weight for control rate
-    double tau_weight = 10.0;       // Weight for error
+    double tau_weight = 10.0;  
     
     for (int k = 0; k < N; ++k) {
-        MX n1 = n_vars(0, k+1);
-        MX n2 = n_vars(1, k+1);
-        MX alpha1 = alpha_vars(0, k+1);
-        MX alpha2 = alpha_vars(1, k+1);
+        MX n1 = n_vars(0, k);
+        MX n2 = n_vars(1, k);
+        MX alpha1 = alpha_vars(0, k);
+        MX alpha2 = alpha_vars(1, k);
 
         // Calculate thrusts
         MX Thrust1 = if_else(n1 >= 0, k_pos * n1 * fabs(n1), k_neg * n1 * fabs(n1));
@@ -77,16 +73,8 @@ std::vector<double> MPC_control_alloc(double tau_X, double tau_Y, double tau_N,
         
         // Error cost
         J = J + tau_weight * (pow(tau_X - tau_X_model, 2) + 
-                           pow(tau_Y - tau_Y_model, 2) + 
-                           pow(tau_N - tau_N_model, 2));
-        
-        if (k > 0) {
-            // Penalize control rate changes
-            J = J + reg_n_cmd * (pow(n_cmd(0, k) - n_cmd(0, k-1), 2) + 
-                              pow(n_cmd(1, k) - n_cmd(1, k-1), 2));
-            J = J + reg_alpha_cmd * (pow(alpha_cmd(0, k) - alpha_cmd(0, k-1), 2) + 
-                                  pow(alpha_cmd(1, k) - alpha_cmd(1, k-1), 2));
-        }
+                              pow(tau_Y - tau_Y_model, 2) + 
+                              pow(tau_N - tau_N_model, 2));
     }
 
     // Optimization:
@@ -111,18 +99,18 @@ std::vector<double> MPC_control_alloc(double tau_X, double tau_Y, double tau_N,
     // Set initial guesses for optimization variables
     opti.set_initial(n_vars, repmat(DM::vertcat({n_input(0), n_input(1)}), 1, N+1));
     opti.set_initial(alpha_vars, repmat(DM::vertcat({alpha_input(0), alpha_input(1)}), 1, N+1));
-    opti.set_initial(n_cmd, repmat(DM::vertcat({n_input(0), n_input(1)}), 1, N));
+    
+    opti.set_initial(n_cmd, repmat(DM::vertcat({0.1, 0.1}), 1, N));
     opti.set_initial(alpha_cmd, repmat(DM::vertcat({alpha_input(0), alpha_input(1)}), 1, N));
 
     // Configure solver options
     Dict solver_opts;
     solver_opts["print_time"] = 0;
     solver_opts["ipopt.print_level"] = 0;
-    solver_opts["ipopt.max_iter"] = 500;  // Increase max iterations
-    solver_opts["ipopt.tol"] = 1e-4;      // Loosen tolerance
-    solver_opts["ipopt.acceptable_tol"] = 1e-3;
-    solver_opts["ipopt.acceptable_iter"] = 5;
-    solver_opts["ipopt.hessian_approximation"] = "limited-memory"; // For large-scale problems
+    solver_opts["ipopt.max_iter"] = 100;  
+    solver_opts["ipopt.tol"] = 0.001;       
+    solver_opts["ipopt.acceptable_tol"] = 0.01;
+    solver_opts["ipopt.acceptable_iter"] = 20;
     opti.solver("ipopt", solver_opts);
 
 
@@ -133,19 +121,17 @@ std::vector<double> MPC_control_alloc(double tau_X, double tau_Y, double tau_N,
         DM n_cmd_sol = opti.value(n_cmd);
         DM alpha_cmd_sol = opti.value(alpha_cmd);
 
-        double n1_opt     = double(n_cmd_sol(0, 0));
-        double n2_opt     = double(n_cmd_sol(1, 0));
-        double alpha1_opt = double(alpha_cmd_sol(0, 0));
-        double alpha2_opt = double(alpha_cmd_sol(1, 0));
+        double n1_opt     = double(n_cmd_sol(0, 1));
+        double n2_opt     = double(n_cmd_sol(1, 1));
+        double alpha1_opt = double(alpha_cmd_sol(0, 1));
+        double alpha2_opt = double(alpha_cmd_sol(1, 1));
 
         return {n1_opt, alpha1_opt, n2_opt, alpha2_opt};
 
     } catch (std::exception &e) {
-        // Handle solver failure gracefully
+       
         std::cerr << "Optimization failed: " << e.what() << std::endl;
         
-        // Fallback to simpler allocation method (could use your NLOptControlAlloc here)
-        // For now, just return the current values
         return {n_input(0), alpha_input(0), n_input(1), alpha_input(1)};
     }
 }

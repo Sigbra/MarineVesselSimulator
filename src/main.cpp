@@ -94,6 +94,10 @@ int main() {
      
     // Initial states - will be properly set after path generation
     Eigen::VectorXd x = Eigen::VectorXd::Zero(12);  // x = [u v w p q r xn yn zn phi theta psi]'
+    // x(0) = 0.1;
+    // x(1) = 0.01;
+    // x(6) = -0.1;
+    // x(7) = -0.1;
     x(11) = std::atan2(wpt[1].y - wpt[0].y, wpt[1].x - wpt[0].x);
     
     // Azimuth pod dynamics
