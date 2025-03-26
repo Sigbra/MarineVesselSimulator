@@ -104,7 +104,7 @@ int main() {
     double T_n = 0.5;                                // Propeller time constant (s)
     Eigen::Vector2d n = Eigen::Vector2d::Zero();     // Init: [n_left, n_right] = [0, 0]
 
-    double T_alpha = 1;                              // Azimuth angle time constant (s)
+    double T_alpha = 0.5;                              // Azimuth angle time constant (s)
     Eigen::Vector2d alpha = Eigen::Vector2d::Zero(); // Init: [angle_left, angle_right] = [0, 0]
 
     // Choose path type
@@ -169,6 +169,14 @@ int main() {
     // SIM data storage
     Eigen::MatrixXd simdata(num_steps, 24);         
     
+    RealTimePlotter plotter;
+    if (pathType == 2) {
+        plotter.setSampledPath(pathLine);
+    }
+    else if (pathType == 3) {
+        plotter.setSampledPath(pathFS);
+    }
+
     // Main simulation loop
     for (int i = 0; i < num_steps; ++i) {
         t[i] = i * h;
@@ -205,6 +213,7 @@ int main() {
             if (R_switch > std::sqrt(std::pow(xn - wpt[wpt_index].x, 2) + std::pow(yn - wpt[wpt_index].y, 2))) {
                 pathType = 0;
                 GuidanceFlag = 1; 
+                break; //Temporary
             }
         }
 
@@ -320,6 +329,7 @@ int main() {
 
         // Show SIM progress once per second
         if (i % 100 == 0) {
+            plotter.updatePlot(xn, yn, psi, 0.2, closest.point.pos.x, closest.point.pos.y);
             std::cout << std::fixed << std::setprecision(0)
             << "################################################" << std::endl
             << "Iteration: " << i << ", Time: " << floor(t[i]/60) << "min, " << fmod(t[i], 60) << "s, " <<std::endl
@@ -368,10 +378,13 @@ int main() {
         simdata(i, 21) = alpha_c(1);
         simdata(i, 22) = alpha(0); 
         simdata(i, 23) = alpha(1); 
+
     }
 
     std::cout << "Simulation completed" << std::endl;
     storeSimulationData(simdata, "simdata.csv");
+
+    plotter.finalizePlot();
 
     plotTrajectory();
     plotStateErrors();

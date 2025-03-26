@@ -8,6 +8,7 @@
 #include <cstdlib> 
 #include <filesystem>
 #include "matplotlibcpp.h"
+#include <Python.h>
 
 #include "Utilities/plotting.hpp"
 #include "Utilities/calculations.hpp"
@@ -260,4 +261,78 @@ void plotAngles() {
     plt::legend();
     plt::grid(true);
     plt::show();
+}          
+
+RealTimePlotter::RealTimePlotter() {
+    plt::figure();   
+    plt::xlabel("x(t)");
+    plt::ylabel("y(t)");
+    plt::title("Vessel Trajectory with Heading Angles");
+    plt::axis("equal");
+    plt::grid(true);
+    plt::xlim(-50, 100);
+    plt::ylim(-50, 100);
+}
+
+RealTimePlotter::~RealTimePlotter() {
+    plt::close();
+}
+
+void RealTimePlotter::setSampledPath(const Waypoints& path) {
+    m_path_x.clear();
+    m_path_y.clear();
+    for (const auto& pt : path) {
+        m_path_x.push_back(pt.x);
+        m_path_y.push_back(pt.y);
+    }
+    if (!m_path_x.empty() && !m_path_y.empty()) {
+        plt::plot(m_path_x, m_path_y, "k-"); 
+        plt::draw();
+        plt::pause(0.001);
+    }
+}
+
+
+void RealTimePlotter::updatePlot(double x, double y, double psi_value, double arrowLength,
+    double x_closest, double y_closest) {
+
+m_x.push_back(x);
+m_y.push_back(y);
+m_psi.push_back(psi_value);
+
+plt::cla();
+
+if (!m_path_x.empty() && !m_path_y.empty()) {
+plt::plot(m_path_x, m_path_y, "k-");  
+}
+
+plt::plot(m_x, m_y, "b-");
+
+double u_val = arrowLength * cos(psi_value);
+double v_val = arrowLength * sin(psi_value);
+std::vector<double> arrowX = { x };
+std::vector<double> arrowY = { y };
+std::vector<double> u_vec  = { u_val };
+std::vector<double> v_vec  = { v_val };
+plt::quiver(arrowX, arrowY, u_vec, v_vec);
+
+std::vector<double> cpX = { x_closest };
+std::vector<double> cpY = { y_closest };
+plt::plot(cpX, cpY, "go"); 
+
+std::vector<double> curPosX = { x };
+std::vector<double> curPosY = { y };
+plt::plot(curPosX, curPosY, "ro");
+
+plt::xlabel("x(t)");
+plt::ylabel("y(t)");
+plt::title("Vessel Trajectory with Heading Angles");
+plt::grid(true);
+
+plt::draw();
+plt::pause(0.01);
+}
+
+void RealTimePlotter::finalizePlot(const std::string& filename) {
+    plt::close();
 }
