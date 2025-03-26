@@ -64,6 +64,15 @@ struct PathPoint {
 };
 
 //----------------------------------------------
+// Structure to Return Path Following Information
+//----------------------------------------------
+struct PathTrackingInfo {
+    PathPoint point;    // Closest point on the path
+    double x_e;         // Along-track error
+    double y_e;         // Cross-track error
+};
+
+//----------------------------------------------
 // Functions
 //----------------------------------------------
 double ssa(double angle);

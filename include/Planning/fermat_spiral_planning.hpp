@@ -25,7 +25,7 @@ class FermatSpiralPath {
         //   and returns the point with less positional error of the 4.
         //   When on the last segment, the waypoint index is updated. To ensure 
         //   a continous path, the line segments overlap by one waypoint.
-        PathPoint getClosestPoint(const Vector2D vessel_position, int& index);
+        PathTrackingInfo getClosestPoint(const Vector2D vessel_position, int& index);
     
         // Trajectory tracking:
         // - Not yet implemented

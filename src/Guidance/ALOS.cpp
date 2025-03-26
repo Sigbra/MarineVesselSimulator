@@ -8,15 +8,22 @@ ALOS::ALOS(double Delta_h, double gamma_h, double h)
 
 std::tuple<double, double> ALOS::update(double xn, double yn,
                                         double path_x, double path_y,
-                                        double path_x_dot, double path_y_dot)
+                                        double path_x_dot, double path_y_dot,
+                                        double precomputed_y_e)
 {
 // Compute the path-tangent angle (pi_h) using the derivatives of the path.
 double pi_h = std::atan2(path_y_dot, path_x_dot);
 
-// Compute the lateral error (y_e) in the path-tangential frame.
-// Here, the error is computed by projecting the difference between the vehicle
-// position and the path point onto the direction perpendicular to the path.
-double y_e = -(xn - path_x) * std::sin(pi_h) + (yn - path_y) * std::cos(pi_h);
+// Use pre-computed cross-track error if provided, otherwise calculate it
+double y_e;
+if (std::isnan(precomputed_y_e)) {
+    // Compute the lateral error (y_e) in the path-tangential frame.
+    // Here, the error is computed by projecting the difference between the vehicle
+    // position and the path point onto the direction perpendicular to the path.
+    y_e = -(xn - path_x) * std::sin(pi_h) + (yn - path_y) * std::cos(pi_h);
+} else {
+    y_e = precomputed_y_e;
+}
 
 // Compute the desired heading (psi_ref) using the adaptive LOS guidance law.
 double psi_ref = pi_h - beta_hat - std::atan(y_e / Delta_h_);

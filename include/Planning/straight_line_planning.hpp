@@ -17,7 +17,7 @@ class StraightLinePath {
     
         void updateWaypoints(const Waypoints& waypoints);
     
-        PathPoint getClosestPoint(const Vector2D vessel, int& wpt_index);
+        PathTrackingInfo getClosestPoint(const Vector2D vessel, int& wpt_index);
     
         std::vector<Vector2D> samplePath(double delta) const;
     

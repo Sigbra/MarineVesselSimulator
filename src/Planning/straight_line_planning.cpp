@@ -26,7 +26,7 @@ double StraightLinePath::crossTrackError(Vector2D vessel, PathPoint path_point) 
     return y_e;
 }
 
-PathPoint StraightLinePath::getClosestPoint(const Vector2D vessel_position, int &wpt_index) {
+PathTrackingInfo StraightLinePath::getClosestPoint(const Vector2D vessel_position, int &wpt_index) {
     
     Vector2D vessel_pos = vessel_position;
     Vector2D wpt_prev   = waypoints_[wpt_index-1];
@@ -43,8 +43,7 @@ PathPoint StraightLinePath::getClosestPoint(const Vector2D vessel_position, int 
     double y_e_line;
     double line_error;
 
-    PathPoint closest_point;
-
+    PathTrackingInfo tracking_info;
 
     line_prev_point = projectOntoLine(wpt_prev, wpt, vessel_position);
     x_e_line_prev = alongTrackError(vessel_position, line_prev_point);
@@ -57,18 +56,20 @@ PathPoint StraightLinePath::getClosestPoint(const Vector2D vessel_position, int 
     line_error = std::sqrt(x_e_line*x_e_line + y_e_line*y_e_line);
 
     if (line_prev_error < line_error){
-        closest_point = line_prev_point;    
+        tracking_info.point = line_prev_point;
+        tracking_info.x_e = x_e_line_prev;
+        tracking_info.y_e = y_e_line_prev;
     } 
     else {
-        closest_point = line_point;
+        tracking_info.point = line_point;
+        tracking_info.x_e = x_e_line;
+        tracking_info.y_e = y_e_line;
         if (wpt_index < waypoints_.size()-1){
             wpt_index++;
         }
     } 
 
-    //std::cout << "closest_point: " << closest_point.pos.x << ", " << closest_point.pos.y << "\n" <<std::endl;
-    //std::cout << "y_e_line: " << y_e_line << "\n" <<std::endl;
-    return closest_point;
+    return tracking_info;
 }
 
 

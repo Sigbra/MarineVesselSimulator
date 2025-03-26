@@ -239,7 +239,7 @@ double FermatSpiralPath::crossTrackError(Vector2D vessel, PathPoint path_point) 
 }
 
 
-PathPoint FermatSpiralPath::getClosestPoint(const Vector2D vessel_position, int &wpt_index) {
+PathTrackingInfo FermatSpiralPath::getClosestPoint(const Vector2D vessel_position, int &wpt_index) {
     
     Vector2D vessel_pos = vessel_position;
     Vector2D wpt_prev   = waypoints_[wpt_index-1];
@@ -266,7 +266,7 @@ PathPoint FermatSpiralPath::getClosestPoint(const Vector2D vessel_position, int 
     double y_e_line;
     double line_error;
 
-    PathPoint closest_point;
+    PathTrackingInfo tracking_info;
 
     if (wpt_index > 1){ 
         Vector2D wpt_prev2  = waypoints_[wpt_index-2];
@@ -304,31 +304,39 @@ PathPoint FermatSpiralPath::getClosestPoint(const Vector2D vessel_position, int 
 
 
     if (wpt_index == 1){
-        closest_point = line_point;
+        tracking_info.point = line_point;
+        tracking_info.x_e = x_e_line;
+        tracking_info.y_e = y_e_line;
         if (wpt_index < waypoints_.size()-1){
-        wpt_index++;
+            wpt_index++;
         }
-        return closest_point;
+        return tracking_info;
     }
 
     if (line_prev_error < FS_error && line_prev_error < FS_mirrored_error && line_prev_error < line_error){
-        closest_point = line_prev_point; 
+        tracking_info.point = line_prev_point;
+        tracking_info.x_e = x_e_line_prev;
+        tracking_info.y_e = y_e_line_prev;
     } 
     else if (FS_mirrored_error < FS_error && FS_mirrored_error < line_error){
-        closest_point = FS_mirrored_point;
+        tracking_info.point = FS_mirrored_point;
+        tracking_info.x_e = x_e_FS_mirrored;
+        tracking_info.y_e = y_e_FS_mirrored;
     } 
     else if (FS_error < line_error){
-        closest_point = FS_point;
+        tracking_info.point = FS_point;
+        tracking_info.x_e = x_e_FS;
+        tracking_info.y_e = y_e_FS;
     } 
     else{
-        closest_point = line_point;
+        tracking_info.point = line_point;
+        tracking_info.x_e = x_e_line;
+        tracking_info.y_e = y_e_line;
         if (wpt_index < waypoints_.size()-1){
-        wpt_index++;
+            wpt_index++;
         }
     }
-    //std::cout << "closest_point: " << closest_point.pos.x << ", " << closest_point.pos.y << "\n" <<std::endl;
-    //std::cout << "y_e_line: " << y_e_line << "\n" <<std::endl;
-    return closest_point;
+    return tracking_info;
 }
 
 Waypoints FermatSpiralPath::samplePath(double delta) const
@@ -386,7 +394,7 @@ Waypoints FermatSpiralPath::samplePath(double delta) const
             path.push_back(pt);
         }
 
-        // 4) Update prev_end to the final “pull‐out” point2
+        // 4) Update prev_end to the final "pull‐out" point2
         prev_end = params.point2;
     }
 

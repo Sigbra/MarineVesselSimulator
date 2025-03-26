@@ -112,10 +112,12 @@ int main() {
 
     // Initialize path following variables
     int wpt_index = 1;
-    PathPoint closest;
-    closest.pos = Vector2D(0.0, 0.0);
-    closest.dpos = Vector2D(0.0, 0.0);
-    closest.ddpos = Vector2D(0.0, 0.0);
+    PathTrackingInfo closest;
+    closest.point.pos = Vector2D(0.0, 0.0);
+    closest.point.dpos = Vector2D(0.0, 0.0);
+    closest.point.ddpos = Vector2D(0.0, 0.0);
+    closest.x_e = 0.0;
+    closest.y_e = 0.0;
 
     double path_x = wpt[wpt_index-1].x;
     double path_y = wpt[wpt_index-1].y;
@@ -222,12 +224,12 @@ int main() {
                 break;
             }
         }
-        path_x = closest.pos.x;
-        path_y = closest.pos.y;
-        path_x_dot = closest.dpos.x;
-        path_y_dot = closest.dpos.y;
-        path_x_ddot = closest.ddpos.x;
-        path_y_ddot = closest.ddpos.y;
+        path_x = closest.point.pos.x;
+        path_y = closest.point.pos.y;
+        path_x_dot = closest.point.dpos.x;
+        path_y_dot = closest.point.dpos.y;
+        path_x_ddot = closest.point.ddpos.x;
+        path_y_ddot = closest.point.ddpos.y;
 
         // - Guidance law
         switch (GuidanceFlag) {
@@ -321,7 +323,13 @@ int main() {
             std::cout << std::fixed << std::setprecision(0)
             << "################################################" << std::endl
             << "Iteration: " << i << ", Time: " << floor(t[i]/60) << "min, " << fmod(t[i], 60) << "s, " <<std::endl
-            << "Guidance flag: " << GuidanceFlag << ", wpt index: " << wpt_index <<std::endl
+            << "------------------------------------------------" << std::endl
+            << "Path type: " << pathType
+            << ", Guidance flag: " << GuidanceFlag << ", wpt index: " << wpt_index <<std::endl
+            << "------------------------------------------------" << std::endl
+            << "closest point: " << closest.point.pos.x << ", " << closest.point.pos.y << std::endl
+            << std::fixed << std::setprecision(1)
+            << "x_e: " << closest.x_e << ", y_e: " << closest.y_e << std::endl
             << "------------------------------------------------" << std::endl;
             if (GuidanceFlag == 1){
                 std::cout << std::fixed << std::setprecision(1)
