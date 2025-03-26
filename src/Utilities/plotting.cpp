@@ -334,5 +334,9 @@ plt::pause(0.01);
 }
 
 void RealTimePlotter::finalizePlot(const std::string& filename) {
+    if (!filename.empty()) {
+        plt::save(filename);
+    }
+    plt::show();
     plt::close();
 }

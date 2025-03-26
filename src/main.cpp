@@ -209,11 +209,10 @@ int main() {
         // Guidance
 
         // - Mode switching condition
-        if (wpt_index == wpt.size()-1) {
+        if (wpt_index == wpt.size()) {
             if (R_switch > std::sqrt(std::pow(xn - wpt[wpt_index].x, 2) + std::pow(yn - wpt[wpt_index].y, 2))) {
-                pathType = 0;
+                pathType = 1;
                 GuidanceFlag = 1; 
-                break; //Temporary
             }
         }
 
@@ -239,6 +238,10 @@ int main() {
         path_y_dot = closest.point.dpos.y;
         path_x_ddot = closest.point.ddpos.x;
         path_y_ddot = closest.point.ddpos.y;
+
+        if (path_x == wpt.back().x && path_y == wpt.back().y) {
+            GuidanceFlag = 1; // To make vessel stop
+        }
 
         // - Guidance law
         switch (GuidanceFlag) {
@@ -268,40 +271,27 @@ int main() {
         }
 
         // Control System 
-        // - Station Keeping
+        // - Motion Control
+        // - - Station Keeping 
         if (GuidanceFlag==1) {
-            // - Motion control system
             tau_XYN = posPID.update(h, xn_d, yn_d, psi_d, xn, yn, psi);
-            
-            // - Control allocation
-            if (ControlAllocFlag==1) {
-                control_allocation = NLOptControlAlloc(tau_XYN[0], tau_XYN[1], tau_XYN[2], U);
-            }
-            else if (ControlAllocFlag==2){
-                control_allocation = MPC_control_alloc(tau_XYN[0], tau_XYN[1], tau_XYN[2],
-                                                       U, T_n, T_alpha,
-                                                       n, alpha);
-            }
-            n_c     = {control_allocation[0], control_allocation[2]};
-            alpha_c = {control_allocation[1], control_allocation[3]};
         } 
-        // - Path following 
+        // - - Path following
         else if (GuidanceFlag==2 || GuidanceFlag==3) { 
-            // - Motion control system
             tau_XYN = headPID.update(h, M, psi, psi_d, r, r_d, a_d);
-
-            // - Control allocation
-            if (ControlAllocFlag==1) {
-                control_allocation = NLOptControlAlloc(tau_XYN[0], tau_XYN[1], tau_XYN[2], U);
-            }
-            else if (ControlAllocFlag==2){
-                control_allocation = MPC_control_alloc(tau_XYN[0], tau_XYN[1], tau_XYN[2],
-                                                       U, T_n, T_alpha,
-                                                       n, alpha);
-            }
-            n_c     = {control_allocation[0], control_allocation[2]};
-            alpha_c = {control_allocation[1], control_allocation[3]};
         }
+
+        // - Control allocation
+        if (ControlAllocFlag==1) {
+            control_allocation = NLOptControlAlloc(tau_XYN[0], tau_XYN[1], tau_XYN[2], U);
+        }
+        else if (ControlAllocFlag==2){
+            control_allocation = MPC_control_alloc(tau_XYN[0], tau_XYN[1], tau_XYN[2],
+                                                   U, T_n, T_alpha,
+                                                   n, alpha);
+        }
+        n_c     = {control_allocation[0], control_allocation[2]};
+        alpha_c = {control_allocation[1], control_allocation[3]};
 
         // Marine Craft Model
         rk4_ran_step(x, n, alpha, mp, V_c, beta_c, h);
@@ -351,7 +341,7 @@ int main() {
             }
             std::cout << "x:   " << xn << "m, y:   " << yn << "m, psi:   " << rad2deg(psi) << "deg" << std::endl
             << "------------------------------------------------" << std::endl
-            << std::fixed << std::setprecision(3)
+            << std::fixed << std::setprecision(4)
             << "n_c(0), n_c(1):         " << n_c(0) << ", " << n_c(1) << std::endl
             << "n(0),   n(1):           " << n(0) << ", " << n(1) << std::endl
             << "------------------------------------------------" << std::endl
