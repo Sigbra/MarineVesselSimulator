@@ -17,4 +17,27 @@ void plotStateErrors();
 
 void plotAngles();
 
+class RealTimePlotter {
+    public:
+        RealTimePlotter();
+        
+        ~RealTimePlotter();
+
+        void setSampledPath(const Waypoints& path);
+
+        void updatePlot(double x, double y, double psi_value, double arrowLength, 
+                        double x_closest, double y_closest);
+
+        void finalizePlot(const std::string& filename = "");
+    
+    private:
+        std::vector<double> m_x;
+        std::vector<double> m_y;
+        std::vector<double> m_psi;
+
+        std::vector<double> m_path_x;
+        std::vector<double> m_path_y;
+    };
+    
+
 #endif // UTILITIES_HPP

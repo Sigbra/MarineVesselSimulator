@@ -104,7 +104,7 @@ int main() {
     double T_n = 0.5;                                // Propeller time constant (s)
     Eigen::Vector2d n = Eigen::Vector2d::Zero();     // Init: [n_left, n_right] = [0, 0]
 
-    double T_alpha = 1;                              // Azimuth angle time constant (s)
+    double T_alpha = 0.5;                              // Azimuth angle time constant (s)
     Eigen::Vector2d alpha = Eigen::Vector2d::Zero(); // Init: [angle_left, angle_right] = [0, 0]
 
     // Choose path type
@@ -112,10 +112,12 @@ int main() {
 
     // Initialize path following variables
     int wpt_index = 1;
-    PathPoint closest;
-    closest.pos = Vector2D(0.0, 0.0);
-    closest.dpos = Vector2D(0.0, 0.0);
-    closest.ddpos = Vector2D(0.0, 0.0);
+    PathTrackingInfo closest;
+    closest.point.pos = Vector2D(0.0, 0.0);
+    closest.point.dpos = Vector2D(0.0, 0.0);
+    closest.point.ddpos = Vector2D(0.0, 0.0);
+    closest.x_e = 0.0;
+    closest.y_e = 0.0;
 
     double path_x = wpt[wpt_index-1].x;
     double path_y = wpt[wpt_index-1].y;
@@ -167,6 +169,14 @@ int main() {
     // SIM data storage
     Eigen::MatrixXd simdata(num_steps, 24);         
     
+    RealTimePlotter plotter;
+    if (pathType == 2) {
+        plotter.setSampledPath(pathLine);
+    }
+    else if (pathType == 3) {
+        plotter.setSampledPath(pathFS);
+    }
+
     // Main simulation loop
     for (int i = 0; i < num_steps; ++i) {
         t[i] = i * h;
@@ -203,6 +213,7 @@ int main() {
             if (R_switch > std::sqrt(std::pow(xn - wpt[wpt_index].x, 2) + std::pow(yn - wpt[wpt_index].y, 2))) {
                 pathType = 0;
                 GuidanceFlag = 1; 
+                break; //Temporary
             }
         }
 
@@ -222,12 +233,12 @@ int main() {
                 break;
             }
         }
-        path_x = closest.pos.x;
-        path_y = closest.pos.y;
-        path_x_dot = closest.dpos.x;
-        path_y_dot = closest.dpos.y;
-        path_x_ddot = closest.ddpos.x;
-        path_y_ddot = closest.ddpos.y;
+        path_x = closest.point.pos.x;
+        path_y = closest.point.pos.y;
+        path_x_dot = closest.point.dpos.x;
+        path_y_dot = closest.point.dpos.y;
+        path_x_ddot = closest.point.ddpos.x;
+        path_y_ddot = closest.point.ddpos.y;
 
         // - Guidance law
         switch (GuidanceFlag) {
@@ -318,10 +329,17 @@ int main() {
 
         // Show SIM progress once per second
         if (i % 100 == 0) {
+            plotter.updatePlot(xn, yn, psi, 0.2, closest.point.pos.x, closest.point.pos.y);
             std::cout << std::fixed << std::setprecision(0)
             << "################################################" << std::endl
             << "Iteration: " << i << ", Time: " << floor(t[i]/60) << "min, " << fmod(t[i], 60) << "s, " <<std::endl
-            << "Guidance flag: " << GuidanceFlag << ", wpt index: " << wpt_index <<std::endl
+            << "------------------------------------------------" << std::endl
+            << "Path type: " << pathType
+            << ", Guidance flag: " << GuidanceFlag << ", wpt index: " << wpt_index <<std::endl
+            << "------------------------------------------------" << std::endl
+            << "closest point: " << closest.point.pos.x << ", " << closest.point.pos.y << std::endl
+            << std::fixed << std::setprecision(1)
+            << "x_e: " << closest.x_e << ", y_e: " << closest.y_e << std::endl
             << "------------------------------------------------" << std::endl;
             if (GuidanceFlag == 1){
                 std::cout << std::fixed << std::setprecision(1)
@@ -360,10 +378,13 @@ int main() {
         simdata(i, 21) = alpha_c(1);
         simdata(i, 22) = alpha(0); 
         simdata(i, 23) = alpha(1); 
+
     }
 
     std::cout << "Simulation completed" << std::endl;
     storeSimulationData(simdata, "simdata.csv");
+
+    plotter.finalizePlot();
 
     plotTrajectory();
     plotStateErrors();

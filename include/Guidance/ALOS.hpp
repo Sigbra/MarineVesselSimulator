@@ -15,7 +15,8 @@ public:
 
     std::tuple<double, double> update(double xn, double yn,
                                       double path_x, double path_y,
-                                      double path_x_dot, double path_y_dot);
+                                      double path_x_dot, double path_y_dot,
+                                      double precomputed_y_e = std::numeric_limits<double>::quiet_NaN());
 
     void reset();
 
