@@ -213,6 +213,7 @@ int main() {
             if (R_switch > std::sqrt(std::pow(xn - wpt[wpt_index].x, 2) + std::pow(yn - wpt[wpt_index].y, 2))) {
                 pathType = 1;
                 GuidanceFlag = 1; 
+                break; // Temp
             }
         }
 

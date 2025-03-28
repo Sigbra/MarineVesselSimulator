@@ -43,8 +43,8 @@ class FermatSpiralPath {
         double kappa_max_;
         // Maximum theta given kappa_max.
         double theta_kappa_max;
-    
-        Vector2D point2_prev;
+
+        Vector2D stored_pull_out;
     
         // Structure to store FS parameters
         struct FSParameters {
@@ -67,7 +67,7 @@ class FermatSpiralPath {
             // - Scaling constant.
             double k;         
             // - Starting point and end point of the spiral.
-            Vector2D point1, point2;
+            Vector2D wheel_over, pull_out;
             // - Previous waypoint.
             double x0, y0;
             // - Next waypoint.
