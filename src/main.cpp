@@ -75,7 +75,7 @@ int main() {
     // Create the straight line path.
     StraightLinePath straightLinePath;
     straightLinePath.updateWaypoints(wpt);
-    Waypoints pathLine = straightLinePath.samplePath(0.1);
+    Waypoints pathLine = straightLinePath.samplePath(0.05);
     std::cout << "Path size: " << pathLine.size() << std::endl;
     plotPath(pathLine);
 
@@ -84,7 +84,7 @@ int main() {
     double kappa_max = 0.3; 
     FermatSpiralPath spiral(kappa_max);
     spiral.updateWaypoints(wpt);
-    Waypoints pathFS = spiral.samplePath(0.01);
+    Waypoints pathFS = spiral.samplePath(0.05);
     std::cout << "Path size: " << pathFS.size() << std::endl;
     plotPath(pathFS);
 
@@ -104,7 +104,7 @@ int main() {
     double T_n = 0.5;                                // Propeller time constant (s)
     Eigen::Vector2d n = Eigen::Vector2d::Zero();     // Init: [n_left, n_right] = [0, 0]
 
-    double T_alpha = 0.5;                              // Azimuth angle time constant (s)
+    double T_alpha = 0.5;                            // Azimuth angle time constant (s)
     Eigen::Vector2d alpha = Eigen::Vector2d::Zero(); // Init: [angle_left, angle_right] = [0, 0]
 
     // Choose path type
@@ -319,7 +319,7 @@ int main() {
         }
 
         // Show SIM progress once per second
-        if (i % 100 == 0) {
+        if (i % 10 == 0) {
             plotter.updatePlot(xn, yn, psi, 0.2, closest.point.pos.x, closest.point.pos.y);
             std::cout << std::fixed << std::setprecision(0)
             << "################################################" << std::endl

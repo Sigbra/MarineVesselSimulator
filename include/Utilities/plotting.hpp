@@ -38,6 +38,8 @@ class RealTimePlotter {
         std::vector<double> m_path_x;
         std::vector<double> m_path_y;
     };
+
+void plot_points(const std::vector<Vector2D>& vessels, const std::vector<Vector2D>& projections);
     
 
 #endif // UTILITIES_HPP

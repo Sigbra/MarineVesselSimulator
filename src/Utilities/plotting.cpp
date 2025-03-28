@@ -340,3 +340,32 @@ void RealTimePlotter::finalizePlot(const std::string& filename) {
     plt::show();
     plt::close();
 }
+
+void plot_points(const std::vector<Vector2D>& vessels, const std::vector<Vector2D>& projections) {
+    std::vector<double> vessel_x, vessel_y;
+    std::vector<double> proj_x, proj_y;
+
+    for (const auto& v : vessels) {
+        vessel_x.push_back(v.x);
+        vessel_y.push_back(v.y);
+    }
+
+    for (const auto& p : projections) {
+        proj_x.push_back(p.x);
+        proj_y.push_back(p.y);
+    }
+
+    // Plot vessel positions
+    plt::scatter(vessel_x, vessel_y, 50.0, {{"color", "red"}, {"label", "Vessel"}});
+
+    // Plot projected points onto the spiral
+    plt::scatter(proj_x, proj_y, 30.0, {{"color", "blue"}, {"label", "Projection"}});
+
+    // Set labels and legend
+    plt::xlabel("X Position");
+    plt::ylabel("Y Position");
+    plt::legend();
+
+    // Show the plot
+    plt::show();
+}

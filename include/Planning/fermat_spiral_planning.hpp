@@ -31,7 +31,7 @@ class FermatSpiralPath {
         // - Not yet implemented
     
         // Data access
-        Waypoints samplePath(double delta) const;
+        Waypoints samplePath(double delta); //Add const
     
         void printParameters() const;
     
