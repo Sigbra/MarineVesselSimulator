@@ -167,7 +167,7 @@ int main() {
     std::vector<double> t(num_steps);    
 
     // SIM data storage
-    Eigen::MatrixXd simdata(num_steps, 24);         
+    Eigen::MatrixXd simdata(num_steps, 31);         
     
     RealTimePlotter plotter;
     if (pathType == 2) {
@@ -213,7 +213,6 @@ int main() {
             if (R_switch > std::sqrt(std::pow(xn - wpt[wpt_index].x, 2) + std::pow(yn - wpt[wpt_index].y, 2))) {
                 pathType = 1;
                 GuidanceFlag = 1; 
-                break; // Temp
             }
         }
 
@@ -242,6 +241,8 @@ int main() {
 
         if (path_x == wpt.back().x && path_y == wpt.back().y) {
             GuidanceFlag = 1; // To make vessel stop
+            pathType = 1;
+            wpt_index = wpt.size();
         }
 
         // - Guidance law
@@ -302,7 +303,7 @@ int main() {
         n = n + h/T_n * (n_c - n);                      
         alpha = alpha + h/T_alpha * (alpha_c - alpha);  
 
-        // Saturate:
+        // - Saturate:
         double k_pos = 200*9.81;     
         double k_neg = 200*9.81;     
         double n_max =  1;             
@@ -369,7 +370,13 @@ int main() {
         simdata(i, 21) = alpha_c(1);
         simdata(i, 22) = alpha(0); 
         simdata(i, 23) = alpha(1); 
-
+        simdata(i, 24) = tau_XYN[0];
+        simdata(i, 25) = tau_XYN[1];
+        simdata(i, 26) = tau_XYN[2];
+        simdata(i, 27) = closest.point.pos.x;
+        simdata(i, 28) = closest.point.pos.y;
+        simdata(i, 29) = closest.x_e;
+        simdata(i, 30) = closest.y_e;
     }
 
     std::cout << "Simulation completed" << std::endl;
@@ -378,6 +385,7 @@ int main() {
     plotter.finalizePlot();
 
     plotTrajectory();
+    plotClosestPointErrors();
     plotStateErrors();
     plotAngles();
 
