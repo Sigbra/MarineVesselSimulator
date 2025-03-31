@@ -29,6 +29,8 @@ class RealTimePlotter {
 
         void setSampledPath(const Waypoints& path);
 
+        void draw_vessel(double x, double y, double theta);
+
         void updatePlot(double x, double y, double psi_value, double arrowLength, 
                         double x_closest, double y_closest);
 
