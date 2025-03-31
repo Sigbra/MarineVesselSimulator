@@ -399,45 +399,74 @@ void RealTimePlotter::setSampledPath(const Waypoints& path) {
     }
 }
 
+void RealTimePlotter::draw_vessel(double x, double y, double theta) {
+    double L = 5.0;  // Hull length
+    double W = 1;  // Half the width of each hull
+    double gap = 1; // Space between hulls
+    double bridge_L = 2.0; // Bridge length (shorter than hull)
+
+    // Define a single connected shape (hulls + bridge)
+    std::vector<double> x_shape = {
+        -L/2, L/2.5, L/1.5,  bridge_L/2,  bridge_L/2,  L/1.5, L/2.5, -L/2, -L/2, -bridge_L/2, -bridge_L/2, -L/2, -L/2
+    };
+    
+    std::vector<double> y_shape = {
+        -W - gap/2, -W - gap/2, -gap/2, -gap/2, gap/2, gap/2, W + gap/2, W + gap/2, gap/2, gap/2, -gap/2, -gap/2, -W - gap/2
+    };
+
+    // Apply rotation and translation
+    std::vector<double> x_rotated, y_rotated;
+    for (size_t i = 0; i < x_shape.size(); ++i) {
+        double x_new = x + x_shape[i] * cos(theta) - y_shape[i] * sin(theta);
+        double y_new = y + x_shape[i] * sin(theta) + y_shape[i] * cos(theta);
+        x_rotated.push_back(x_new);
+        y_rotated.push_back(y_new);
+    }
+
+    // Plot the single connected shape
+    plt::plot(x_rotated, y_rotated, "r-");
+}
 
 void RealTimePlotter::updatePlot(double x, double y, double psi_value, double arrowLength,
     double x_closest, double y_closest) {
 
-m_x.push_back(x);
-m_y.push_back(y);
-m_psi.push_back(psi_value);
+    m_x.push_back(x);
+    m_y.push_back(y);
+    m_psi.push_back(psi_value);
 
-plt::cla();
+    plt::cla();
 
-if (!m_path_x.empty() && !m_path_y.empty()) {
-plt::plot(m_path_x, m_path_y, "k-");  
-}
+    draw_vessel(x, y, psi_value);
 
-plt::plot(m_x, m_y, "b-");
+    if (!m_path_x.empty() && !m_path_y.empty()) {
+    plt::plot(m_path_x, m_path_y, "k-");  
+    }
 
-double u_val = arrowLength * cos(psi_value);
-double v_val = arrowLength * sin(psi_value);
-std::vector<double> arrowX = { x };
-std::vector<double> arrowY = { y };
-std::vector<double> u_vec  = { u_val };
-std::vector<double> v_vec  = { v_val };
-plt::quiver(arrowX, arrowY, u_vec, v_vec);
+    plt::plot(m_x, m_y, "b-");
 
-std::vector<double> cpX = { x_closest };
-std::vector<double> cpY = { y_closest };
-plt::plot(cpX, cpY, "go"); 
+    // double u_val = arrowLength * cos(psi_value);
+    // double v_val = arrowLength * sin(psi_value);
+    // std::vector<double> arrowX = { x };
+    // std::vector<double> arrowY = { y };
+    // std::vector<double> u_vec  = { u_val };
+    // std::vector<double> v_vec  = { v_val };
+    // plt::quiver(arrowX, arrowY, u_vec, v_vec);
 
-std::vector<double> curPosX = { x };
-std::vector<double> curPosY = { y };
-plt::plot(curPosX, curPosY, "ro");
+    std::vector<double> cpX = { x_closest };
+    std::vector<double> cpY = { y_closest };
+    plt::plot(cpX, cpY, "go"); 
 
-plt::xlabel("x(t)");
-plt::ylabel("y(t)");
-plt::title("Vessel Trajectory with Heading Angles");
-plt::grid(true);
+    std::vector<double> curPosX = { x };
+    std::vector<double> curPosY = { y };
+    plt::plot(curPosX, curPosY, "ro");
 
-plt::draw();
-plt::pause(0.01);
+    plt::xlabel("x(t)");
+    plt::ylabel("y(t)");
+    plt::title("Vessel Trajectory with Heading Angles");
+    plt::grid(true);
+
+    plt::draw();
+    plt::pause(0.01);
 }
 
 void RealTimePlotter::finalizePlot(const std::string& filename) {

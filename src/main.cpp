@@ -206,12 +206,17 @@ int main() {
 
         // Guidance
 
-        // - Mode switching condition
+        // - DP mode switch criteria. 
         if (R_switch > std::sqrt(std::pow(xn - wpt[wpt.size()-1].x, 2) + std::pow(yn - wpt[wpt.size()-1].y, 2))) {
-            pathType = 1;
             GuidanceFlag = 1; 
+            pathType = 1;
+            wpt_index = wpt.size()-1;
         }
-    
+        if (path_x == wpt.back().x && path_y == wpt.back().y) {
+            GuidanceFlag = 1; 
+            pathType = 1;
+            wpt_index = wpt.size()-1;
+        }
 
         // - Type of path
         // - path functions responsible for wpt_index increment
@@ -234,17 +239,17 @@ int main() {
         path_x_dot = closest.point.dpos.x;
         path_y_dot = closest.point.dpos.y;
 
-        if (path_x == wpt.back().x && path_y == wpt.back().y) {
-            GuidanceFlag = 1; // To make vessel stop
-            pathType = 1;
-            wpt_index = wpt.size();
-        }
-
         // - Guidance law
         switch (GuidanceFlag) {
             case 1: { // Dynamic Positioning
-                auto [xn_d, yn_d, psi_d] = DP(xn, yn, wpt[wpt_index].x, wpt[wpt_index].y, wpt[wpt_index-1].x, wpt[wpt_index-1].y);
+                // std::cout << "wpt_index: " << wpt_index << " | Last WPT: (" << wpt.back().x << ", " << wpt.back().y << ")\n";
+                // std::cout << "DP inputs: (" << wpt[wpt_index].x << ", " << wpt[wpt_index].y << ") and ("
+                // << wpt[wpt_index-1].x << ", " << wpt[wpt_index-1].y << ")\n";
 
+                auto [xn_ref, yn_ref, psi_ref] = DP(xn, yn, wpt[wpt_index].x, wpt[wpt_index].y, wpt[wpt_index-1].x, wpt[wpt_index-1].y);
+                xn_d = xn_ref;
+                yn_d = yn_ref;
+                psi_d = psi_ref;
                 break;
             }
             case 2: { // LOS heading autopilot
