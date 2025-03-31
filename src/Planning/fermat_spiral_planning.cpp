@@ -36,7 +36,7 @@ FermatSpiralPath::FSParameters FermatSpiralPath::computeFSParameters(const Vecto
 
     params.theta_end = computeThetaEnd(params.delta_chi/2);
     double local_theta_kappa_max = std::min(params.theta_end, theta_kappa_max);
-
+    
     params.k = computeScalingConstant(local_theta_kappa_max, kappa_max_);
     double l = computeDistanceForCorner(params.k, params.theta_end, params.delta_chi);
     
@@ -64,40 +64,22 @@ Vector2D FermatSpiralPath::computeSpiralPoint(double theta, double base_angle, d
                                               double k, double rho, double x, double y, double theta_max) const {
 
     double u = std::sqrt(theta);
-    double u_m = std::sqrt(theta_max - theta);
-    // if (lambda > 0) {
-    //     return Vector2D(x + k * u * std::cos(rho * u * u + base_angle),
-    //                     y + k * u * std::sin(rho * u * u + base_angle));
-    // } else {
-    //     return Vector2D(x + k * u_m * std::cos(rho * (- u_m * u_m) + base_angle),
-    //                     y + k * u_m * std::sin(rho * (- u_m * u_m) + base_angle));
-    // }
+
     if (lambda > 0) {
-        return Vector2D(x + k * u * std::cos(rho * u * u + base_angle),
-                        y + k * u * std::sin(rho * u * u + base_angle));
+        double common = rho * u * u + base_angle;
+        return Vector2D(x + k * u * std::cos(common),
+                        y + k * u * std::sin(common));
     } else {
-        return Vector2D(x - k * u * std::cos(rho * u * u - base_angle),
-                        y + k * u * std::sin(rho * u * u - base_angle));
+        double common = rho * u * u - base_angle;
+        return Vector2D(x - k * u * std::cos(common),
+                        y + k * u * std::sin(common));
     }
 }
 
-// Probably an error in this implementation
 Vector2D FermatSpiralPath::computeSpiralDerivative(double theta, double base_angle, double lambda,
                                                      double k, double rho, double theta_max) const {
     double u = std::sqrt(theta);
-    double u_m = std::sqrt(theta_max - theta);  
 
-    // if (lambda > 0) {
-    //     double common = rho * u * u + base_angle;
-    //     double dx_du = std::cos(common) - 2.0 * rho * u * u * std::sin(common);
-    //     double dy_du = std::sin(common) + 2.0 * rho * u * u * std::cos(common);
-    //     return (k/(2*u)) * Vector2D(dx_du, dy_du);
-    // } else {
-    //     double common = rho * (- u_m * u_m) + base_angle;
-    //     double dx_du_prime = std::cos(common) + (u_m * u_m)*(1-rho) * std::sin(common);
-    //     double dy_du_prime = std::sin(common) - (u_m * u_m)*(1-rho) * std::cos(common);
-    //     return (k/(2*u_m)) * Vector2D(dx_du_prime, dy_du_prime);
-    // }
     if (lambda > 0) {
         double common = rho * u * u + base_angle;
         double dx_du = std::cos(common) - 2.0 * rho * u * u * std::sin(common);
@@ -111,27 +93,15 @@ Vector2D FermatSpiralPath::computeSpiralDerivative(double theta, double base_ang
     }
 }
 
-//And this
+
 Vector2D FermatSpiralPath::computeSpiralSecondDerivative(double theta, double base_angle, double lambda,
                                                            double k, double rho, double theta_max) const {
     double u = std::sqrt(theta);
-    double u_m = std::sqrt(theta_max - theta);     
-
-    // if (lambda > 0) {
-    //     double common = rho * u * u + base_angle;
-    //     double d2x_du2 = (4*u*u*u*u + 1) * std::cos(common) + 4*rho*u*u*std::sin(common);
-    //     double d2y_du2 = (4*u*u*u*u + 1) * std::sin(common) - 4*rho*u*u*std::cos(common);
-    //     return (-k/(4*std::pow(u*u, 3/2))) * Vector2D(d2x_du2, d2y_du2);
-    // } else {
-    //     double common = rho * (- u_m * u_m) + base_angle;
-    //     double d2x_duprime2 = (4*(u_m*u_m*u_m*u_m) + 1) * std::cos(common) + 4*(u_m*u_m)*(rho-1)*std::sin(common);
-    //     double d2y_duprime2 = (4*(u_m*u_m*u_m*u_m) + 1) * std::sin(common) - 4*(u_m*u_m)*(rho-1)*std::cos(common);
-    //     return (k / (4*std::pow(u_m*u_m, 3/2))) * Vector2D(d2x_duprime2, d2y_duprime2);
-    // }
+    
     if (lambda > 0) {
         double common = rho * u * u + base_angle;
-        double d2x_du2 = -6*rho*u*std::sin(common) - 4*u*u*u*std::cos(common);
-        double d2y_du2 =  6*rho*u*std::cos(common) - 4*u*u*u*std::sin(common);
+        double d2x_du2 = - 6*rho*u*std::sin(common) - 4*u*u*u*std::cos(common);
+        double d2y_du2 =   6*rho*u*std::cos(common) - 4*u*u*u*std::sin(common);
         return (k) * Vector2D(d2x_du2, d2y_du2);
     } else {
         double common = rho * u * u - base_angle;
@@ -154,15 +124,15 @@ double FermatSpiralPath::fsecond(double theta) const {
 }
 
 double FermatSpiralPath::computeThetaEnd(double delta_chi) const {
-    double theta = delta_chi / 2.0;  // initial guess
-    const double tol = 1e-3;
+    double theta = delta_chi;  
+    const double tol = 0.001;
     const int maxIter = 10;
     for (int i = 0; i < maxIter; ++i) {
         double f_val = f(theta, delta_chi);
         double fp = fprime(theta);
         double fpp = fsecond(theta);
         double denom = 2.0 * fp * fp - f_val * fpp;
-        if (std::abs(denom) < 1e-8)
+        if (std::abs(denom) < 0.0000001)
             break;
         double delta = 2.0 * f_val * fp / denom;
         theta -= delta;
@@ -198,10 +168,47 @@ PathPoint FermatSpiralPath::projectOntoLine(const Vector2D &A, const Vector2D &B
     return pp;
 }
 
+// Function to calculate f(th)
+double FermatSpiralPath::computeF(double th, const Vector2D& vessel, double base_angle, double lamda, 
+    double k, double rho, double xCenter, double yCenter, double theta_end) {
+Vector2D pos = computeSpiralPoint(th, base_angle, lamda, k, rho, xCenter, yCenter, theta_end);
+Vector2D d1 = computeSpiralDerivative(th, base_angle, lamda, k, rho, theta_end);
+
+if (std::isnan(pos.x) || std::isnan(pos.y)) {
+std::cout << "Error: computeSpiralPoint returned NaN!" << std::endl;
+std::abort();
+}
+if (std::isnan(d1.x) || std::isnan(d1.y)) {
+std::cout << "Error: computeSpiralPointDerivative returned NaN!" << std::endl;
+std::abort();
+}
+
+double dx = vessel.x - pos.x;
+double dy = vessel.y - pos.y;
+return d1.y * dy + d1.x * dx;
+}
+
+// Function to calculate fprime(th)
+double FermatSpiralPath::computeFPrime(double th, const Vector2D& vessel, double base_angle, double lamda, 
+         double k, double rho, double xCenter, double yCenter, double theta_end) {
+Vector2D pos = computeSpiralPoint(th, base_angle, lamda, k, rho, xCenter, yCenter, theta_end);
+Vector2D d1 = computeSpiralDerivative(th, base_angle, lamda, k, rho, theta_end);
+Vector2D d2 = computeSpiralSecondDerivative(th, base_angle, lamda, k, rho, theta_end);
+
+if (std::isnan(d2.x) || std::isnan(d2.y)) {
+std::cout << "Error: computeSpiralSecondDerivative returned NaN!" << std::endl;
+std::abort();
+}
+
+double dx = vessel.x - pos.x;
+double dy = vessel.y - pos.y;
+return d2.y * dy + d2.x * dx - d1.x * d1.x - d1.y * d1.y;
+}
+
 PathPoint FermatSpiralPath::projectOntoSpiral(Vector2D vessel, FSParameters params, double lamda) {
-    double tolerance = 0.0001;
     double thetaGuess = params.theta_end;
-    double maxIterations = 100;
+    double maxIterations = 2000;
+    double tolerance = 1e-16;
 
     double base_angle = (lamda > 0) ? params.chi0 : (params.chi_end);
     double xCenter    = (lamda > 0) ? params.x0  : params.x_end;
@@ -222,68 +229,43 @@ PathPoint FermatSpiralPath::projectOntoSpiral(Vector2D vessel, FSParameters para
     std::cout << "  lamda: " << lamda << std::endl;
     std::cout << "  vessel.x: " << vessel.x << " vessel.y: " << vessel.y << std::endl;
     
-
-    auto f = [&](double th) {
-        Vector2D pos = computeSpiralPoint(th, base_angle, lamda, k, rho, xCenter, yCenter, theta_end);
-        Vector2D d1  = computeSpiralDerivative(th, base_angle, lamda, k, rho, theta_end);
-        if (std::isnan(pos.x) || std::isnan(pos.y)) {
-            std::cout << "Error: computeSpiralPoint returned NaN!" << std::endl;
-            std::abort();
-        }
-        if (std::isnan(d1.x) || std::isnan(d1.y)) {
-            std::cout << "Error: computeSpiralPointDerivative returned NaN!" << std::endl;
-            std::abort();
-        }
-        double dx = vessel.x - pos.x;
-        double dy = vessel.y - pos.y;
-        return d1.y * dy + d1.x * dx;
-    };
-    auto fprime = [&](double th) {
-        Vector2D pos = computeSpiralPoint(th, base_angle, lamda, k, rho, xCenter, yCenter, theta_end);
-        Vector2D d1  = computeSpiralDerivative(th, base_angle, lamda, k, rho, theta_end);
-        Vector2D d2  = computeSpiralSecondDerivative(th, base_angle, lamda, k, rho, theta_end);
-        if (std::isnan(d2.x) || std::isnan(d2.y)) {
-            std::cout << "Error: computeSpiralPointDerivative returned NaN!" << std::endl;
-            std::abort();
-        }
-        double dx = vessel.x - pos.x;
-        double dy = vessel.y - pos.y;
-        return  d2.y * dy + d2.x * dx - d1.x * d1.x - d1.y * d1.y;
-    };
-
     double theta = thetaGuess;
     for (int i = 0; i < maxIterations; ++i)
     {
-        double val = f(theta);
-        double der = fprime(theta);
+        double val = computeF(theta, vessel, base_angle, lamda, k, rho, xCenter, yCenter, theta_end);
+        double der = computeFPrime(theta, vessel, base_angle, lamda, k, rho, xCenter, yCenter, theta_end);
 
-        // Avoid division by a near-zero derivative.
-        if (std::fabs(der) < 0.001) {
-            std::cout << "Warning: fprime too low" << std::endl;
-            break;
+        if (std::fabs(der) < 1e-4) {
+            std::cout << "Warning: fprime too low, applying damping" << std::endl;
+            der = (der < 0) ? -1e-4 : 1e-4; // Apply damping to prevent division issues
         }
 
         double step = val / der;
         if (std::isnan(step)) {
             std::cout << "Error: step is NaN!" << std::endl;
-            std::abort();
-        }
-        theta = theta - step;
-
-        // Clamp theta to the valid interval [thetaMin, thetaMax].
-        const double epsilon = 0.0001;
-        if (theta < epsilon)
-            theta = epsilon;
-        if (theta > theta_end)
-            theta = theta_end;
-
-        if (step < tolerance)
             break;
+        }
+
+        if (step < tolerance) {
+            break;
+        }
+
+        // Costum function for better convergence insted of using step directly
+        theta -= (step > 0 ? 1 : (step < 0 ? -1 : 0)) * step * step;
+
+
+        const double theta_start = 0;
+        if (theta < theta_start) {
+            theta = theta_start;
+        }
+        else if (theta > theta_end) {
+            theta = theta_end;
+        }
+
     }
-    //std::cout << "theta: " << theta << std::endl;
+
     PathPoint closest_point;
     closest_point.pos = computeSpiralPoint(theta, base_angle, lamda, k, rho, xCenter, yCenter, theta_end);
-    //std::cout << "pos using theta: " << closest_point.pos.x << ", " << closest_point.pos.y << std::endl;
     closest_point.dpos = computeSpiralDerivative(theta, base_angle, lamda, k, rho, theta_end);
     closest_point.ddpos = computeSpiralSecondDerivative(theta, base_angle, lamda, k, rho, theta_end);
 
@@ -355,9 +337,8 @@ PathTrackingInfo FermatSpiralPath::getClosestPoint(const Vector2D vessel_positio
     x_e_line_prev = alongTrackError(vessel_position, line_prev_point);
     y_e_line_prev = crossTrackError(vessel_position, line_prev_point);
     line_prev_error = std::sqrt(x_e_line_prev*x_e_line_prev + y_e_line_prev*y_e_line_prev);
-    Vector2D prev_pull_out = params.pull_out;
 
-    FS_point = projectOntoSpiral(vessel_pos, params, 1);
+    FS_point = projectOntoSpiral(vessel_pos, params, +1);
     x_e_FS = alongTrackError(vessel_position, FS_point);
     y_e_FS = crossTrackError(vessel_position, FS_point);
     FS_error = std::sqrt(x_e_FS*x_e_FS + y_e_FS*y_e_FS);
@@ -367,23 +348,20 @@ PathTrackingInfo FermatSpiralPath::getClosestPoint(const Vector2D vessel_positio
     y_e_FS_mirrored = crossTrackError(vessel_position, FS_mirrored_point);
     FS_mirrored_error = std::sqrt(x_e_FS_mirrored*x_e_FS_mirrored + y_e_FS_mirrored*y_e_FS_mirrored);
 
-    //Next segment
 
+    Vector2D prev_pull_out = params.pull_out;
     params = computeFSParameters(wpt_prev, wpt, wpt_next);
 
-    line_point = projectOntoLine(prev_pull_out, params.wheel_over, vessel_position);
+    if (wpt_index < waypoints_.size()-1) { //There is more segments
+        line_point = projectOntoLine(prev_pull_out, params.wheel_over, vessel_position);
+    }
+    else { //There is not more segments
+        line_point = projectOntoLine(prev_pull_out, wpt_next, vessel_position);
+    }
     x_e_line = alongTrackError(vessel_position, line_point); 
     y_e_line = crossTrackError(vessel_position, line_point);
     line_error = std::sqrt(x_e_line*x_e_line + y_e_line*y_e_line);
 
-    std::cout << "#####################################" << std::endl;
-    std::cout << "wpt_index:         " << wpt_index << std::endl;
-    std::cout << "line_prev_error:   " << line_prev_error << std::endl;
-    std::cout << "FS_error:          " << FS_error << std::endl;
-    std::cout << "FS_mirrored_error: " << FS_mirrored_error << std::endl;
-    std::cout << "line_prev_error:   " << line_error << std::endl;
-
-    // if (line_prev_error > 20) {std::abort();}
 
     if (line_prev_error < FS_error && line_prev_error < FS_mirrored_error && line_prev_error < line_error){
         tracking_info.point = line_prev_point;
@@ -391,7 +369,7 @@ PathTrackingInfo FermatSpiralPath::getClosestPoint(const Vector2D vessel_positio
         tracking_info.y_e = y_e_line_prev;
     } 
     else if (FS_error < FS_mirrored_error && FS_error < line_error){
-        tracking_info.point = FS_mirrored_point;
+        tracking_info.point = FS_point;
         tracking_info.x_e = x_e_FS;
         tracking_info.y_e = y_e_FS;
     } 
@@ -404,7 +382,7 @@ PathTrackingInfo FermatSpiralPath::getClosestPoint(const Vector2D vessel_positio
         tracking_info.point = line_point;
         tracking_info.x_e = x_e_line;
         tracking_info.y_e = y_e_line;
-        if (wpt_index < waypoints_.size()-1){
+        if (wpt_index < waypoints_.size()-2){
             stored_pull_out = prev_pull_out;
             wpt_index++;
         }
@@ -453,8 +431,8 @@ Waypoints FermatSpiralPath::samplePath(double delta)
             );
             path.push_back(pt);
 
-            vessels.push_back(pt);
-            PathPoint projection = projectOntoSpiral(pt, params, +1);
+            vessels.push_back(pt + Vector2D(-1, 1));
+            PathPoint projection = projectOntoSpiral(pt + Vector2D(-1, 1), params, +1);
             projections.push_back(projection.pos);
         }
 
@@ -473,8 +451,8 @@ Waypoints FermatSpiralPath::samplePath(double delta)
             );
             path.push_back(pt);
 
-            vessels.push_back(pt); // Vessel position (simulating)
-            PathPoint projection = projectOntoSpiral(pt, params, -1.0); // Assuming lamda = -1
+            vessels.push_back(pt + Vector2D(-1, 1)); // Vessel position (simulating)
+            PathPoint projection = projectOntoSpiral(pt + Vector2D(-1, 1), params, -1); 
             projections.push_back(projection.pos);
         }
 

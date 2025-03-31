@@ -123,8 +123,6 @@ int main() {
     double path_y = wpt[wpt_index-1].y;
     double path_x_dot = 0.0;
     double path_y_dot = 0.0;
-    double path_x_ddot = 0.0;
-    double path_y_ddot = 0.0;
 
     // Control method selection for path following
     GuidanceMethod guidance;
@@ -209,12 +207,11 @@ int main() {
         // Guidance
 
         // - Mode switching condition
-        if (wpt_index == wpt.size()) {
-            if (R_switch > std::sqrt(std::pow(xn - wpt[wpt_index].x, 2) + std::pow(yn - wpt[wpt_index].y, 2))) {
-                pathType = 1;
-                GuidanceFlag = 1; 
-            }
+        if (R_switch > std::sqrt(std::pow(xn - wpt[wpt.size()-1].x, 2) + std::pow(yn - wpt[wpt.size()-1].y, 2))) {
+            pathType = 1;
+            GuidanceFlag = 1; 
         }
+    
 
         // - Type of path
         // - path functions responsible for wpt_index increment
@@ -236,8 +233,6 @@ int main() {
         path_y = closest.point.pos.y;
         path_x_dot = closest.point.dpos.x;
         path_y_dot = closest.point.dpos.y;
-        path_x_ddot = closest.point.ddpos.x;
-        path_y_ddot = closest.point.ddpos.y;
 
         if (path_x == wpt.back().x && path_y == wpt.back().y) {
             GuidanceFlag = 1; // To make vessel stop
@@ -253,7 +248,7 @@ int main() {
                 break;
             }
             case 2: { // LOS heading autopilot
-                auto [psi_ref, y_e] = LOS(xn, yn, Delta_h, path_x, path_y, path_x_dot, path_y_dot);
+                auto [psi_ref, y_e] = LOS(xn, yn, Delta_h, path_x, path_y, path_x_dot, path_y_dot, closest.y_e);
 
                 losObserver.update(psi_ref);
                 psi_d = losObserver.getLOSAngle();
@@ -262,7 +257,7 @@ int main() {
                 break;
             }
             case 3: { // ALOS heading autopilot
-                auto [psi_ref, y_e] = ALOS.update(xn, yn, path_x, path_y, path_x_dot, path_y_dot);
+                auto [psi_ref, y_e] = ALOS.update(xn, yn, path_x, path_y, path_x_dot, path_y_dot, closest.y_e);
 
                 losObserver.update(psi_ref);
                 psi_d = losObserver.getLOSAngle();

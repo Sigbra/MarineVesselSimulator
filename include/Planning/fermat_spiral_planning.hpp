@@ -89,12 +89,21 @@ class FermatSpiralPath {
     
         Vector2D computeSpiralSecondDerivative(double u, double base_angle, double lambda,
                                                double k, double rho, double u_max) const;
+
+        Vector2D computeSpiralThirdDerivative(double theta, double base_angle, double lambda,
+                                                           double k, double rho, double theta_max) const;
     
     
         // Helper functions.
         double f(double theta, double delta_chi) const;
         double fprime(double theta) const;
         double fsecond(double theta) const;
+
+        double computeF(double th, const Vector2D& vessel, double base_angle, double lamda, 
+            double k, double rho, double xCenter, double yCenter, double theta_end);
+
+        double computeFPrime(double th, const Vector2D& vessel, double base_angle, double lamda, 
+            double k, double rho, double xCenter, double yCenter, double theta_end);
     
         double computeThetaEnd(double delta_chi) const;
         double computeScalingConstant(double theta_kappa_max, double kappa_max) const;
