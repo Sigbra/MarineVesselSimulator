@@ -50,6 +50,13 @@ PathTrackingInfo StraightLinePath::getClosestPoint(const Vector2D vessel_positio
     y_e_line_prev = crossTrackError(vessel_position, line_prev_point);
     line_prev_error = std::sqrt(x_e_line_prev*x_e_line_prev + y_e_line_prev*y_e_line_prev);
 
+    if (wpt_index == waypoints_.size()-1){
+        tracking_info.point = line_prev_point;
+        tracking_info.x_e = x_e_line_prev;
+        tracking_info.y_e = y_e_line_prev;
+        return tracking_info;
+    }
+
     line_point = projectOntoLine(wpt, wpt_next, vessel_position);
     x_e_line = alongTrackError(vessel_position, line_point); 
     y_e_line = crossTrackError(vessel_position, line_point);

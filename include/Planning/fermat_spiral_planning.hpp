@@ -31,7 +31,7 @@ class FermatSpiralPath {
         // - Not yet implemented
     
         // Data access
-        Waypoints samplePath(double delta) const;
+        Waypoints samplePath(double delta); //Add const
     
         void printParameters() const;
     
@@ -43,8 +43,8 @@ class FermatSpiralPath {
         double kappa_max_;
         // Maximum theta given kappa_max.
         double theta_kappa_max;
-    
-        Vector2D point2_prev;
+
+        Vector2D stored_pull_out;
     
         // Structure to store FS parameters
         struct FSParameters {
@@ -67,7 +67,7 @@ class FermatSpiralPath {
             // - Scaling constant.
             double k;         
             // - Starting point and end point of the spiral.
-            Vector2D point1, point2;
+            Vector2D wheel_over, pull_out;
             // - Previous waypoint.
             double x0, y0;
             // - Next waypoint.
@@ -89,12 +89,21 @@ class FermatSpiralPath {
     
         Vector2D computeSpiralSecondDerivative(double u, double base_angle, double lambda,
                                                double k, double rho, double u_max) const;
+
+        Vector2D computeSpiralThirdDerivative(double theta, double base_angle, double lambda,
+                                                           double k, double rho, double theta_max) const;
     
     
         // Helper functions.
         double f(double theta, double delta_chi) const;
         double fprime(double theta) const;
         double fsecond(double theta) const;
+
+        double computeF(double th, const Vector2D& vessel, double base_angle, double lamda, 
+            double k, double rho, double xCenter, double yCenter, double theta_end);
+
+        double computeFPrime(double th, const Vector2D& vessel, double base_angle, double lamda, 
+            double k, double rho, double xCenter, double yCenter, double theta_end);
     
         double computeThetaEnd(double delta_chi) const;
         double computeScalingConstant(double theta_kappa_max, double kappa_max) const;

@@ -39,7 +39,7 @@ std::vector<double> HeadingPIDController::update(double h, const Eigen::MatrixXd
                    Kp * (error_psi + Td * (r - r_d) + (1/Ti) * z_psi_);
 
     // Tau_x, reduced when the heading error is large.
-    double tau_X = std::max(0.0, 5 - 3 * std::abs(ssa(psi_d - psi)));
+    double tau_X = 3; //std::max(0.0, 5 - 3 * std::abs(ssa(psi_d - psi)));
 
     return {tau_X, 0, tau_N};
 }

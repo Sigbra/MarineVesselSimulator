@@ -261,7 +261,114 @@ void plotAngles() {
     plt::legend();
     plt::grid(true);
     plt::show();
-}          
+}      
+
+void plot_points(const std::vector<Vector2D>& vessels, const std::vector<Vector2D>& projections) {
+    std::vector<double> vessel_x, vessel_y;
+    std::vector<double> proj_x, proj_y;
+
+    for (const auto& v : vessels) {
+        vessel_x.push_back(v.x);
+        vessel_y.push_back(v.y);
+    }
+
+    for (const auto& p : projections) {
+        proj_x.push_back(p.x);
+        proj_y.push_back(p.y);
+    }
+
+    // Plot vessel positions
+    plt::scatter(vessel_x, vessel_y, 50.0, {{"color", "red"}, {"label", "Vessel"}});
+
+    // Plot projected points onto the spiral
+    plt::scatter(proj_x, proj_y, 30.0, {{"color", "blue"}, {"label", "Projection"}});
+
+    // Set labels and legend
+    plt::xlabel("X Position");
+    plt::ylabel("Y Position");
+    plt::legend();
+
+    // Show the plot
+    plt::show();
+}
+
+void plotClosestPointErrors() {
+    std::filesystem::path filepath = std::filesystem::path(getRepositoryPath()) / "data" / "simdata.csv";
+    if (!std::filesystem::exists(filepath)) {
+        std::cerr << "File does not exist: " << filepath << std::endl;
+        return;
+    }
+    std::ifstream file(filepath);
+    if (!file.is_open()) {
+        std::cerr << "Error: Unable to open " << filepath << std::endl;
+        return;
+    }
+    
+    std::vector<double> time, x_e, y_e, position_e;
+    std::string line;
+     
+    double total_x_e = 0.0;
+    double total_y_e = 0.0;
+    double prev_time = 0.0;
+
+    while (std::getline(file, line)) {
+        std::stringstream ss(line);
+        std::vector<double> values;
+        std::string cell;
+        
+        while (std::getline(ss, cell, ',')) {
+            try {
+                values.push_back(std::stod(cell));
+            } catch (const std::invalid_argument&) {
+                // Skip any invalid entries
+            }
+        }
+
+        if (values.size() >= 31) {
+            double t = values[0];
+            double xe = values[29];
+            double ye = values[30];
+
+            double h = (t - prev_time);
+            
+            time.push_back(t);
+            x_e.push_back(xe);
+            y_e.push_back(ye);
+            position_e.push_back(std::sqrt(xe * xe + ye * ye));
+
+            total_x_e += std::abs(xe)*h;
+            total_y_e += std::abs(ye)*h;
+
+            prev_time = t;
+        }
+    }
+    file.close();
+    
+    if (time.empty() || x_e.empty() || y_e.empty()) {
+        std::cerr << "Error: No valid data found in " << filepath << std::endl;
+        return;
+    }
+    std::ostringstream oss_x;
+    oss_x << std::fixed << std::setprecision(1);
+    oss_x << "along track error x_e (total = " << total_x_e << "): ";
+    std::string title_x = oss_x.str();
+
+    std::ostringstream oss_y;
+    oss_y << std::fixed << std::setprecision(1);
+    oss_y << "cross track error y_e (total = " << total_y_e << "): ";
+    std::string title_y = oss_y.str();
+
+    plt::figure_size(800, 600);
+    plt::named_plot(title_x, time, x_e, "r-");
+    plt::named_plot(title_y, time, y_e, "g-");
+    //plt::named_plot("position error:        ", time, position_e, "b-");
+    plt::xlabel("Time (s)");
+    plt::ylabel("Error (m)");
+    plt::title("Position errors over Time");
+    plt::legend();
+    plt::grid(true);
+    plt::show();
+}
 
 RealTimePlotter::RealTimePlotter() {
     plt::figure();   
@@ -334,5 +441,10 @@ plt::pause(0.01);
 }
 
 void RealTimePlotter::finalizePlot(const std::string& filename) {
+    if (!filename.empty()) {
+        plt::save(filename);
+    }
+    plt::show();
     plt::close();
 }
+

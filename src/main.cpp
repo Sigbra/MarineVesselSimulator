@@ -75,7 +75,7 @@ int main() {
     // Create the straight line path.
     StraightLinePath straightLinePath;
     straightLinePath.updateWaypoints(wpt);
-    Waypoints pathLine = straightLinePath.samplePath(0.1);
+    Waypoints pathLine = straightLinePath.samplePath(0.05);
     std::cout << "Path size: " << pathLine.size() << std::endl;
     plotPath(pathLine);
 
@@ -84,7 +84,7 @@ int main() {
     double kappa_max = 0.3; 
     FermatSpiralPath spiral(kappa_max);
     spiral.updateWaypoints(wpt);
-    Waypoints pathFS = spiral.samplePath(0.01);
+    Waypoints pathFS = spiral.samplePath(0.05);
     std::cout << "Path size: " << pathFS.size() << std::endl;
     plotPath(pathFS);
 
@@ -104,7 +104,7 @@ int main() {
     double T_n = 0.5;                                // Propeller time constant (s)
     Eigen::Vector2d n = Eigen::Vector2d::Zero();     // Init: [n_left, n_right] = [0, 0]
 
-    double T_alpha = 0.5;                              // Azimuth angle time constant (s)
+    double T_alpha = 0.5;                            // Azimuth angle time constant (s)
     Eigen::Vector2d alpha = Eigen::Vector2d::Zero(); // Init: [angle_left, angle_right] = [0, 0]
 
     // Choose path type
@@ -123,8 +123,6 @@ int main() {
     double path_y = wpt[wpt_index-1].y;
     double path_x_dot = 0.0;
     double path_y_dot = 0.0;
-    double path_x_ddot = 0.0;
-    double path_y_ddot = 0.0;
 
     // Control method selection for path following
     GuidanceMethod guidance;
@@ -167,7 +165,7 @@ int main() {
     std::vector<double> t(num_steps);    
 
     // SIM data storage
-    Eigen::MatrixXd simdata(num_steps, 24);         
+    Eigen::MatrixXd simdata(num_steps, 31);         
     
     RealTimePlotter plotter;
     if (pathType == 2) {
@@ -209,13 +207,11 @@ int main() {
         // Guidance
 
         // - Mode switching condition
-        if (wpt_index == wpt.size()-1) {
-            if (R_switch > std::sqrt(std::pow(xn - wpt[wpt_index].x, 2) + std::pow(yn - wpt[wpt_index].y, 2))) {
-                pathType = 0;
-                GuidanceFlag = 1; 
-                break; //Temporary
-            }
+        if (R_switch > std::sqrt(std::pow(xn - wpt[wpt.size()-1].x, 2) + std::pow(yn - wpt[wpt.size()-1].y, 2))) {
+            pathType = 1;
+            GuidanceFlag = 1; 
         }
+    
 
         // - Type of path
         // - path functions responsible for wpt_index increment
@@ -237,8 +233,12 @@ int main() {
         path_y = closest.point.pos.y;
         path_x_dot = closest.point.dpos.x;
         path_y_dot = closest.point.dpos.y;
-        path_x_ddot = closest.point.ddpos.x;
-        path_y_ddot = closest.point.ddpos.y;
+
+        if (path_x == wpt.back().x && path_y == wpt.back().y) {
+            GuidanceFlag = 1; // To make vessel stop
+            pathType = 1;
+            wpt_index = wpt.size();
+        }
 
         // - Guidance law
         switch (GuidanceFlag) {
@@ -248,7 +248,7 @@ int main() {
                 break;
             }
             case 2: { // LOS heading autopilot
-                auto [psi_ref, y_e] = LOS(xn, yn, Delta_h, path_x, path_y, path_x_dot, path_y_dot);
+                auto [psi_ref, y_e] = LOS(xn, yn, Delta_h, path_x, path_y, path_x_dot, path_y_dot, closest.y_e);
 
                 losObserver.update(psi_ref);
                 psi_d = losObserver.getLOSAngle();
@@ -257,7 +257,7 @@ int main() {
                 break;
             }
             case 3: { // ALOS heading autopilot
-                auto [psi_ref, y_e] = ALOS.update(xn, yn, path_x, path_y, path_x_dot, path_y_dot);
+                auto [psi_ref, y_e] = ALOS.update(xn, yn, path_x, path_y, path_x_dot, path_y_dot, closest.y_e);
 
                 losObserver.update(psi_ref);
                 psi_d = losObserver.getLOSAngle();
@@ -268,40 +268,27 @@ int main() {
         }
 
         // Control System 
-        // - Station Keeping
+        // - Motion Control
+        // - - Station Keeping 
         if (GuidanceFlag==1) {
-            // - Motion control system
             tau_XYN = posPID.update(h, xn_d, yn_d, psi_d, xn, yn, psi);
-            
-            // - Control allocation
-            if (ControlAllocFlag==1) {
-                control_allocation = NLOptControlAlloc(tau_XYN[0], tau_XYN[1], tau_XYN[2], U);
-            }
-            else if (ControlAllocFlag==2){
-                control_allocation = MPC_control_alloc(tau_XYN[0], tau_XYN[1], tau_XYN[2],
-                                                       U, T_n, T_alpha,
-                                                       n, alpha);
-            }
-            n_c     = {control_allocation[0], control_allocation[2]};
-            alpha_c = {control_allocation[1], control_allocation[3]};
         } 
-        // - Path following 
+        // - - Path following
         else if (GuidanceFlag==2 || GuidanceFlag==3) { 
-            // - Motion control system
             tau_XYN = headPID.update(h, M, psi, psi_d, r, r_d, a_d);
-
-            // - Control allocation
-            if (ControlAllocFlag==1) {
-                control_allocation = NLOptControlAlloc(tau_XYN[0], tau_XYN[1], tau_XYN[2], U);
-            }
-            else if (ControlAllocFlag==2){
-                control_allocation = MPC_control_alloc(tau_XYN[0], tau_XYN[1], tau_XYN[2],
-                                                       U, T_n, T_alpha,
-                                                       n, alpha);
-            }
-            n_c     = {control_allocation[0], control_allocation[2]};
-            alpha_c = {control_allocation[1], control_allocation[3]};
         }
+
+        // - Control allocation
+        if (ControlAllocFlag==1) {
+            control_allocation = NLOptControlAlloc(tau_XYN[0], tau_XYN[1], tau_XYN[2], U);
+        }
+        else if (ControlAllocFlag==2){
+            control_allocation = MPC_control_alloc(tau_XYN[0], tau_XYN[1], tau_XYN[2],
+                                                   U, T_n, T_alpha,
+                                                   n, alpha);
+        }
+        n_c     = {control_allocation[0], control_allocation[2]};
+        alpha_c = {control_allocation[1], control_allocation[3]};
 
         // Marine Craft Model
         rk4_ran_step(x, n, alpha, mp, V_c, beta_c, h);
@@ -311,7 +298,7 @@ int main() {
         n = n + h/T_n * (n_c - n);                      
         alpha = alpha + h/T_alpha * (alpha_c - alpha);  
 
-        // Saturate:
+        // - Saturate:
         double k_pos = 200*9.81;     
         double k_neg = 200*9.81;     
         double n_max =  1;             
@@ -328,7 +315,7 @@ int main() {
         }
 
         // Show SIM progress once per second
-        if (i % 100 == 0) {
+        if (i % 10 == 0) {
             plotter.updatePlot(xn, yn, psi, 0.2, closest.point.pos.x, closest.point.pos.y);
             std::cout << std::fixed << std::setprecision(0)
             << "################################################" << std::endl
@@ -351,7 +338,7 @@ int main() {
             }
             std::cout << "x:   " << xn << "m, y:   " << yn << "m, psi:   " << rad2deg(psi) << "deg" << std::endl
             << "------------------------------------------------" << std::endl
-            << std::fixed << std::setprecision(3)
+            << std::fixed << std::setprecision(4)
             << "n_c(0), n_c(1):         " << n_c(0) << ", " << n_c(1) << std::endl
             << "n(0),   n(1):           " << n(0) << ", " << n(1) << std::endl
             << "------------------------------------------------" << std::endl
@@ -378,7 +365,13 @@ int main() {
         simdata(i, 21) = alpha_c(1);
         simdata(i, 22) = alpha(0); 
         simdata(i, 23) = alpha(1); 
-
+        simdata(i, 24) = tau_XYN[0];
+        simdata(i, 25) = tau_XYN[1];
+        simdata(i, 26) = tau_XYN[2];
+        simdata(i, 27) = closest.point.pos.x;
+        simdata(i, 28) = closest.point.pos.y;
+        simdata(i, 29) = closest.x_e;
+        simdata(i, 30) = closest.y_e;
     }
 
     std::cout << "Simulation completed" << std::endl;
@@ -387,6 +380,7 @@ int main() {
     plotter.finalizePlot();
 
     plotTrajectory();
+    plotClosestPointErrors();
     plotStateErrors();
     plotAngles();
 
