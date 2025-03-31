@@ -210,24 +210,20 @@ PathPoint FermatSpiralPath::projectOntoSpiral(Vector2D vessel, FSParameters para
     double maxIterations = 2000;
     double tolerance = 1e-16;
 
-    double base_angle = (lamda > 0) ? params.chi0 : (params.chi_end);
-    double xCenter    = (lamda > 0) ? params.x0  : params.x_end;
-    double yCenter    = (lamda > 0) ? params.y0  : params.y_end;
-
     double k = params.k;
     double rho = params.rho;
     double theta_end = params.theta_end;
+    double base_angle, xCenter, yCenter;
 
-    std::cout << "Debug Info: " << std::endl;
-    std::cout << "  thetaGuess: " << thetaGuess << std::endl;
-    std::cout << "  params.theta_end: " << params.theta_end << std::endl;
-    std::cout << "  base_angle: " << base_angle << std::endl;
-    std::cout << "  xCenter: " << xCenter << std::endl;
-    std::cout << "  yCenter: " << yCenter << std::endl;
-    std::cout << "  k: " << k << std::endl;
-    std::cout << "  rho: " << rho << std::endl;
-    std::cout << "  lamda: " << lamda << std::endl;
-    std::cout << "  vessel.x: " << vessel.x << " vessel.y: " << vessel.y << std::endl;
+    if (lamda > 0) {
+        base_angle = params.chi0;
+        xCenter = params.x0;
+        yCenter = params.y0;
+    } else {
+        base_angle = params.chi_end;
+        xCenter = params.x_end;
+        yCenter = params.y_end;
+    }
     
     double theta = thetaGuess;
     for (int i = 0; i < maxIterations; ++i)
@@ -235,9 +231,9 @@ PathPoint FermatSpiralPath::projectOntoSpiral(Vector2D vessel, FSParameters para
         double val = computeF(theta, vessel, base_angle, lamda, k, rho, xCenter, yCenter, theta_end);
         double der = computeFPrime(theta, vessel, base_angle, lamda, k, rho, xCenter, yCenter, theta_end);
 
-        if (std::fabs(der) < 1e-4) {
+        if (std::fabs(der) < 1e-6) {
             std::cout << "Warning: fprime too low, applying damping" << std::endl;
-            der = (der < 0) ? -1e-4 : 1e-4; // Apply damping to prevent division issues
+            der = (der < 0) ? -1e-6 : 1e-6; // Apply damping to prevent division issues
         }
 
         double step = val / der;
@@ -253,7 +249,6 @@ PathPoint FermatSpiralPath::projectOntoSpiral(Vector2D vessel, FSParameters para
         // Costum function for better convergence insted of using step directly
         theta -= (step > 0 ? 1 : (step < 0 ? -1 : 0)) * step * step;
 
-
         const double theta_start = 0;
         if (theta < theta_start) {
             theta = theta_start;
@@ -261,13 +256,19 @@ PathPoint FermatSpiralPath::projectOntoSpiral(Vector2D vessel, FSParameters para
         else if (theta > theta_end) {
             theta = theta_end;
         }
-
     }
 
     PathPoint closest_point;
     closest_point.pos = computeSpiralPoint(theta, base_angle, lamda, k, rho, xCenter, yCenter, theta_end);
-    closest_point.dpos = computeSpiralDerivative(theta, base_angle, lamda, k, rho, theta_end);
-    closest_point.ddpos = computeSpiralSecondDerivative(theta, base_angle, lamda, k, rho, theta_end);
+    //Mirroring derivatives of mirrored FS segment because this segment goes in the opposite way of the FS segment.
+    if (lamda > 0) {
+        closest_point.dpos = computeSpiralDerivative(theta, base_angle, lamda, k, rho, theta_end);
+        closest_point.ddpos = computeSpiralSecondDerivative(theta, base_angle, lamda, k, rho, theta_end);
+    } else {
+        closest_point.dpos = (-1) * computeSpiralDerivative(theta, base_angle, lamda, k, rho, theta_end);
+        closest_point.ddpos = (-1) * computeSpiralSecondDerivative(theta, base_angle, lamda, k, rho, theta_end);
+    }
+    
 
     return closest_point;
 }
@@ -347,16 +348,15 @@ PathTrackingInfo FermatSpiralPath::getClosestPoint(const Vector2D vessel_positio
     x_e_FS_mirrored = alongTrackError(vessel_position, FS_mirrored_point);
     y_e_FS_mirrored = crossTrackError(vessel_position, FS_mirrored_point);
     FS_mirrored_error = std::sqrt(x_e_FS_mirrored*x_e_FS_mirrored + y_e_FS_mirrored*y_e_FS_mirrored);
-
-
+    
     Vector2D prev_pull_out = params.pull_out;
     params = computeFSParameters(wpt_prev, wpt, wpt_next);
 
-    if (wpt_index < waypoints_.size()-1) { //There is more segments
+    if (wpt_index < waypoints_.size() - 1) { //There is more segments
         line_point = projectOntoLine(prev_pull_out, params.wheel_over, vessel_position);
     }
     else { //There is not more segments
-        line_point = projectOntoLine(prev_pull_out, wpt_next, vessel_position);
+        line_point = projectOntoLine(prev_pull_out, wpt, vessel_position);
     }
     x_e_line = alongTrackError(vessel_position, line_point); 
     y_e_line = crossTrackError(vessel_position, line_point);
@@ -365,24 +365,25 @@ PathTrackingInfo FermatSpiralPath::getClosestPoint(const Vector2D vessel_positio
 
     if (line_prev_error < FS_error && line_prev_error < FS_mirrored_error && line_prev_error < line_error){
         tracking_info.point = line_prev_point;
-        tracking_info.x_e = x_e_line_prev;
-        tracking_info.y_e = y_e_line_prev;
+        tracking_info.x_e   = x_e_line_prev;
+        tracking_info.y_e   = y_e_line_prev;
     } 
     else if (FS_error < FS_mirrored_error && FS_error < line_error){
         tracking_info.point = FS_point;
-        tracking_info.x_e = x_e_FS;
-        tracking_info.y_e = y_e_FS;
+        tracking_info.x_e   = x_e_FS;
+        tracking_info.y_e   = y_e_FS;
     } 
     else if (FS_mirrored_error < line_error){
         tracking_info.point = FS_mirrored_point;
-        tracking_info.x_e = x_e_FS_mirrored;
-        tracking_info.y_e = y_e_FS_mirrored;
+        tracking_info.x_e   = x_e_FS_mirrored;
+        tracking_info.y_e   = y_e_FS_mirrored;
     } 
     else{
         tracking_info.point = line_point;
-        tracking_info.x_e = x_e_line;
-        tracking_info.y_e = y_e_line;
-        if (wpt_index < waypoints_.size()-2){
+        tracking_info.x_e   = x_e_line;
+        tracking_info.y_e   = y_e_line;
+
+        if (wpt_index < waypoints_.size()-1){
             stored_pull_out = prev_pull_out;
             wpt_index++;
         }
