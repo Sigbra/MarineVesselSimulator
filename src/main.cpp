@@ -150,9 +150,13 @@ int main() {
 
     // Marine vessel Dynamics
     Eigen::VectorXd xdot = Eigen::VectorXd::Zero(12);
+    Eigen::VectorXd eta = Eigen::VectorXd::Zero(6);
+    Eigen::VectorXd nu = Eigen::VectorXd::Zero(6);
+
     Eigen::MatrixXd M = Eigen::MatrixXd::Zero(6, 6); 
     Eigen::MatrixXd B = Eigen::MatrixXd::Zero(3, 4); 
     double U = 0.0;
+
 
     // Control system variables
     std::vector<double> tau_XYN = {0.0, 0.0, 0.0};
@@ -182,24 +186,28 @@ int main() {
         // Navigation (Fake measurements using noise)
         double random = ((double)rand() / RAND_MAX - 0.5);
   
-        double u     = x(0)  +  0.01 * random; //Surge velocity (BODY frame)
-        double v     = x(1)  +  0.01 * random; //Sway velocity  (BODY frame)
-        double w     = x(2)  +  0.01 * random; //Heave velocity (BODY frame)
-        double p     = x(3)  + 0.001 * random; //Roll rate      (BODY frame)
-        double q     = x(4)  + 0.001 * random; //Pitch rate     (BODY frame)
-        double r     = x(5)  + 0.001 * random; //Yaw rate       (BODY frame)
+        double u     = x(0)  +  0.01 * random; // Surge velocity (BODY frame)
+        double v     = x(1)  +  0.01 * random; // Sway velocity  (BODY frame)
+        double w     = x(2)  +  0.01 * random; // Heave velocity (BODY frame)
+        double p     = x(3)  + 0.001 * random; // Roll rate      (BODY frame)
+        double q     = x(4)  + 0.001 * random; // Pitch rate     (BODY frame)
+        double r     = x(5)  + 0.001 * random; // Yaw rate       (BODY frame)
     
-        double xn    = x(6)  +  0.01 * random; //North position  (NED frame)
-        double yn    = x(7)  +  0.01 * random; //East position   (NED frame)
-        double zn    = x(8)  +  0.01 * random; //Down position   (NED frame)
-        double phi   = x(9)  + 0.001 * random; //Roll angle      (NED frame)
-        double theta = x(10) + 0.001 * random; //Pitch angle     (NED frame)
-        double psi   = x(11) + 0.001 * random; //Heading angle   (NED frame)
+        double xn    = x(6)  +  0.01 * random; // North position  (NED frame)
+        double yn    = x(7)  +  0.01 * random; // East position   (NED frame)
+        double zn    = x(8)  +  0.01 * random; // Down position   (NED frame)
+        double phi   = x(9)  + 0.001 * random; // Roll angle      (NED frame)
+        double theta = x(10) + 0.001 * random; // Pitch angle     (NED frame)
+        double psi   = x(11) + 0.001 * random; // Heading angle   (NED frame)
 
         if (std::isnan(psi)) {
             std::cerr << "NaN detected for psi at iteration " << i << ", time: " << t[i] << "s\n";
             break; 
         }
+
+        // Update eta and nu for MIMOPID
+        eta << u, v, w, p, q, r;
+        nu  << xn, yn, zn, phi, theta, psi;
 
         // Update model dynamics
         ran(x, n, alpha, mp, V_c, beta_c, xdot, U, M, B);

@@ -64,3 +64,63 @@ void PositionPIDController::reset() {
 z_xn_ = z_yn_ = z_psi_ = 0.0;
 prev_error_xn_ = prev_error_yn_ = prev_error_psi_ = 0.0;
 }
+
+
+//-------------------------
+// MIMOPIDController Implementation
+//-------------------------
+
+MIMOPIDController::MIMOPIDController(){
+    // Tunable
+    Omega_b = Eigen::MatrixXd::Zero(3, 3);
+    Omega_b(0, 0) = 1;
+    Omega_b(1, 1) = 1;
+    Omega_b(2, 2) = 1;
+
+    Z = Eigen::MatrixXd::Zero(3, 3);
+    Z(0, 0) = 1;
+    Z(1, 1) = 1;
+    Z(2, 2) = 1;
+
+    Omega_n = Eigen::VectorXd::Zero(3);
+    for (int i; i < 3; ++i) {
+        double w_bi = Omega_b(i, i);
+        double z_i = Z(i, i);
+        Omega_n(i, i) = w_bi / (sqrt(1-2*std::pow(z_i, 2) + sqrt(4*std::pow(z_i,2) - 4*std::pow(z_i, 2) + 2)));
+    }
+}
+
+
+std::vector<double> MIMOPIDController::update(Eigen::MatrixXd M, Eigen::VectorXd eta, Eigen::VectorXd nu, double h){
+    
+    // u, v, r 
+    Eigen::VectorXd eta3(eta(0), eta(1), eta(5));
+
+    // xn, yn, psi
+    Eigen::VectorXd nu3(nu(0), nu(1), nu(5));
+
+    // New 6x6 matrix with only the relevant states (eta3 and nu3)
+    Eigen::VectorXi indices(6);
+    indices << 0, 1, 5, 6, 7, 11; 
+    Eigen::MatrixXd M6(6, 6);
+
+    for (int i = 0; i < 6; ++i) {
+        for (int j = 0; j < 6; ++j) {
+            M6(i, j) = M(indices(i), indices(j));
+        }
+    }
+
+    double Kp = M6*Omega_n*Omega_n;
+    double Ki = 2*M6*Z*Omega_n; // No C or D compensation implemented here
+    double Ki = (Kp*Omega_n)/10;
+
+    nu_der += (nu_error - prev_nu_error)/h;
+    nu_int += error_nu * h;
+
+    tau_XYN = -Kp*
+
+}
+    
+void MIMOPIDController::reset(){
+
+}

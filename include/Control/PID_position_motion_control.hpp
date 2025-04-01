@@ -5,25 +5,17 @@
 #include <string>
 #include <Eigen/Dense>
 
-//-------------------------
-// Position PID Controller
-//-------------------------
 class PositionPIDController {
     public:
-        // Constructor (you can later extend these to be configurable)
+
         PositionPIDController(double Kp_xn = 6.0, double Ki_xn = 0.0, double Kd_xn = 2.0,
                               double Kp_yn = 6.0, double Ki_yn = 0.0, double Kd_yn = 2.0,
                               double Kp_psi = 6.0, double Ki_psi = 0.0, double Kd_psi = 2.0);
     
-        // Update method calculates control efforts (tau_X, tau_Y, tau_N)
-        // h: time step
-        // (xn_d, yn_d, psi_d): desired states (position in NED and heading)
-        // (xn, yn, psi): measured states
         std::vector<double> update(double h,
                                    double xn_d, double yn_d, double psi_d,
                                    double xn, double yn, double psi);
     
-        // Reset the internal (integral and derivative) state.
         void reset();
     
     private:
@@ -36,6 +28,40 @@ class PositionPIDController {
         double z_xn_, z_yn_, z_psi_;
         // For derivative calculation: previous error values.
         double prev_error_xn_, prev_error_yn_, prev_error_psi_;
+    };
+
+
+// Based on Algorithm 15.2 in Fossen. 
+class MIMOPIDController {
+    public:
+        // Defines Omega and Z
+        // Computes w
+        MIMOPIDController();
+
+        // Compute P gain matrix
+        // Compute D gain matrix
+        // Compute I gain matrix
+        std::vector<double> MIMOPIDController::update(Eigen::MatrixXd M, Eigen::VectorXd eta, Eigen::VectorXd nu, double h);
+    
+        void reset();
+    
+    private:
+
+        // Matrix of bandwidths
+        Eigen::MatrixXd Omega_b;
+
+        // Matrix of damping ratios
+        Eigen::MatrixXd Z;
+
+        // Natural frequencies
+        Eigen::MatrixXd Omega_n;
+
+        //Derivative state;
+        Eigen::VectorXd nu_der;
+        //Integral state;
+        Eigen::VectorXd nu_int;
+
+        
     };
 
 #endif 
