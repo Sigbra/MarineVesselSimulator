@@ -142,6 +142,7 @@ int main() {
     
     // Motion control classes
     PositionPIDController posPID;
+    MIMOPIDController MIMO_PID;
     HeadingPIDController headPID;
 
     // Desired rate of turn and acceleration
@@ -204,10 +205,6 @@ int main() {
             std::cerr << "NaN detected for psi at iteration " << i << ", time: " << t[i] << "s\n";
             break; 
         }
-
-        // Update eta and nu for MIMOPID
-        eta << u, v, w, p, q, r;
-        nu  << xn, yn, zn, phi, theta, psi;
 
         // Update model dynamics
         ran(x, n, alpha, mp, V_c, beta_c, xdot, U, M, B);
@@ -284,7 +281,10 @@ int main() {
         // - Motion Control
         // - - Station Keeping 
         if (GuidanceFlag==1) {
-            tau_XYN = posPID.update(h, xn_d, yn_d, psi_d, xn, yn, psi);
+            //tau_XYN = posPID.update(h, xn_d, yn_d, psi_d, xn, yn, psi);
+            eta << u, v, w, p, q, r;
+            nu  << xn, yn, zn, phi, theta, psi;
+            tau_XYN = MIMO_PID.update(h, xn_d, yn_d, psi_d, M, eta, nu);
         } 
         // - - Path following
         else if (GuidanceFlag==2 || GuidanceFlag==3) { 
