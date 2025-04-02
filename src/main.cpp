@@ -113,11 +113,11 @@ int main() {
     // Initialize path following variables
     int wpt_index = 1;
     PathTrackingInfo closest;
+    closest.x_e = 0.0;
+    closest.y_e = 0.0;
     closest.point.pos = Vector2D(0.0, 0.0);
     closest.point.dpos = Vector2D(0.0, 0.0);
     closest.point.ddpos = Vector2D(0.0, 0.0);
-    closest.x_e = 0.0;
-    closest.y_e = 0.0;
 
     double path_x = wpt[wpt_index-1].x;
     double path_y = wpt[wpt_index-1].y;
@@ -138,7 +138,9 @@ int main() {
 
     // ALOS variables
     double psi_ref = 0.0;
-    double y_e = 0.0; 
+    double y_e = closest.y_e; 
+
+    double x_e = closest.x_e;
     
     // Motion control classes
     MIMOPIDController MIMO_PID;
@@ -146,7 +148,7 @@ int main() {
 
     // Desired rate of turn and acceleration
     double r_d = 0.0; 
-    double a_d = 0.0;
+    double a_d = 0.0;           
 
     // Marine vessel Dynamics
     Eigen::VectorXd xdot = Eigen::VectorXd::Zero(12);
@@ -156,7 +158,6 @@ int main() {
     Eigen::MatrixXd M = Eigen::MatrixXd::Zero(6, 6); 
     Eigen::MatrixXd B = Eigen::MatrixXd::Zero(3, 4); 
     double U = 0.0;
-
 
     // Control system variables
     std::vector<double> tau_XYN = {0.0, 0.0, 0.0};
@@ -236,6 +237,8 @@ int main() {
             }
             case 2: { // Straight line path.
                 closest = straightLinePath.getClosestPoint(Vector2D(xn, yn), wpt_index);
+                y_e = closest.y_e;
+                x_e = closest.x_e;
                 path_x = closest.point.pos.x;
                 path_y = closest.point.pos.y;
                 path_x_dot = closest.point.dpos.x;
@@ -244,6 +247,8 @@ int main() {
             }
             case 3: { // Continuous-Curvature Path Using Fermat's Spiral.
                 closest = spiral.getClosestPoint(Vector2D(xn, yn), wpt_index);
+                y_e = closest.y_e;
+                x_e = closest.x_e;
                 path_x = closest.point.pos.x;
                 path_y = closest.point.pos.y;
                 path_x_dot = closest.point.dpos.x;
@@ -255,7 +260,7 @@ int main() {
         // - Guidance laws
         switch (GuidanceFlag) {
             case 1: { // Dynamic Positioning
-                // TODO; Dynamic positioning for beerthing in a Voronoi space with MPC.
+                // TODO; MPC DP Guidance.
                 // Temporary: Simple DP using wpt directly to generate ref x, y and psi. 
                 auto [xn_ref, yn_ref, psi_ref] = DP(xn, yn, wpt[wpt_index].x, wpt[wpt_index].y, wpt[wpt_index-1].x, wpt[wpt_index-1].y);
 
@@ -265,7 +270,7 @@ int main() {
                 break;
             }
             case 2: { // LOS heading autopilot
-                auto [psi_ref, y_e] = LOS(xn, yn, Delta_h, path_x, path_y, path_x_dot, path_y_dot, closest.y_e);
+                auto [psi_ref, _ ] = LOS(xn, yn, Delta_h, path_x, path_y, path_x_dot, path_y_dot, y_e);
 
                 losObserver.update(psi_ref);
                 psi_d = losObserver.getLOSAngle();
@@ -273,7 +278,7 @@ int main() {
                 break;
             }
             case 3: { // ALOS heading autopilot
-                auto [psi_ref, y_e] = ALOS.update(xn, yn, path_x, path_y, path_x_dot, path_y_dot, closest.y_e);
+                auto [psi_ref, _ ] = ALOS.update(xn, yn, path_x, path_y, path_x_dot, path_y_dot, y_e);
 
                 losObserver.update(psi_ref);
                 psi_d = losObserver.getLOSAngle();
@@ -292,7 +297,7 @@ int main() {
         // - Path following
         else if (GuidanceFlag==2 || GuidanceFlag==3) { 
             tau_XYN = headPID.update(h, M, psi, psi_d, r, r_d, a_d);
-        }
+        }              
 
         // Control allocation
         if (ControlAllocFlag==1) {
@@ -342,15 +347,15 @@ int main() {
             << "------------------------------------------------" << std::endl
             << "closest point: " << closest.point.pos.x << ", " << closest.point.pos.y << std::endl
             << std::fixed << std::setprecision(1)
-            << "x_e: " << closest.x_e << ", y_e: " << closest.y_e << std::endl
+            << "x_e: " << x_e << ", y_e: " << y_e << std::endl
             << "------------------------------------------------" << std::endl;
             if (GuidanceFlag == 1){
                 std::cout << std::fixed << std::setprecision(1)
                 << "x_d: " << xn_d << "m, y_d: " << yn_d << "m, psi_d: " << rad2deg(psi_d) << "deg" << std::endl;
             }
-            else if (GuidanceFlag == 2) {
-                std::cout << std::fixed << std::setprecision(1)
-                << "psi_ref: " << psi_ref << ", psi_d: " << psi_d << std::endl;
+            else if (GuidanceFlag == 2 || GuidanceFlag == 3) {
+                std::cout << std::fixed << std::setprecision(2)
+                << "psi_d: " << psi_d << ", r_d: " << r_d << std::endl;
             }
             std::cout << "x:   " << xn << "m, y:   " << yn << "m, psi:   " << rad2deg(psi) << "deg" << std::endl
             << "------------------------------------------------" << std::endl
