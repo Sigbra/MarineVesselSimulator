@@ -92,6 +92,7 @@ set(SOURCES
 
     src/Guidance/LOS.cpp
     src/Guidance/ALOS.cpp
+    src/Guidance/MPC_guidance.cpp
     src/Guidance/LOS_observer.cpp
     src/Guidance/dynamic_positioning.cpp
     src/Guidance/guidance_selector.cpp
