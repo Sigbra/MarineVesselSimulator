@@ -14,9 +14,10 @@ class GuidanceMethod {
     
     private:
         std::vector<std::string> methods = {
-            "Dynamic Positioning",
-            "LOS",
-            "ALOS"
+            "DP:  Simple wpt guidance",
+            "DP:  MPC guidance",
+            "LOS  guidance",
+            "ALOS guidance"
         };
     };
 

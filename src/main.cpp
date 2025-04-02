@@ -17,6 +17,7 @@
 #include "Guidance/guidance_selector.hpp"
 #include "Guidance/LOS.hpp"
 #include "Guidance/ALOS.hpp"
+#include "Guidance/MPC_guidance.hpp"
 #include "Guidance/LOS_observer.hpp"
 #include "Guidance/dynamic_positioning.hpp"
 
@@ -69,7 +70,6 @@ int main() {
     double K_f = config["path_following"]["K_f"].as<double>();
     double Delta_h = config["path_following"]["Delta_h"].as<double>();                    
     double gamma_h = config["path_following"]["gamma_h"].as<double>();               
-    double kappa = config["path_following"]["kappa"].as<double>();   
 
 
     // Create the straight line path.
@@ -91,6 +91,7 @@ int main() {
     // Initialize guidance methods and LOS observer 
     ALOS ALOS(Delta_h, gamma_h, 0.1);
     LOSObserver losObserver(h, K_f);
+    MPCGuidance mpc_guidance(h, 0.3, 10, 60);
      
     // Initial states - will be properly set after path generation
     Eigen::VectorXd x = Eigen::VectorXd::Zero(12);  // x = [u v w p q r xn yn zn phi theta psi]'
@@ -260,16 +261,23 @@ int main() {
         // - Guidance laws
         switch (GuidanceFlag) {
             case 1: { // Dynamic Positioning
-                // TODO; MPC DP Guidance.
                 // Temporary: Simple DP using wpt directly to generate ref x, y and psi. 
                 auto [xn_ref, yn_ref, psi_ref] = DP(xn, yn, wpt[wpt_index].x, wpt[wpt_index].y, wpt[wpt_index-1].x, wpt[wpt_index-1].y);
-
                 xn_d = xn_ref;
                 yn_d = yn_ref;
                 psi_d = psi_ref;
                 break;
             }
-            case 2: { // LOS heading autopilot
+            case 2: { // Dynamicpositioning using MPC
+                mpc_guidance.update(xn, yn, psi, U, wpt[wpt_index-1], wpt[wpt_index]);
+
+                double U_d   = mpc_guidance.getFirstSpeed();                                  // !!! Not used, because how? 
+                xn_d  = mpc_guidance.getFirstX();
+                yn_d  = mpc_guidance.getFirstY();
+                psi_d = mpc_guidance.getFirstChi();
+                break;
+            }
+            case 3: { // LOS heading autopilot
                 auto [psi_ref, _ ] = LOS(xn, yn, Delta_h, path_x, path_y, path_x_dot, path_y_dot, y_e);
 
                 losObserver.update(psi_ref);
@@ -277,7 +285,7 @@ int main() {
                 r_d = losObserver.getLOSRate();
                 break;
             }
-            case 3: { // ALOS heading autopilot
+            case 4: { // ALOS heading autopilot
                 auto [psi_ref, _ ] = ALOS.update(xn, yn, path_x, path_y, path_x_dot, path_y_dot, y_e);
 
                 losObserver.update(psi_ref);
@@ -289,13 +297,13 @@ int main() {
 
         // Motion Control
         // - Dynamic positioning 
-        if (GuidanceFlag==1) {
+        if (GuidanceFlag==1 || GuidanceFlag == 2) {
             eta << u, v, w, p, q, r;
             nu  << xn, yn, zn, phi, theta, psi;
             tau_XYN = MIMO_PID.update(h, xn_d, yn_d, psi_d, M, eta, nu);
         } 
         // - Path following
-        else if (GuidanceFlag==2 || GuidanceFlag==3) { 
+        else if (GuidanceFlag==3 || GuidanceFlag==4) { 
             tau_XYN = headPID.update(h, M, psi, psi_d, r, r_d, a_d);
         }              
 
@@ -349,11 +357,11 @@ int main() {
             << std::fixed << std::setprecision(1)
             << "x_e: " << x_e << ", y_e: " << y_e << std::endl
             << "------------------------------------------------" << std::endl;
-            if (GuidanceFlag == 1){
+            if (GuidanceFlag == 1 || GuidanceFlag == 2){
                 std::cout << std::fixed << std::setprecision(1)
                 << "x_d: " << xn_d << "m, y_d: " << yn_d << "m, psi_d: " << rad2deg(psi_d) << "deg" << std::endl;
             }
-            else if (GuidanceFlag == 2 || GuidanceFlag == 3) {
+            else if (GuidanceFlag == 3 || GuidanceFlag == 4) {
                 std::cout << std::fixed << std::setprecision(2)
                 << "psi_d: " << psi_d << ", r_d: " << r_d << std::endl;
             }
