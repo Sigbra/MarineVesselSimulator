@@ -107,10 +107,10 @@ std::vector<double> MPC_control_alloc(double tau_X, double tau_Y, double tau_N,
     Dict solver_opts;
     solver_opts["print_time"] = 0;
     solver_opts["ipopt.print_level"] = 0;
-    solver_opts["ipopt.max_iter"] = 100;  
+    solver_opts["ipopt.max_iter"] = 200;  
     solver_opts["ipopt.tol"] = 0.001;       
     solver_opts["ipopt.acceptable_tol"] = 0.01;
-    solver_opts["ipopt.acceptable_iter"] = 20;
+    solver_opts["ipopt.acceptable_iter"] = 50;
     opti.solver("ipopt", solver_opts);
 
 

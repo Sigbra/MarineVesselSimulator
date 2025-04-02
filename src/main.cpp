@@ -9,7 +9,7 @@
 #include <thread>
 
 #include "Control/control_alloc_selector.hpp"
-#include "Control/PID_position_motion_control.hpp"
+#include "Control/PID_MIMO_motion_control.hpp"
 #include "Control/PID_heading_motion_control.hpp"
 #include "Control/MPC_control_alloc.hpp"
 #include "Control/non_lin_constrained_control_alloc.hpp"
@@ -113,11 +113,11 @@ int main() {
     // Initialize path following variables
     int wpt_index = 1;
     PathTrackingInfo closest;
+    closest.x_e = 0.0;
+    closest.y_e = 0.0;
     closest.point.pos = Vector2D(0.0, 0.0);
     closest.point.dpos = Vector2D(0.0, 0.0);
     closest.point.ddpos = Vector2D(0.0, 0.0);
-    closest.x_e = 0.0;
-    closest.y_e = 0.0;
 
     double path_x = wpt[wpt_index-1].x;
     double path_y = wpt[wpt_index-1].y;
@@ -138,18 +138,23 @@ int main() {
 
     // ALOS variables
     double psi_ref = 0.0;
-    double y_e = 0.0; 
+    double y_e = closest.y_e; 
+
+    double x_e = closest.x_e;
     
     // Motion control classes
-    PositionPIDController posPID;
+    MIMOPIDController MIMO_PID;
     HeadingPIDController headPID;
 
     // Desired rate of turn and acceleration
     double r_d = 0.0; 
-    double a_d = 0.0;
+    double a_d = 0.0;           
 
     // Marine vessel Dynamics
     Eigen::VectorXd xdot = Eigen::VectorXd::Zero(12);
+    Eigen::VectorXd eta = Eigen::VectorXd::Zero(6);
+    Eigen::VectorXd nu = Eigen::VectorXd::Zero(6);
+
     Eigen::MatrixXd M = Eigen::MatrixXd::Zero(6, 6); 
     Eigen::MatrixXd B = Eigen::MatrixXd::Zero(3, 4); 
     double U = 0.0;
@@ -182,19 +187,19 @@ int main() {
         // Navigation (Fake measurements using noise)
         double random = ((double)rand() / RAND_MAX - 0.5);
   
-        double u     = x(0)  +  0.01 * random; //Surge velocity (BODY frame)
-        double v     = x(1)  +  0.01 * random; //Sway velocity  (BODY frame)
-        double w     = x(2)  +  0.01 * random; //Heave velocity (BODY frame)
-        double p     = x(3)  + 0.001 * random; //Roll rate      (BODY frame)
-        double q     = x(4)  + 0.001 * random; //Pitch rate     (BODY frame)
-        double r     = x(5)  + 0.001 * random; //Yaw rate       (BODY frame)
+        double u     = x(0)  +  0.01 * random; // Surge velocity (BODY frame)
+        double v     = x(1)  +  0.01 * random; // Sway velocity  (BODY frame)
+        double w     = x(2)  +  0.01 * random; // Heave velocity (BODY frame)
+        double p     = x(3)  + 0.001 * random; // Roll rate      (BODY frame)
+        double q     = x(4)  + 0.001 * random; // Pitch rate     (BODY frame)
+        double r     = x(5)  + 0.001 * random; // Yaw rate       (BODY frame)
     
-        double xn    = x(6)  +  0.01 * random; //North position  (NED frame)
-        double yn    = x(7)  +  0.01 * random; //East position   (NED frame)
-        double zn    = x(8)  +  0.01 * random; //Down position   (NED frame)
-        double phi   = x(9)  + 0.001 * random; //Roll angle      (NED frame)
-        double theta = x(10) + 0.001 * random; //Pitch angle     (NED frame)
-        double psi   = x(11) + 0.001 * random; //Heading angle   (NED frame)
+        double xn    = x(6)  +  0.01 * random; // North position  (NED frame)
+        double yn    = x(7)  +  0.01 * random; // East position   (NED frame)
+        double zn    = x(8)  +  0.01 * random; // Down position   (NED frame)
+        double phi   = x(9)  + 0.001 * random; // Roll angle      (NED frame)
+        double theta = x(10) + 0.001 * random; // Pitch angle     (NED frame)
+        double psi   = x(11) + 0.001 * random; // Heading angle   (NED frame)
 
         if (std::isnan(psi)) {
             std::cerr << "NaN detected for psi at iteration " << i << ", time: " << t[i] << "s\n";
@@ -206,84 +211,95 @@ int main() {
 
         // Guidance
 
-        // - DP mode switch criteria. 
-        if (R_switch > std::sqrt(std::pow(xn - wpt[wpt.size()-1].x, 2) + std::pow(yn - wpt[wpt.size()-1].y, 2))) {
-            GuidanceFlag = 1; 
-            pathType = 1;
-            wpt_index = wpt.size()-1;
-        }
-        if (path_x == wpt.back().x && path_y == wpt.back().y) {
-            GuidanceFlag = 1; 
-            pathType = 1;
-            wpt_index = wpt.size()-1;
+        // - Switch criteria for DP mode. 
+        if (GuidanceFlag != 1) {
+            if (R_switch > std::sqrt(std::pow(xn - wpt[wpt.size()-1].x, 2) + std::pow(yn - wpt[wpt.size()-1].y, 2))) {
+                GuidanceFlag = 1; 
+                pathType = 1;
+                wpt_index = wpt.size()-1;
+            }
+            if (path_x == wpt.back().x && path_y == wpt.back().y) {
+                GuidanceFlag = 1; 
+                pathType = 1;
+                wpt_index = wpt.size()-1;
+            }
         }
 
         // - Type of path
-        // - path functions responsible for wpt_index increment
         switch (pathType) {
-            case 1: { // Dynamic Positioning does not currently use a path.
-                // TODO; Dynamic positioning for beerthing in a Voronoi space with MPC.
+            case 1: { // Dynamic Positioning.
+                if (wpt_index < wpt.size()-1) {
+                    if (R_switch > std::sqrt(std::pow(xn - wpt[wpt.size()-1].x, 2) + std::pow(yn - wpt[wpt.size()-1].y, 2))){
+                        wpt_index += 1;
+                    }
+                }
                 break; 
             }
             case 2: { // Straight line path.
                 closest = straightLinePath.getClosestPoint(Vector2D(xn, yn), wpt_index);
+                y_e = closest.y_e;
+                x_e = closest.x_e;
+                path_x = closest.point.pos.x;
+                path_y = closest.point.pos.y;
+                path_x_dot = closest.point.dpos.x;
+                path_y_dot = closest.point.dpos.y;
                 break;
             }
             case 3: { // Continuous-Curvature Path Using Fermat's Spiral.
                 closest = spiral.getClosestPoint(Vector2D(xn, yn), wpt_index);
+                y_e = closest.y_e;
+                x_e = closest.x_e;
+                path_x = closest.point.pos.x;
+                path_y = closest.point.pos.y;
+                path_x_dot = closest.point.dpos.x;
+                path_y_dot = closest.point.dpos.y;
                 break;
             }
         }
-        path_x = closest.point.pos.x;
-        path_y = closest.point.pos.y;
-        path_x_dot = closest.point.dpos.x;
-        path_y_dot = closest.point.dpos.y;
 
-        // - Guidance law
+        // - Guidance laws
         switch (GuidanceFlag) {
             case 1: { // Dynamic Positioning
-                // std::cout << "wpt_index: " << wpt_index << " | Last WPT: (" << wpt.back().x << ", " << wpt.back().y << ")\n";
-                // std::cout << "DP inputs: (" << wpt[wpt_index].x << ", " << wpt[wpt_index].y << ") and ("
-                // << wpt[wpt_index-1].x << ", " << wpt[wpt_index-1].y << ")\n";
-
+                // TODO; MPC DP Guidance.
+                // Temporary: Simple DP using wpt directly to generate ref x, y and psi. 
                 auto [xn_ref, yn_ref, psi_ref] = DP(xn, yn, wpt[wpt_index].x, wpt[wpt_index].y, wpt[wpt_index-1].x, wpt[wpt_index-1].y);
+
                 xn_d = xn_ref;
                 yn_d = yn_ref;
                 psi_d = psi_ref;
                 break;
             }
             case 2: { // LOS heading autopilot
-                auto [psi_ref, y_e] = LOS(xn, yn, Delta_h, path_x, path_y, path_x_dot, path_y_dot, closest.y_e);
+                auto [psi_ref, _ ] = LOS(xn, yn, Delta_h, path_x, path_y, path_x_dot, path_y_dot, y_e);
 
                 losObserver.update(psi_ref);
                 psi_d = losObserver.getLOSAngle();
                 r_d = losObserver.getLOSRate();
-
                 break;
             }
             case 3: { // ALOS heading autopilot
-                auto [psi_ref, y_e] = ALOS.update(xn, yn, path_x, path_y, path_x_dot, path_y_dot, closest.y_e);
+                auto [psi_ref, _ ] = ALOS.update(xn, yn, path_x, path_y, path_x_dot, path_y_dot, y_e);
 
                 losObserver.update(psi_ref);
                 psi_d = losObserver.getLOSAngle();
                 r_d = losObserver.getLOSRate();
-
                 break;
             }
         }
 
-        // Control System 
-        // - Motion Control
-        // - - Station Keeping 
+        // Motion Control
+        // - Dynamic positioning 
         if (GuidanceFlag==1) {
-            tau_XYN = posPID.update(h, xn_d, yn_d, psi_d, xn, yn, psi);
+            eta << u, v, w, p, q, r;
+            nu  << xn, yn, zn, phi, theta, psi;
+            tau_XYN = MIMO_PID.update(h, xn_d, yn_d, psi_d, M, eta, nu);
         } 
-        // - - Path following
+        // - Path following
         else if (GuidanceFlag==2 || GuidanceFlag==3) { 
             tau_XYN = headPID.update(h, M, psi, psi_d, r, r_d, a_d);
-        }
+        }              
 
-        // - Control allocation
+        // Control allocation
         if (ControlAllocFlag==1) {
             control_allocation = NLOptControlAlloc(tau_XYN[0], tau_XYN[1], tau_XYN[2], U);
         }
@@ -331,15 +347,15 @@ int main() {
             << "------------------------------------------------" << std::endl
             << "closest point: " << closest.point.pos.x << ", " << closest.point.pos.y << std::endl
             << std::fixed << std::setprecision(1)
-            << "x_e: " << closest.x_e << ", y_e: " << closest.y_e << std::endl
+            << "x_e: " << x_e << ", y_e: " << y_e << std::endl
             << "------------------------------------------------" << std::endl;
             if (GuidanceFlag == 1){
                 std::cout << std::fixed << std::setprecision(1)
                 << "x_d: " << xn_d << "m, y_d: " << yn_d << "m, psi_d: " << rad2deg(psi_d) << "deg" << std::endl;
             }
-            else if (GuidanceFlag == 2) {
-                std::cout << std::fixed << std::setprecision(1)
-                << "psi_ref: " << psi_ref << ", psi_d: " << psi_d << ", y_e: " << y_e <<std::endl;
+            else if (GuidanceFlag == 2 || GuidanceFlag == 3) {
+                std::cout << std::fixed << std::setprecision(2)
+                << "psi_d: " << psi_d << ", r_d: " << r_d << std::endl;
             }
             std::cout << "x:   " << xn << "m, y:   " << yn << "m, psi:   " << rad2deg(psi) << "deg" << std::endl
             << "------------------------------------------------" << std::endl

@@ -257,7 +257,7 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input, const Eigen::Ve
     double w5 = std::sqrt(G55 / M_sys(4,4));
     
     // ---------------------------
-    // Linear damping terms
+    // Linear damping terms                              !!!
     // ---------------------------
     double Xu = -24.4 * g / Umax;
     double Yv = -M_sys(1,1) / T_sway;
