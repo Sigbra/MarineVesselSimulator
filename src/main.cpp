@@ -9,7 +9,7 @@
 #include <thread>
 
 #include "Control/control_alloc_selector.hpp"
-#include "Control/PID_position_motion_control.hpp"
+#include "Control/PID_MIMO_motion_control.hpp"
 #include "Control/PID_heading_motion_control.hpp"
 #include "Control/MPC_control_alloc.hpp"
 #include "Control/non_lin_constrained_control_alloc.hpp"
@@ -141,7 +141,6 @@ int main() {
     double y_e = 0.0; 
     
     // Motion control classes
-    PositionPIDController posPID;
     MIMOPIDController MIMO_PID;
     HeadingPIDController headPID;
 
@@ -211,47 +210,55 @@ int main() {
 
         // Guidance
 
-        // - DP mode switch criteria. 
-        if (R_switch > std::sqrt(std::pow(xn - wpt[wpt.size()-1].x, 2) + std::pow(yn - wpt[wpt.size()-1].y, 2))) {
-            GuidanceFlag = 1; 
-            pathType = 1;
-            wpt_index = wpt.size()-1;
-        }
-        if (path_x == wpt.back().x && path_y == wpt.back().y) {
-            GuidanceFlag = 1; 
-            pathType = 1;
-            wpt_index = wpt.size()-1;
+        // - Switch criteria for DP mode. 
+        if (GuidanceFlag != 1) {
+            if (R_switch > std::sqrt(std::pow(xn - wpt[wpt.size()-1].x, 2) + std::pow(yn - wpt[wpt.size()-1].y, 2))) {
+                GuidanceFlag = 1; 
+                pathType = 1;
+                wpt_index = wpt.size()-1;
+            }
+            if (path_x == wpt.back().x && path_y == wpt.back().y) {
+                GuidanceFlag = 1; 
+                pathType = 1;
+                wpt_index = wpt.size()-1;
+            }
         }
 
         // - Type of path
-        // - path functions responsible for wpt_index increment
         switch (pathType) {
-            case 1: { // Dynamic Positioning does not currently use a path.
-                // TODO; Dynamic positioning for beerthing in a Voronoi space with MPC.
+            case 1: { // Dynamic Positioning.
+                if (wpt_index < wpt.size()-1) {
+                    if (R_switch > std::sqrt(std::pow(xn - wpt[wpt.size()-1].x, 2) + std::pow(yn - wpt[wpt.size()-1].y, 2))){
+                        wpt_index += 1;
+                    }
+                }
                 break; 
             }
             case 2: { // Straight line path.
                 closest = straightLinePath.getClosestPoint(Vector2D(xn, yn), wpt_index);
+                path_x = closest.point.pos.x;
+                path_y = closest.point.pos.y;
+                path_x_dot = closest.point.dpos.x;
+                path_y_dot = closest.point.dpos.y;
                 break;
             }
             case 3: { // Continuous-Curvature Path Using Fermat's Spiral.
                 closest = spiral.getClosestPoint(Vector2D(xn, yn), wpt_index);
+                path_x = closest.point.pos.x;
+                path_y = closest.point.pos.y;
+                path_x_dot = closest.point.dpos.x;
+                path_y_dot = closest.point.dpos.y;
                 break;
             }
         }
-        path_x = closest.point.pos.x;
-        path_y = closest.point.pos.y;
-        path_x_dot = closest.point.dpos.x;
-        path_y_dot = closest.point.dpos.y;
 
-        // - Guidance law
+        // - Guidance laws
         switch (GuidanceFlag) {
             case 1: { // Dynamic Positioning
-                // std::cout << "wpt_index: " << wpt_index << " | Last WPT: (" << wpt.back().x << ", " << wpt.back().y << ")\n";
-                // std::cout << "DP inputs: (" << wpt[wpt_index].x << ", " << wpt[wpt_index].y << ") and ("
-                // << wpt[wpt_index-1].x << ", " << wpt[wpt_index-1].y << ")\n";
-
+                // TODO; Dynamic positioning for beerthing in a Voronoi space with MPC.
+                // Temporary: Simple DP using wpt directly to generate ref x, y and psi. 
                 auto [xn_ref, yn_ref, psi_ref] = DP(xn, yn, wpt[wpt_index].x, wpt[wpt_index].y, wpt[wpt_index-1].x, wpt[wpt_index-1].y);
+
                 xn_d = xn_ref;
                 yn_d = yn_ref;
                 psi_d = psi_ref;
@@ -263,7 +270,6 @@ int main() {
                 losObserver.update(psi_ref);
                 psi_d = losObserver.getLOSAngle();
                 r_d = losObserver.getLOSRate();
-
                 break;
             }
             case 3: { // ALOS heading autopilot
@@ -272,26 +278,23 @@ int main() {
                 losObserver.update(psi_ref);
                 psi_d = losObserver.getLOSAngle();
                 r_d = losObserver.getLOSRate();
-
                 break;
             }
         }
 
-        // Control System 
-        // - Motion Control
-        // - - Station Keeping 
+        // Motion Control
+        // - Dynamic positioning 
         if (GuidanceFlag==1) {
-            //tau_XYN = posPID.update(h, xn_d, yn_d, psi_d, xn, yn, psi);
             eta << u, v, w, p, q, r;
             nu  << xn, yn, zn, phi, theta, psi;
             tau_XYN = MIMO_PID.update(h, xn_d, yn_d, psi_d, M, eta, nu);
         } 
-        // - - Path following
+        // - Path following
         else if (GuidanceFlag==2 || GuidanceFlag==3) { 
             tau_XYN = headPID.update(h, M, psi, psi_d, r, r_d, a_d);
         }
 
-        // - Control allocation
+        // Control allocation
         if (ControlAllocFlag==1) {
             control_allocation = NLOptControlAlloc(tau_XYN[0], tau_XYN[1], tau_XYN[2], U);
         }
@@ -347,7 +350,7 @@ int main() {
             }
             else if (GuidanceFlag == 2) {
                 std::cout << std::fixed << std::setprecision(1)
-                << "psi_ref: " << psi_ref << ", psi_d: " << psi_d << ", y_e: " << y_e <<std::endl;
+                << "psi_ref: " << psi_ref << ", psi_d: " << psi_d << std::endl;
             }
             std::cout << "x:   " << xn << "m, y:   " << yn << "m, psi:   " << rad2deg(psi) << "deg" << std::endl
             << "------------------------------------------------" << std::endl
