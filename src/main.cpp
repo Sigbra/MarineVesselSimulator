@@ -91,14 +91,10 @@ int main() {
     // Initialize guidance methods and LOS observer 
     ALOS ALOS(Delta_h, gamma_h, 0.1);
     LOSObserver losObserver(h, K_f);
-    MPCGuidance mpc_guidance(h, 0.3, 10, 60);
+    MPCGuidance mpc_guidance(1, 2);
      
     // Initial states - will be properly set after path generation
     Eigen::VectorXd x = Eigen::VectorXd::Zero(12);  // x = [u v w p q r xn yn zn phi theta psi]'
-    // x(0) = 0.1;
-    // x(1) = 0.01;
-    // x(6) = -0.1;
-    // x(7) = -0.1;
     x(11) = std::atan2(wpt[1].y - wpt[0].y, wpt[1].x - wpt[0].x);
     
     // Azimuth pod dynamics
@@ -174,7 +170,7 @@ int main() {
     Eigen::MatrixXd simdata(num_steps, 31);         
     
     RealTimePlotter plotter;
-    if (pathType == 2) {
+    if (pathType == 1 || pathType == 2) {
         plotter.setSampledPath(pathLine);
     }
     else if (pathType == 3) {
@@ -268,13 +264,13 @@ int main() {
                 psi_d = psi_ref;
                 break;
             }
-            case 2: { // Dynamicpositioning using MPC
-                mpc_guidance.update(xn, yn, psi, U, wpt[wpt_index-1], wpt[wpt_index]);
+            case 2: { // Dynamic positioning using MPC
+                mpc_guidance.update(h, xn, yn, psi, U, wpt[wpt_index-1], wpt[wpt_index]);
 
-                double U_d   = mpc_guidance.getFirstSpeed();                                  // !!! Not used, because how? 
-                xn_d  = mpc_guidance.getFirstX();
-                yn_d  = mpc_guidance.getFirstY();
-                psi_d = mpc_guidance.getFirstChi();
+                //double U_d  = mpc_guidance.get_U_d(1);                                  
+                psi_d       = mpc_guidance.get_chi_d(1); //+beta_c
+                xn_d        = mpc_guidance.get_X_d(1);
+                yn_d        = mpc_guidance.get_Y_d(1);
                 break;
             }
             case 3: { // LOS heading autopilot
