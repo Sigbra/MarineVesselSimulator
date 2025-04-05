@@ -91,7 +91,7 @@ int main() {
     // Initialize guidance methods and LOS observer 
     ALOS ALOS(Delta_h, gamma_h, 0.1);
     LOSObserver losObserver(h, K_f);
-    MPCGuidance mpc_guidance(1, 2);
+    MPCGuidance mpc_guidance(0.5, 0.5);
      
     // Initial states - will be properly set after path generation
     Eigen::VectorXd x = Eigen::VectorXd::Zero(12);  // x = [u v w p q r xn yn zn phi theta psi]'
@@ -128,10 +128,11 @@ int main() {
     ControlAllocationMethod controlAlloc;
     int ControlAllocFlag = controlAlloc.selectMethod();
 
-    // Initial desired states (will be set properly after path generation)
-    double xn_d = 0.0;        
-    double yn_d = 0.0;        
+    // Initial desired states
+    double xn_d  = 0.0;        
+    double yn_d  = 0.0;        
     double psi_d = 0.0; 
+    double U_d   = 0.0;
 
     // ALOS variables
     double psi_ref = 0.0;
@@ -209,24 +210,25 @@ int main() {
         // Guidance
 
         // - Switch criteria for DP mode. 
-        if (GuidanceFlag != 1) {
-            if (R_switch > std::sqrt(std::pow(xn - wpt[wpt.size()-1].x, 2) + std::pow(yn - wpt[wpt.size()-1].y, 2))) {
-                GuidanceFlag = 1; 
-                pathType = 1;
-                wpt_index = wpt.size()-1;
-            }
-            if (path_x == wpt.back().x && path_y == wpt.back().y) {
-                GuidanceFlag = 1; 
-                pathType = 1;
-                wpt_index = wpt.size()-1;
-            }
-        }
+        // if (GuidanceFlag != 1) {
+        //     if (R_switch > std::sqrt(std::pow(xn - wpt[wpt.size()-1].x, 2) + std::pow(yn - wpt[wpt.size()-1].y, 2))) {
+        //         if (pathType)
+        //         GuidanceFlag = 1; 
+        //         pathType = 1;
+        //         wpt_index = wpt.size()-1;
+        //     }
+        //     if (path_x == wpt.back().x && path_y == wpt.back().y) {
+        //         GuidanceFlag = 1; 
+        //         pathType = 1;
+        //         wpt_index = wpt.size()-1;
+        //     }
+        // }
 
         // - Type of path
         switch (pathType) {
             case 1: { // Dynamic Positioning.
-                if (wpt_index < wpt.size()-1) {
-                    if (R_switch > std::sqrt(std::pow(xn - wpt[wpt.size()-1].x, 2) + std::pow(yn - wpt[wpt.size()-1].y, 2))){
+                if (R_switch > std::sqrt(std::pow(xn - wpt[wpt_index].x, 2) + std::pow(yn - wpt[wpt_index].y, 2))){
+                    if (wpt_index < wpt.size()-1) {
                         wpt_index += 1;
                     }
                 }
@@ -256,21 +258,23 @@ int main() {
 
         // - Guidance laws
         switch (GuidanceFlag) {
-            case 1: { // Dynamic Positioning
+            case 1: { // Dynamic Positioning wpt path
                 // Temporary: Simple DP using wpt directly to generate ref x, y and psi. 
                 auto [xn_ref, yn_ref, psi_ref] = DP(xn, yn, wpt[wpt_index].x, wpt[wpt_index].y, wpt[wpt_index-1].x, wpt[wpt_index-1].y);
+
                 xn_d = xn_ref;
                 yn_d = yn_ref;
                 psi_d = psi_ref;
                 break;
             }
-            case 2: { // Dynamic positioning using MPC
-                mpc_guidance.update(h, xn, yn, psi, U, wpt[wpt_index-1], wpt[wpt_index]);
+            case 2: { // Dynamic positioning using MPC for path
+                auto [chi_ref, U_ref, xn_ref, yn_ref] = mpc_guidance.update(h, xn, yn, psi, U, wpt[wpt_index-1], wpt[wpt_index]);
+                                 
+                xn_d  = xn_ref;
+                yn_d  = yn_ref;
+                psi_d = chi_ref; //+beta_c ? 
+                U_d   = U_ref; 
 
-                //double U_d  = mpc_guidance.get_U_d(1);                                  
-                psi_d       = mpc_guidance.get_chi_d(1); //+beta_c
-                xn_d        = mpc_guidance.get_X_d(1);
-                yn_d        = mpc_guidance.get_Y_d(1);
                 break;
             }
             case 3: { // LOS heading autopilot
@@ -341,7 +345,23 @@ int main() {
 
         // Show SIM progress once per second
         if (i % 10 == 0) {
-            plotter.updatePlot(xn, yn, psi, 0.2, closest.point.pos.x, closest.point.pos.y);
+            std::vector<double> GuidanceVectorX;
+            std::vector<double> GuidanceVectorY;
+            if (GuidanceFlag == 1){
+                GuidanceVectorX = {wpt[wpt_index].x};
+                GuidanceVectorY = {wpt[wpt_index].y};
+            }
+            else if (GuidanceFlag == 2){
+                GuidanceVectorX = mpc_guidance.get_X_d();
+                GuidanceVectorY = mpc_guidance.get_Y_d();
+            }
+            else if (GuidanceFlag == 3 || GuidanceFlag == 4){
+                GuidanceVectorX = {path_x};
+                GuidanceVectorY = {path_y};
+            }
+
+            plotter.updatePlot(xn, yn, psi, 0.2, GuidanceVectorX, GuidanceVectorY);
+
             std::cout << std::fixed << std::setprecision(0)
             << "################################################" << std::endl
             << "Iteration: " << i << ", Time: " << floor(t[i]/60) << "min, " << fmod(t[i], 60) << "s, " <<std::endl
@@ -353,15 +373,19 @@ int main() {
             << std::fixed << std::setprecision(1)
             << "x_e: " << x_e << ", y_e: " << y_e << std::endl
             << "------------------------------------------------" << std::endl;
-            if (GuidanceFlag == 1 || GuidanceFlag == 2){
+            if (GuidanceFlag == 1){
                 std::cout << std::fixed << std::setprecision(1)
                 << "x_d: " << xn_d << "m, y_d: " << yn_d << "m, psi_d: " << rad2deg(psi_d) << "deg" << std::endl;
+            }
+            else if (GuidanceFlag == 2){
+                std::cout << std::fixed << std::setprecision(1)
+                << "x_d: " << xn_d << "m, y_d: " << yn_d << "m, psi_d: " << rad2deg(psi_d) << "deg" << ", U_d: " << U_d << std::endl;
             }
             else if (GuidanceFlag == 3 || GuidanceFlag == 4) {
                 std::cout << std::fixed << std::setprecision(2)
                 << "psi_d: " << psi_d << ", r_d: " << r_d << std::endl;
             }
-            std::cout << "x:   " << xn << "m, y:   " << yn << "m, psi:   " << rad2deg(psi) << "deg" << std::endl
+            std::cout << "x:   " << xn << "m, y:   " << yn << "m, psi:   " << rad2deg(psi) << "deg" << ", U: " << U << std::endl
             << "------------------------------------------------" << std::endl
             << std::fixed << std::setprecision(4)
             << "n_c(0), n_c(1):         " << n_c(0) << ", " << n_c(1) << std::endl

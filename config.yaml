@@ -38,10 +38,10 @@ waypoints:
 
 path_following:
   #Additional parameters for MPC DP mode
-  R_switch: 3  # Radius for mode switch on last waypoint [m]
+  R_switch: 1  # Radius for wpt switching in DP[m]
   K_f: 0.3     # LOS observer gain
 
   #LOS and ALOS parameters
-  Delta_h: 15    # Look-ahead distance
+  Delta_h: 10    # Look-ahead distance
   gamma_h: 0.001 # ALOS adaptive gain
 
