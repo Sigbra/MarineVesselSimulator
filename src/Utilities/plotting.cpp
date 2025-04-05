@@ -452,9 +452,11 @@ void RealTimePlotter::updatePlot(double x, double y, double psi_value, double ar
     // std::vector<double> v_vec  = { v_val };
     // plt::quiver(arrowX, arrowY, u_vec, v_vec);
 
-    std::vector<double> cpX = { guidance_x };
-    std::vector<double> cpY = { guidance_y };
-    plt::plot(cpX, cpY, "g-"); 
+    if (guidance_x.size() == 1){
+        plt::plot(guidance_x, guidance_y, "go");
+    } else {
+        plt::plot(guidance_x, guidance_y, "g-"); 
+    }
 
     std::vector<double> curPosX = { x };
     std::vector<double> curPosY = { y };
