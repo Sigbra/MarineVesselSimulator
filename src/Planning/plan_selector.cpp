@@ -4,9 +4,9 @@
 
 int selectPathType() {
     std::cout << "Choose Path Type:" << std::endl;
-    std::cout << "1. DP path generation using MPC (Not yet implemented)." << std::endl;
-    std::cout << "2. Straight Line Path" << std::endl;
-    std::cout << "3. Continuous-Curvature Path Using Fermat's Spiral" << std::endl;
+    std::cout << "1. DP path." << std::endl;
+    std::cout << "2. Straight Line Path." << std::endl;
+    std::cout << "3. Continuous-Curvature Path Using Fermat's Spiral." << std::endl;
     
     int choice = 0;
     while (true) {

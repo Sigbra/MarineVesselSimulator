@@ -428,8 +428,8 @@ void RealTimePlotter::draw_vessel(double x, double y, double theta) {
 }
 
 void RealTimePlotter::updatePlot(double x, double y, double psi_value, double arrowLength,
-    double x_closest, double y_closest) {
-
+                                 std::vector<double> guidance_x, std::vector<double> guidance_y)
+{
     m_x.push_back(x);
     m_y.push_back(y);
     m_psi.push_back(psi_value);
@@ -452,9 +452,9 @@ void RealTimePlotter::updatePlot(double x, double y, double psi_value, double ar
     // std::vector<double> v_vec  = { v_val };
     // plt::quiver(arrowX, arrowY, u_vec, v_vec);
 
-    std::vector<double> cpX = { x_closest };
-    std::vector<double> cpY = { y_closest };
-    plt::plot(cpX, cpY, "go"); 
+    std::vector<double> cpX = { guidance_x };
+    std::vector<double> cpY = { guidance_y };
+    plt::plot(cpX, cpY, "g-"); 
 
     std::vector<double> curPosX = { x };
     std::vector<double> curPosY = { y };

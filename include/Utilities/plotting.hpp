@@ -32,7 +32,7 @@ class RealTimePlotter {
         void draw_vessel(double x, double y, double theta);
 
         void updatePlot(double x, double y, double psi_value, double arrowLength, 
-                        double x_closest, double y_closest);
+                        std::vector<double> guidance_x, std::vector<double> guidance_y);
 
         void finalizePlot(const std::string& filename = "");
     
