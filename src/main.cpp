@@ -309,7 +309,7 @@ int main() {
 
         // Control allocation
         if (ControlAllocFlag==1) {
-            control_allocation = NLOptControlAlloc(tau_XYN[0], tau_XYN[1], tau_XYN[2], U);
+            control_allocation = NLOptControlAlloc(tau_XYN[0], tau_XYN[1], tau_XYN[2], U, n, alpha);
         }
         else if (ControlAllocFlag==2){
             control_allocation = MPC_control_alloc(tau_XYN[0], tau_XYN[1], tau_XYN[2],
@@ -386,6 +386,8 @@ int main() {
                 << "psi_d: " << psi_d << ", r_d: " << r_d << std::endl;
             }
             std::cout << "x:   " << xn << "m, y:   " << yn << "m, psi:   " << rad2deg(psi) << "deg" << ", U: " << U << std::endl
+            << "------------------------------------------------" << std::endl
+            << "CO offset (x, y, z): " << CO_Offset(U).transpose() << std::endl
             << "------------------------------------------------" << std::endl
             << std::fixed << std::setprecision(4)
             << "n_c(0), n_c(1):         " << n_c(0) << ", " << n_c(1) << std::endl

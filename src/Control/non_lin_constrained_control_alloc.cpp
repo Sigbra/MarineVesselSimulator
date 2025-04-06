@@ -9,136 +9,109 @@
 #include "Models/model_utilities.hpp"
 #include "Utilities/calculations.hpp"
 
+using namespace casadi;
 
-std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N, double U) {
-    using namespace casadi;
+std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N, double U, Eigen::Vector2d n, Eigen::Vector2d alpha) {
 
-    // Check for NaN inputs and replace with safe values
-    if (std::isnan(tau_X)) tau_X = 0.0;
-    if (std::isnan(tau_Y)) tau_Y = 0.0;
-    if (std::isnan(tau_N)) tau_N = 0.0;
-    if (std::isnan(U)) U = 0.1;  // Small positive value
-
-    // Define symbolic decision variables
-    MX n1 = MX::sym("F1");        // Thruster 1 force
-    MX alpha1 = MX::sym("phi1");  // Thruster 1 angle
-    MX n2 = MX::sym("F2");        // Thruster 2 force
-    MX alpha2 = MX::sym("phi2");  // Thruster 2 angle
-
-    // Combine decision variables
-    MX vars = vertcat(n1, alpha1, n2, alpha2);
-
-    // CO offset
+    // Lever arms from ran()
     Eigen::Vector3d CO_offset = CO_Offset(U);
-    double ly1 =  1.1 - CO_offset(1);    // Left pod lever arm
-    double ly2 = -1.1 + CO_offset(1);    // Right pod lever arm
-    double lx  = -1.1 - CO_offset(0);    // Pod locations in x
+    double ly1 =  1.1 - CO_offset(1);    
+    double ly2 = -1.1 + CO_offset(1);    
+    double lx  = -1.1 - CO_offset(0);    
 
     // Constants from ran()
     double g = 9.81;
-    double k_pos = 200*g;         // Positive Bollard
-    double k_neg = 200*g;         // Negative Bollard
-    double n_max =  1;            // Relative propellar speed max (representing max positive  revs)
-    double n_min = -1;            // Relative propellar speed min (representing max negative revs)
+    double k_pos = 200*g;         
+    double k_neg = 200*g;         
+    double n_max =  1;           
+    double n_min = -1;            
     double alpha_max = M_PI/2; 
     double alpha_min = -M_PI/2;
 
-    // Thrust Calcualtion 
-    // - Symbolic version of ThrustsFromRelativeN() in ran.cpp for casadi.
-    MX Thrust1 = if_else(n1 >= 0, k_pos * n1 * fabs(n1), k_neg * n1 * fabs(n1));
-    MX Thrust2 = if_else(n2 >= 0, k_pos * n2 * fabs(n2), k_neg * n2 * fabs(n2));
+    Opti opti;
 
-    // Mapping to forces and moments (From ran())
-    MX tau_X_model = Thrust1 * cos(alpha1) + Thrust2 * cos(alpha2);
-    MX tau_Y_model = Thrust1 * sin(alpha1) + Thrust2 * sin(alpha2);
-    MX tau_N_model = lx * (Thrust1*sin(alpha1) + Thrust2*sin(alpha2))
-                    -(ly1*Thrust1*cos(alpha1) + ly2*Thrust2*cos(alpha2));
+    // n1, alpha1, n2, alpha2
+    int n_effectors = 4;
+    MX vars = opti.variable(n_effectors);
+    // Objective function
+    MX J = 0;
+    double tau_weight = 10.0; 
+    // Small randomness to avoid local minima
+    double rand_small = ((double)rand() / RAND_MAX - 0.5) * 0.01;
 
-    // Objective Function
-    // - Mean square error minimization of each tau component
-    MX penalty_tau = 0.5  * pow(tau_X - tau_X_model, 2)
-                   + 0.5  * pow(tau_Y - tau_Y_model, 2)
-                   + 0.5  * pow(tau_N - tau_N_model, 2);
-                   
-    MX eff_alpha1 = if_else(n1 >= 0, alpha1, alpha1 + M_PI);
-    MX eff_alpha2 = if_else(n2 >= 0, alpha2, alpha2 + M_PI);
+    opti.set_initial(vars(0), n(0) + rand_small);
+    opti.set_initial(vars(1), alpha(0));
+    opti.set_initial(vars(2), n(1) + rand_small);
+    opti.set_initial(vars(3), alpha(1));
+
+    opti.subject_to(vars(0) >= n_min);
+    opti.subject_to(vars(0) <= n_max);
+    opti.subject_to(vars(1) >= alpha_min);
+    opti.subject_to(vars(1) <= alpha_max);
+
+    opti.subject_to(vars(2) >= n_min);
+    opti.subject_to(vars(2) <= n_max);
+    opti.subject_to(vars(3) >= alpha_min);
+    opti.subject_to(vars(3) <= alpha_max);
+
+
+    MX Thrust1 = if_else(vars(0) >= 0, k_pos * vars(0) * abs(vars(0)), k_neg * vars(0) * abs(vars(0)));
+    MX Thrust2 = if_else(vars(2) >= 0, k_pos * vars(2) * abs(vars(2)), k_neg * vars(2) * abs(vars(2)));
+
+    MX tau_X_model = Thrust1 * cos(vars(1)) + Thrust2 * cos(vars(3));
+    MX tau_Y_model = Thrust1 * sin(vars(1)) + Thrust2 * sin(vars(3));
+    MX tau_N_model = lx * (Thrust1*sin(vars(1)) + Thrust2*sin(vars(3)))
+                    -(ly1*Thrust1*cos(vars(1)) + ly2*Thrust2*cos(vars(3)));
+    
+    J = 10 * (pow(tau_X - tau_X_model, 2) +
+              pow(tau_Y - tau_Y_model, 2) +
+              pow(tau_N - tau_N_model, 2));
 
     // - Penalty for both pods forward, leading to loss of sway control.
-    MX a1 = exp( -pow( abs(eff_alpha1), 2 ) / 0.1 ); 
-    MX a2 = exp( -pow( abs(eff_alpha2), 2 ) / 0.1 );
-    MX penalty_both_zero = 5 * a1 * a2; // a1_max * a2_max = 1  
+    // MX a1 = exp( -pow( abs(vars(1)), 2 ) / 0.1 ); 
+    // MX a2 = exp( -pow( abs(vars(2)), 2 ) / 0.1 );
+    // J += 5 * a1 * a2; // X * a1_max * a2_max = X
     
-    // - Penalty for pods in complete opposite directions, leading to loss of surge control.
-    MX b1 = exp( -pow((M_PI/2 - abs(eff_alpha1)), 2) / 0.1 ); 
-    MX b2 = exp( -pow((M_PI/2 - abs(eff_alpha2)), 2) / 0.1 );
-    MX penalty_opposite = 10 * b1 * b2; // b1_max * b2_max = 1  
+    // - Penalties for directing thrust into another pod slip stream 
+    //   (effect not captured by the current ran model, but on the real vessel)
+    MX b1 = exp( -pow((vars(1) + M_PI/2), 2) / 0.2 ); 
+    J += 5 * b1; 
 
-    // - Penalty for pods pointing inwards, cancelling each other out.
-    MX c1 = exp( -pow(eff_alpha1 - M_PI/2, 2) / 0.1 );
-    MX c2 = exp( -pow(eff_alpha2 + M_PI/2, 2) / 0.1 );
-    MX penalty_inward = 10 * c1 * c2; // c1_max * c2_max = 1 
+    MX b2 = exp( -pow((vars(3) - M_PI/2), 2) / 0.2 ); 
+    J += 5 * b2;
 
-    // Penalty for both pods beeing +90, leading to loss of surge control?
-    MX d1 = exp( -pow(eff_alpha1 - M_PI/2, 2) / 0.1 );
-    MX d2 = exp( -pow(eff_alpha2 - M_PI/2, 2) / 0.1 );
-    MX penalty_both_plus_90 = 10 * d1 * d2;
+    // Penalties for pods beeing +90 or -90 at the same time,
+    // leading to loss of surge control because of slowly time variying dynamics
+    // not captured by this optimalization method.
+    MX d1 = exp( -pow(abs(vars(1)) - M_PI/2, 2) / 0.1 );
+    MX d2 = exp( -pow(abs(vars(3)) - M_PI/2, 2) / 0.1 );
+    J += 10 * d1 * d2;
 
-    // Penalty for both pods beeing -90, leading to loss of surge control?
-    MX e1 = exp( -pow(eff_alpha1 + M_PI/2, 2) / 0.1 );
-    MX e2 = exp( -pow(eff_alpha2 + M_PI/2, 2) / 0.1 );
-    MX penalty_both_minus_90 = 10 * e1 * e2;
-    
-    MX objective = penalty_tau
-                 + penalty_both_zero
-                 + penalty_opposite
-                 + penalty_inward
-                 + penalty_both_plus_90
-                 + penalty_both_minus_90;
+    opti.minimize(J);
 
-    // Set up NLP problem dictionary
-    MXDict nlp = {{"x", vars}, {"f", objective}}; 
-    Dict opts;
-    opts["ipopt.print_level"] = 0;  // Suppress IPOPT solver output
-    opts["print_time"] = false;     // Disable CasADi timing output
-    opts["ipopt.sb"] = "yes";       // Suppress IPOPT banner
-    opts["ipopt.file_print_level"] = 0;  // Disable output to file
-    opts["verbose"] = false;        // Disable verbose mode in CasADi
-    opts["ipopt.max_iter"] = 50;
-    Function solver = nlpsol("thr_alloc_solver", "ipopt", nlp, opts);
+    Dict solver_opts;
+    solver_opts["print_time"] = 0;
+    solver_opts["ipopt.print_level"] = 0;
+    solver_opts["ipopt.max_iter"] = 200;  
+    solver_opts["ipopt.tol"] = 0.0001;       
+    solver_opts["ipopt.acceptable_tol"] = 0.001;
+    solver_opts["ipopt.acceptable_iter"] = 100;
+    opti.solver("ipopt", solver_opts);
 
-    // Initial guess
-    DM x0 = DM::zeros(4,1);
-    x0(0) = 0.5;  //n1
-    x0(1) = 0.0;  //alpha1
-    x0(2) = 0.5;  //n2
-    x0(3) = 0.0;  //alpha2
+    try {
+        OptiSol sol = opti.solve();
+        DM vars_sol = opti.value(vars);
 
-    DM lbx = DM::zeros(4, 1);
-    lbx(0) = n_min;
-    lbx(1) = alpha_min;
-    lbx(2) = n_min;
-    lbx(3) = alpha_min;
+        double n1_opt     = double(vars_sol(0));
+        double alpha1_opt = double(vars_sol(1));
+        double n2_opt     = double(vars_sol(2));
+        double alpha2_opt = double(vars_sol(3));
 
-    DM ubx = DM::zeros(4, 1);
-    ubx(0) = n_max;
-    ubx(1) = alpha_max;
-    ubx(2) = n_max;
-    ubx(3) = alpha_max;
+        return {n1_opt, alpha1_opt, n2_opt, alpha2_opt};
 
-    // Solve the NLP
-    std::map<std::string, DM> args;
-    args["x0"]  = x0;
-    args["lbx"] = lbx;
-    args["ubx"] = ubx;
-
-    std::map<std::string, DM> result = solver(args);    
-
-    // Extract solution values
-    DM sol = result.at("x");
-    double n1_c   = sol(0).scalar();
-    double alpha1_c = sol(1).scalar();
-    double n2_c   = sol(2).scalar();
-    double alpha2_c = sol(3).scalar();
-
-    return {n1_c, alpha1_c, n2_c, alpha2_c};
+    } catch (std::exception &e) {
+       
+        std::cerr << "Optimization failed: " << e.what() << std::endl;
+        return {0.0, 0.0, 0.0, 0.0};
+    }
 }
