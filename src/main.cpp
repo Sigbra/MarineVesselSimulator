@@ -304,7 +304,9 @@ int main() {
         } 
         // - Path following
         else if (GuidanceFlag==3 || GuidanceFlag==4) { 
-            tau_XYN = headPID.update(h, M, psi, psi_d, r, r_d, a_d);
+            tau_XYN[0] = 3;
+            tau_XYN[1] = 0;
+            tau_XYN[2] = headPID.update(h, M, psi, psi_d, r, r_d, a_d);
         }              
 
         // Control allocation
