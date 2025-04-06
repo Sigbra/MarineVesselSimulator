@@ -36,15 +36,13 @@ std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N, 
     // Objective function
     MX J = 0;
     double tau_weight = 10.0; 
+    // Small randomness to avoid local minima
+    double rand_small = ((double)rand() / RAND_MAX - 0.5) * 0.01;
 
-    auto rand_small = []() {
-        return ((double)rand() / RAND_MAX - 0.5) * 0.01; // random in [-0.05, 0.05]
-    };
-
-    opti.set_initial(vars(0), n(0)      + rand_small());
-    opti.set_initial(vars(1), alpha(0)  + rand_small());
-    opti.set_initial(vars(2), n(1)      + rand_small());
-    opti.set_initial(vars(3), alpha(1)  + rand_small());
+    opti.set_initial(vars(0), n(0) + rand_small);
+    opti.set_initial(vars(1), alpha(0));
+    opti.set_initial(vars(2), n(1) + rand_small);
+    opti.set_initial(vars(3), alpha(1));
 
     opti.subject_to(vars(0) >= n_min);
     opti.subject_to(vars(0) <= n_max);
@@ -95,9 +93,9 @@ std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N, 
     solver_opts["print_time"] = 0;
     solver_opts["ipopt.print_level"] = 0;
     solver_opts["ipopt.max_iter"] = 200;  
-    solver_opts["ipopt.tol"] = 0.001;       
-    solver_opts["ipopt.acceptable_tol"] = 0.01;
-    solver_opts["ipopt.acceptable_iter"] = 50;
+    solver_opts["ipopt.tol"] = 0.0001;       
+    solver_opts["ipopt.acceptable_tol"] = 0.001;
+    solver_opts["ipopt.acceptable_iter"] = 100;
     opti.solver("ipopt", solver_opts);
 
     try {
