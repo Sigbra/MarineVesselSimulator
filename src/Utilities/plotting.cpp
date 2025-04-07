@@ -125,7 +125,7 @@ void plotTrajectory() {
     plt::plot(xn, yn, "b-");
     plt::xlabel("x(t)");
     plt::ylabel("y(t)");
-    plt::title("Vessel Trajectory with Heading Angles");
+    plt::title("Vessel Path with Heading Angles");
     
     // Prepare data for quiver (vector field plot)
     std::vector<double> u, v;  // dx, dy components of arrows
@@ -141,7 +141,7 @@ void plotTrajectory() {
     
     // Use quiver-like representation with arrows
     plt::quiver(xq, yq, u, v);
-    
+    plt::axis("equal");
     plt::grid(true);
     plt::show();
 }
@@ -257,7 +257,7 @@ void plotAngles() {
     plt::named_plot("psi_d", time, psi_d, "g-");
     plt::xlabel("Time (s)");
     plt::ylabel("Angle");
-    plt::title("Heading difference");
+    plt::title("Psi vs Psi Desired");
     plt::legend();
     plt::grid(true);
     plt::show();
@@ -374,7 +374,7 @@ RealTimePlotter::RealTimePlotter() {
     plt::figure();   
     plt::xlabel("x(t)");
     plt::ylabel("y(t)");
-    plt::title("Vessel Trajectory with Heading Angles");
+    plt::title("Vessel Path with Heading Angles");
     plt::axis("equal");
     plt::grid(true);
     plt::xlim(-50, 100);
@@ -464,7 +464,8 @@ void RealTimePlotter::updatePlot(double x, double y, double psi_value, double ar
 
     plt::xlabel("x(t)");
     plt::ylabel("y(t)");
-    plt::title("Vessel Trajectory with Heading Angles");
+    plt::title("Vessel Path with Heading Angles");
+    plt::axis("equal");
     plt::grid(true);
 
     plt::draw();

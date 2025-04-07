@@ -81,7 +81,7 @@ int main() {
 
     // Create the Fermat spiral path.
     // - Set the curvature constraint (k_max in rad/m).
-    double kappa_max = 0.3; 
+    double kappa_max = 0.2; 
     FermatSpiralPath spiral(kappa_max);
     spiral.updateWaypoints(wpt);
     Waypoints pathFS = spiral.samplePath(0.05);
@@ -95,6 +95,8 @@ int main() {
      
     // Initial states - will be properly set after path generation
     Eigen::VectorXd x = Eigen::VectorXd::Zero(12);  // x = [u v w p q r xn yn zn phi theta psi]'
+    x(6) = wpt[0].x; // North position (NED frame)
+    x(7) = wpt[0].y; // East position (NED frame)
     x(11) = std::atan2(wpt[1].y - wpt[0].y, wpt[1].x - wpt[0].x);
     
     // Azimuth pod dynamics
@@ -178,8 +180,11 @@ int main() {
         plotter.setSampledPath(pathFS);
     }
 
+    bool break_flag = false;
+
     // Main simulation loop
     for (int i = 0; i < num_steps; ++i) {
+
         t[i] = i * h;
         
         // Navigation (Fake measurements using noise)
@@ -228,7 +233,7 @@ int main() {
         switch (pathType) {
             case 1: { // Dynamic Positioning.
                 if (R_switch > std::sqrt(std::pow(xn - wpt[wpt_index].x, 2) + std::pow(yn - wpt[wpt_index].y, 2))){
-                    if (wpt_index < wpt.size()-1) {
+                    if (wpt_index < wpt.size()-1 && std::abs(ssa(psi_d-psi)) < deg2rad(1)) {
                         wpt_index += 1;
                     }
                 }
@@ -242,6 +247,9 @@ int main() {
                 path_y = closest.point.pos.y;
                 path_x_dot = closest.point.dpos.x;
                 path_y_dot = closest.point.dpos.y;
+                if (closest.point.pos.x == wpt[wpt.size()-1].x && closest.point.pos.y == wpt[wpt.size()-1].y) {
+                    break_flag = true;
+                }
                 break;
             }
             case 3: { // Continuous-Curvature Path Using Fermat's Spiral.
@@ -252,6 +260,9 @@ int main() {
                 path_y = closest.point.pos.y;
                 path_x_dot = closest.point.dpos.x;
                 path_y_dot = closest.point.dpos.y;
+                if (closest.point.pos.x == wpt[wpt.size()-1].x && closest.point.pos.y == wpt[wpt.size()-1].y) {
+                    break_flag = true;
+                }
                 break;
             }
         }
@@ -323,7 +334,7 @@ int main() {
 
         // Marine Craft Model
         rk4_ran_step(x, n, alpha, mp, V_c, beta_c, h);
-        x(11) = ssa(x(11));
+        //x(11) = ssa(x(11)); //makes plotting look bad
 
         // - Euler's method
         n = n + h/T_n * (n_c - n);                      
@@ -368,8 +379,10 @@ int main() {
             << "################################################" << std::endl
             << "Iteration: " << i << ", Time: " << floor(t[i]/60) << "min, " << fmod(t[i], 60) << "s, " <<std::endl
             << "------------------------------------------------" << std::endl
-            << "Path type: " << pathType
-            << ", Guidance flag: " << GuidanceFlag << ", wpt index: " << wpt_index <<std::endl
+            << "Path type: " << pathType << ", Guidance flag: " << GuidanceFlag << std::endl
+            << "wpt index: " << wpt_index
+            << std::fixed << std::setprecision(0)
+            << ", current wpt: (" << wpt[wpt_index].x << ", " << wpt[wpt_index].y << ")" << std::endl
             << "------------------------------------------------" << std::endl
             << "closest point: " << closest.point.pos.x << ", " << closest.point.pos.y << std::endl
             << std::fixed << std::setprecision(1)
@@ -425,6 +438,14 @@ int main() {
         simdata(i, 28) = closest.point.pos.y;
         simdata(i, 29) = closest.x_e;
         simdata(i, 30) = closest.y_e;
+
+        if (break_flag == true) {
+            for (int j = i; j < num_steps; ++j) {
+                simdata.row(j) = simdata.row(i);
+                simdata(j, 0) = j * h;
+            }
+            break;
+        }
     }
 
     std::cout << "Simulation completed" << std::endl;
