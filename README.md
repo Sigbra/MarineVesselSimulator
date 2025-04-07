@@ -30,13 +30,14 @@ The repository is implemented using c++ for fast computations and open-source pu
 
 ## Showcase of capabilities;
 
+
 ### Live plotting: 
 The SIM has a class for Live plotting of the vessel position, catamaran body outline, guidance points, path traversed and the path we try to follow. 
-It's a nice-to-have tool, made using matplotlibcpp, for experimentation and tuning. 
+It's a nice-to-have tool, made using matplotlibcpp, for experimentation, debugging and tuning. 
 <table>
   <tr>
     <td>
-      <img src="data/Live-DP-MPC_NLOpt.png" width="400"/>
+      <img src="data/live-plotting/Live-DP-MPC_NLOpt.png" width="400"/>
       <div align="center">Live, 4 square test, DP directly to wpt, MPC NL-Opt Control alloc</div>
     </td>
     <td>
@@ -59,55 +60,79 @@ It's a nice-to-have tool, made using matplotlibcpp, for experimentation and tuni
 
 ### Dynamic positioning performance: 4 square test results; 
 The 4 square test, as described in ... , is a way to test the manuvering capabilities of a vessel using a given control allocation, 
-by speciffying destination and the angle at which to move to the destination.
+by speciffying destination and the angle at which to move to the destination. In the test implemented in this SIM, the waypoint 
+index in not updated before the boat is at the right position, with the desired heading and 0 speed, with a small margin for error.
 The 4 parts of the this test are: 
 - Straight forward: (0,0) to (0,40) with psi = 90.
 - Sideways: (0,40) to (40,40) with psi = 90.
 - Backwards: (40, 40) to (40, 0) wth psi = 90.
 - Sideways with 45 degree angle: (40, 0) to (0,0) with psi = 135.
 
+<div class="scrollable-table">
 <table>
   <tr>
     <td>
-        <img src="data/DP-NLOpt.png" width="400"/>
+        <img src="data/DP-pictures/DP-NLOpt.png" width="400"/>
         <div align="center">4 square test, DP directly to wpt, NL-Opt Control alloc</div>
     </td>
     <td>
-        <img src="data/DP-NLOpt-x_y_error.png" width="400"/>
+        <img src="data/DP-pictures/DP-NLOpt-state_errors.png" width="400"/>
         <div align="center">along track (x_e) and cross track (y_e) error</div>
     </td>
-  </tr>
-  <tr>
     <td>
-        <img src="data/DP_MPC-NLOpt.png" width="400"/>
-        <div align="center">4 square test, DP using MPC, NL-Opt Control alloc</div>
-    </td>
-    <td>
-        <img src="data/DP_MPC-NLOpt-x_y_error.png" width="400"/>
-        <div align="center">along track (x_e) and cross track (y_e) error</div>
+        <img src="data/DP-pictures/DP-NLOpt-Psi.png" width="400"/>
+        <div align="center">Psi vs Psi_d</div>
     </td>
   </tr>
 </table>
+</div>
+
+<div class="scrollable-table">
+<table>
+  <tr>
+    <td>
+        <img src="data/DP-pictures/DP_MPC-NLOpt.png" width="400"/>
+        <div align="center">4 square test, DP using MPC, NL-Opt Control alloc</div>
+    </td>
+    <td>
+        <img src="data/DP-pictures/DP_MPC-NLOpt-state_errors.png" width="400"/>
+        <div align="center">along track (x_e) and cross track (y_e) error</div>
+    </td>
+    <td>
+        <img src="data/DP-pictures/DP_MPC-NLOpt-Psi.png" width="400"/>
+        <div align="center">Psi vs Psi_d</div>
+    </td>
+  </tr>
+</table>
+</div>
 
 <table>
   <tr>
     <td>
-        <img src="data/DP-MPC_NLOpt.png" width="400"/>
+        <img src="data/DP-pictures/DP-MPC_NLOpt.png" width="400"/>
         <div align="center">4 square test, DP directly to wpt, NL-Opt Control alloc</div>
     </td>
     <td>
-        <img src="data/DP-MPC_NLOpt-x_y_error.png" width="400"/>
+        <img src="data/DP-pictures/DP-MPC_NLOpt-state_errors.png" width="400"/>
         <div align="center">along track (x_e) and cross track (y_e) error</div>
+    </td>
+    <td>
+        <img src="data/DP-pictures/DP-MPC_NLOpt-Psi.png" width="400"/>
+        <div align="center">Psi vs Psi_d</div>
     </td>
   </tr>
   <tr>
     <td>
-        <img src="data/DP_MPC-MPC_NLOpt.png" width="400"/>
+        <img src="data/DP-pictures/DP_MPC-MPC_NLOpt.png" width="400"/>
         <div align="center">4 square test, DP using MPC, NL-Opt Control alloc</div>
     </td>
     <td>
-        <img src="data/DP_MPC-MPC_NLOpt-x_y_error.png" width="400"/>
+        <img src="data/DP-pictures/DP_MPC-MPC_NLOpt-state_errors.png" width="400"/>
         <div align="center">along track (x_e) and cross track (y_e) error</div>
+    </td>
+    <td>
+        <img src="data/DP-pictures/DP_MPC-MPC_NLOpt-Psi.png" width="400"/>
+        <div align="center">Psi vs Psi_d</div>
     </td>
   </tr>
 </table>

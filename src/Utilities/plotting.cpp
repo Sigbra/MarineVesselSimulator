@@ -206,7 +206,6 @@ void plotStateErrors() {
     plt::title("State Errors over Time");
     plt::legend();
     plt::grid(true);
-    plt::axis("equal");
     plt::show();
 }
 

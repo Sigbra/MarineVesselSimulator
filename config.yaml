@@ -2,7 +2,7 @@
 
 simulation:
   h: 0.05               # Sampling time [s]
-  T_final: 500         # Final simulation time [s]
+  T_final: 4000         # Final simulation time [s]
 
 load_condition:
   mp: 0.0               # Payload mass (front cabin) [kg]
@@ -17,9 +17,9 @@ waypoints:
 
 # Waypoint lists for DP simulation
 
-  #x:     [0,  0, 20, 20] 
-  #y:     [0, 20, 20,  0] 
-  #angle: [90,  90, 90, 135]
+  x:     [0,  0, 20, 20, 0] 
+  y:     [0, 20, 20,  0, 0] 
+  angles: [90,  90, 90, 135]
 
 # Waypoint list for path following simulation
 
@@ -32,13 +32,13 @@ waypoints:
   #y: [0, 20, 20]
 
   #Zig zag
-  x: [5,  0,  5,  0,  5,  0]
-  y: [0, 10, 20, 30, 40, 50]
+  #x: [5,  0,  5,  0,  5,  0]
+  #y: [0, 10, 20, 30, 40, 50]
 
 path_following:
   #Additional parameters for MPC DP mode
-  R_switch: 1  # Radius for wpt switching in DP[m]
-  K_f: 0.3     # LOS observer gain
+  R_switch: 0.2  # Radius for wpt switching in DP[m]
+  K_f: 0.3       # LOS observer gain
 
   #LOS and ALOS parameters
   Delta_h: 10    # Look-ahead distance

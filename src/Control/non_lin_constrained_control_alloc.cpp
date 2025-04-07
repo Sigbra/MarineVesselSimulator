@@ -92,10 +92,10 @@ std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N, 
     Dict solver_opts;
     solver_opts["print_time"] = 0;
     solver_opts["ipopt.print_level"] = 0;
-    solver_opts["ipopt.max_iter"] = 200;  
-    solver_opts["ipopt.tol"] = 0.0001;       
-    solver_opts["ipopt.acceptable_tol"] = 0.001;
-    solver_opts["ipopt.acceptable_iter"] = 100;
+    solver_opts["ipopt.max_iter"] = 1000;  
+    solver_opts["ipopt.tol"] = 0.001;       
+    solver_opts["ipopt.acceptable_tol"] = 0.01;
+    solver_opts["ipopt.acceptable_iter"] = 200;
     opti.solver("ipopt", solver_opts);
 
     try {
