@@ -110,7 +110,7 @@ The 4 parts of the this test are:
   <tr>
     <td>
         <img src="data/DP-pictures/DP-MPC_NLOpt.png" width="400"/>
-        <div align="center">4 square test, DP directly to wpt, NL-Opt Control alloc</div>
+        <div align="center">4 square test, DP directly to wpt, MPC NL-Opt Control alloc</div>
     </td>
     <td>
         <img src="data/DP-pictures/DP-MPC_NLOpt-state_errors.png" width="400"/>
@@ -124,7 +124,7 @@ The 4 parts of the this test are:
   <tr>
     <td>
         <img src="data/DP-pictures/DP_MPC-MPC_NLOpt.png" width="400"/>
-        <div align="center">4 square test, DP using MPC, NL-Opt Control alloc</div>
+        <div align="center">4 square test, DP using MPC, MPC NL-Opt Control alloc</div>
     </td>
     <td>
         <img src="data/DP-pictures/DP_MPC-MPC_NLOpt-state_errors.png" width="400"/>
