@@ -2,7 +2,7 @@
 
 simulation:
   h: 0.05               # Sampling time [s]
-  T_final: 500         # Final simulation time [s]
+  T_final: 4000         # Final simulation time [s]
 
 load_condition:
   mp: 0.0               # Payload mass (front cabin) [kg]
@@ -13,33 +13,32 @@ ocean_current:
 
 
 waypoints: 
-# Each column are a waypoint (x, y)
-# The first waypoint are only used to find the initial heading
-# The next waypoints, except the 2 last ones, are used for path following
-# The last 2 waypoints are used with DP for berthing. 
-  x: [0, 0, 5]
-  y: [0, 5, 10]
+# Each column are a waypoint (x, y) in NED
 
-  #x: [0, 0, 15, 20]
-  #y: [0,15, 15, 20]
+# Waypoint lists for DP simulation
 
-  #x: [0,  0, 40, 40] 
-  #y: [0, 40, 40, 80] 
+  x:     [0,  0, 20, 20, 0] 
+  y:     [0, 20, 20,  0, 0] 
+  angles: [90,  90, 90, 135]
 
-  #x: [0,  -5, 5, 40] 
-  #y: [0, 10, 20, 80] 
+# Waypoint list for path following simulation
 
-  #x: [0,  0, 40, 40, 70, 70] 
-  #y: [0, 40, 40, 10, 30, 50] 
+  # Right turn
+  #x: [0,  0, 20] 
+  #y: [0, 20, 20] 
 
-  #x: [0,  0, -20, -20, -34, -20, -50]
-  #y: [0, 20,  20,  40,  54,  68, 50]
+  # Left turn
+  #x: [0, 0, -20]
+  #y: [0, 20, 20]
 
+  #Zig zag
+  #x: [5,  0,  5,  0,  5,  0]
+  #y: [0, 10, 20, 30, 40, 50]
 
 path_following:
   #Additional parameters for MPC DP mode
-  R_switch: 1  # Radius for wpt switching in DP[m]
-  K_f: 0.3     # LOS observer gain
+  R_switch: 0.2  # Radius for wpt switching in DP[m]
+  K_f: 0.3       # LOS observer gain
 
   #LOS and ALOS parameters
   Delta_h: 10    # Look-ahead distance

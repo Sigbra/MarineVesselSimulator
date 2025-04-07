@@ -78,7 +78,7 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input, const Eigen::Ve
     // - waterline area coefficient
     double Cw_pont   = 1;                       
     // - block coefficient
-    double Cb_pont   = 0.5;                     
+    double Cb_pont   = 0.5;
     
     // ---------------------------
     // State extraction

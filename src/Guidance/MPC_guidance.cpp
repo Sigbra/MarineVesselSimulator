@@ -92,6 +92,9 @@ std::tuple<double, double, double, double> MPCGuidance::update(double h, double 
     solver_opts["print_time"] = 0;
     solver_opts["ipopt.print_level"] = 0;
     solver_opts["ipopt.max_iter"] = 1000;  
+    solver_opts["ipopt.tol"] = 0.0001;       
+    solver_opts["ipopt.acceptable_tol"] = 0.001;
+    solver_opts["ipopt.acceptable_iter"] = 100;
 
     try {
 

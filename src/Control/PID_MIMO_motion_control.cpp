@@ -17,14 +17,14 @@ MIMOPIDController::MIMOPIDController(){
 
     // Tunable params
     Omega_b = Eigen::MatrixXd::Zero(3, 3);
-    Omega_b(0, 0) = 0.08;
-    Omega_b(1, 1) = 0.08;
-    Omega_b(2, 2) = 2;
+    Omega_b(0, 0) = 0.06;
+    Omega_b(1, 1) = 0.06;
+    Omega_b(2, 2) = 1;
 
     Z = Eigen::MatrixXd::Zero(3, 3);
-    Z(0, 0) = 0.04;
-    Z(1, 1) = 0.04;
-    Z(2, 2) = 0.4;
+    Z(0, 0) = 1;
+    Z(1, 1) = 1;
+    Z(2, 2) = 1;
 
     // Natural Frequencies
     Omega_n = Eigen::MatrixXd::Zero(3,3);

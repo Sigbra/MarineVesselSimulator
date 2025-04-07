@@ -57,13 +57,30 @@ int main() {
         point.y = waypointsNode["y"][i].as<double>();
         wpt.push_back(point);
     }
-    
     std::cout << "Waypoints: ";
     for (const auto& point : wpt) {
         std::cout << "(" << point.x << ", " << point.y << ") ";
     }
     std::cout << std::endl;
 
+    // Load angles from config
+    // - If no angles are provided, the default is to use the angle given by the wpt's or closest point.
+    std::vector<double> angles;
+    if (waypointsNode["angles"]) {
+        auto anglesNode = waypointsNode["angles"];
+        for (size_t i = 0; i < anglesNode.size(); i++) {
+            angles.push_back(deg2rad(anglesNode[i].as<double>()));
+        }
+    }
+    std::cout << "Angles: ";
+    if (angles.empty()) {
+        std::cout << "No angles provided in the config." << std::endl;
+    } else {
+        for (const auto& angle : angles) {
+            std::cout << angle << " ";
+        }
+        std::cout << std::endl;
+    }
     
     // Parameters for path following
     double R_switch = config["path_following"]["R_switch"].as<double>();
@@ -81,7 +98,7 @@ int main() {
 
     // Create the Fermat spiral path.
     // - Set the curvature constraint (k_max in rad/m).
-    double kappa_max = 0.3; 
+    double kappa_max = 0.2; 
     FermatSpiralPath spiral(kappa_max);
     spiral.updateWaypoints(wpt);
     Waypoints pathFS = spiral.samplePath(0.05);
@@ -91,10 +108,12 @@ int main() {
     // Initialize guidance methods and LOS observer 
     ALOS ALOS(Delta_h, gamma_h, 0.1);
     LOSObserver losObserver(h, K_f);
-    MPCGuidance mpc_guidance(0.5, 0.5);
+    MPCGuidance mpc_guidance(0.8, 0.5);
      
     // Initial states - will be properly set after path generation
     Eigen::VectorXd x = Eigen::VectorXd::Zero(12);  // x = [u v w p q r xn yn zn phi theta psi]'
+    x(6) = wpt[0].x; // North position (NED frame)
+    x(7) = wpt[0].y; // East position (NED frame)
     x(11) = std::atan2(wpt[1].y - wpt[0].y, wpt[1].x - wpt[0].x);
     
     // Azimuth pod dynamics
@@ -178,8 +197,11 @@ int main() {
         plotter.setSampledPath(pathFS);
     }
 
+    bool break_flag = false;
+
     // Main simulation loop
     for (int i = 0; i < num_steps; ++i) {
+
         t[i] = i * h;
         
         // Navigation (Fake measurements using noise)
@@ -228,8 +250,14 @@ int main() {
         switch (pathType) {
             case 1: { // Dynamic Positioning.
                 if (R_switch > std::sqrt(std::pow(xn - wpt[wpt_index].x, 2) + std::pow(yn - wpt[wpt_index].y, 2))){
-                    if (wpt_index < wpt.size()-1) {
-                        wpt_index += 1;
+                    if (std::abs(ssa(psi_d-psi)) < deg2rad(1) && U < 0.01) {
+                        if (wpt_index < wpt.size()-1) {
+                            wpt_index += 1;
+                        }
+                        else {
+                            std::cout << "Reached the last waypoint." << std::endl;
+                            break_flag = true;
+                        }
                     }
                 }
                 break; 
@@ -242,6 +270,11 @@ int main() {
                 path_y = closest.point.pos.y;
                 path_x_dot = closest.point.dpos.x;
                 path_y_dot = closest.point.dpos.y;
+                if (wpt_index == wpt.size()-1){
+                    if (closest.point.pos.x == wpt[wpt.size()-1].x && closest.point.pos.y == wpt[wpt.size()-1].y) {
+                        break_flag = true;
+                    }
+                }
                 break;
             }
             case 3: { // Continuous-Curvature Path Using Fermat's Spiral.
@@ -252,6 +285,11 @@ int main() {
                 path_y = closest.point.pos.y;
                 path_x_dot = closest.point.dpos.x;
                 path_y_dot = closest.point.dpos.y;
+                if (wpt_index == wpt.size()-1){
+                    if (closest.point.pos.x == wpt[wpt.size()-1].x && closest.point.pos.y == wpt[wpt.size()-1].y) {
+                        break_flag = true;
+                    }
+                }
                 break;
             }
         }
@@ -260,20 +298,35 @@ int main() {
         switch (GuidanceFlag) {
             case 1: { // Dynamic Positioning wpt path
                 // Temporary: Simple DP using wpt directly to generate ref x, y and psi. 
-                auto [xn_ref, yn_ref, psi_ref] = DP(xn, yn, wpt[wpt_index].x, wpt[wpt_index].y, wpt[wpt_index-1].x, wpt[wpt_index-1].y);
-
-                xn_d = xn_ref;
-                yn_d = yn_ref;
-                psi_d = psi_ref;
+                if (angles.empty()) {
+                    auto [xn_ref, yn_ref, psi_ref] = DP(xn, yn, wpt[wpt_index].x, wpt[wpt_index].y, wpt[wpt_index-1].x, wpt[wpt_index-1].y);
+                    xn_d = xn_ref;
+                    yn_d = yn_ref;
+                    psi_d = psi_ref;
+                }
+                else {
+                    auto [xn_ref, yn_ref, psi_ref] = DP(xn, yn, wpt[wpt_index].x, wpt[wpt_index].y, wpt[wpt_index-1].x, wpt[wpt_index-1].y, angles[wpt_index-1]);
+                    xn_d = xn_ref;
+                    yn_d = yn_ref;
+                    psi_d = psi_ref;
+                }
                 break;
             }
             case 2: { // Dynamic positioning using MPC for path
-                auto [chi_ref, U_ref, xn_ref, yn_ref] = mpc_guidance.update(h, xn, yn, psi, U, wpt[wpt_index-1], wpt[wpt_index]);
-                                 
-                xn_d  = xn_ref;
-                yn_d  = yn_ref;
-                psi_d = chi_ref; //+beta_c ? 
-                U_d   = U_ref; 
+                if (angles.empty()) {
+                    auto [chi_ref, U_ref, xn_ref, yn_ref] = mpc_guidance.update(h, xn, yn, psi, U, wpt[wpt_index-1], wpt[wpt_index]);              
+                    xn_d  = xn_ref;
+                    yn_d  = yn_ref;
+                    psi_d = chi_ref; //+beta_c ? 
+                    U_d   = U_ref; 
+                }
+                else {
+                    auto [chi_ref, U_ref, xn_ref, yn_ref] = mpc_guidance.update(h, xn, yn, psi, U, wpt[wpt_index-1], wpt[wpt_index]);              
+                    xn_d  = xn_ref;
+                    yn_d  = yn_ref;
+                    psi_d = chi_ref; //+beta_c ? 
+                    U_d   = U_ref; 
+                }
 
                 break;
             }
@@ -304,7 +357,9 @@ int main() {
         } 
         // - Path following
         else if (GuidanceFlag==3 || GuidanceFlag==4) { 
-            tau_XYN = headPID.update(h, M, psi, psi_d, r, r_d, a_d);
+            tau_XYN[0] = 3;
+            tau_XYN[1] = 0;
+            tau_XYN[2] = headPID.update(h, M, psi, psi_d, r, r_d, a_d);
         }              
 
         // Control allocation
@@ -321,7 +376,7 @@ int main() {
 
         // Marine Craft Model
         rk4_ran_step(x, n, alpha, mp, V_c, beta_c, h);
-        x(11) = ssa(x(11));
+        //x(11) = ssa(x(11)); //makes plotting look bad
 
         // - Euler's method
         n = n + h/T_n * (n_c - n);                      
@@ -366,23 +421,25 @@ int main() {
             << "################################################" << std::endl
             << "Iteration: " << i << ", Time: " << floor(t[i]/60) << "min, " << fmod(t[i], 60) << "s, " <<std::endl
             << "------------------------------------------------" << std::endl
-            << "Path type: " << pathType
-            << ", Guidance flag: " << GuidanceFlag << ", wpt index: " << wpt_index <<std::endl
+            << "Path type: " << pathType << ", Guidance flag: " << GuidanceFlag << ", Control flag: " << ControlAllocFlag << std::endl
+            << "wpt index: " << wpt_index
+            << std::fixed << std::setprecision(0)
+            << ", current wpt: (" << wpt[wpt_index].x << ", " << wpt[wpt_index].y << ")" << std::endl
             << "------------------------------------------------" << std::endl
             << "closest point: " << closest.point.pos.x << ", " << closest.point.pos.y << std::endl
             << std::fixed << std::setprecision(1)
             << "x_e: " << x_e << ", y_e: " << y_e << std::endl
             << "------------------------------------------------" << std::endl;
             if (GuidanceFlag == 1){
-                std::cout << std::fixed << std::setprecision(1)
+                std::cout << std::fixed << std::setprecision(2)
                 << "x_d: " << xn_d << "m, y_d: " << yn_d << "m, psi_d: " << rad2deg(psi_d) << "deg" << std::endl;
             }
             else if (GuidanceFlag == 2){
-                std::cout << std::fixed << std::setprecision(1)
+                std::cout << std::fixed << std::setprecision(2)
                 << "x_d: " << xn_d << "m, y_d: " << yn_d << "m, psi_d: " << rad2deg(psi_d) << "deg" << ", U_d: " << U_d << std::endl;
             }
             else if (GuidanceFlag == 3 || GuidanceFlag == 4) {
-                std::cout << std::fixed << std::setprecision(2)
+                std::cout << std::fixed << std::setprecision(3)
                 << "psi_d: " << psi_d << ", r_d: " << r_d << std::endl;
             }
             std::cout << "x:   " << xn << "m, y:   " << yn << "m, psi:   " << rad2deg(psi) << "deg" << ", U: " << U << std::endl
@@ -423,6 +480,14 @@ int main() {
         simdata(i, 28) = closest.point.pos.y;
         simdata(i, 29) = closest.x_e;
         simdata(i, 30) = closest.y_e;
+
+        if (break_flag == true) {
+            for (int j = i; j < num_steps; ++j) {
+                simdata.row(j) = simdata.row(i);
+                simdata(j, 0) = j * h;
+            }
+            break;
+        }
     }
 
     std::cout << "Simulation completed" << std::endl;

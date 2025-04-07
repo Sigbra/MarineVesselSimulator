@@ -18,8 +18,8 @@ class HeadingPIDController {
         // psi: measured heading, psi_d: desired heading,
         // r: measured yaw rate, r_d: desired yaw rate,
         // a_d: desired acceleration (feedforward term)
-        std::vector<double> update(double h, const Eigen::MatrixXd& M,
-                                   double psi, double psi_d, double r, double r_d, double a_d);
+        double update(double h, const Eigen::MatrixXd& M,
+                      double psi, double psi_d, double r, double r_d, double a_d);
     
         // Reset the internal (integral and previous error) state.
         void reset();
