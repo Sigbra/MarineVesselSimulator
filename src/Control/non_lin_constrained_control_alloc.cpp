@@ -21,8 +21,8 @@ std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N, 
 
     // Constants from ran()
     double g = 9.81;
-    double k_pos = 200*g;         
-    double k_neg = 200*g;         
+    double k_pos = 200;         
+    double k_neg = 200;         
     double n_max =  1;           
     double n_min = -1;            
     double alpha_max = M_PI/2; 

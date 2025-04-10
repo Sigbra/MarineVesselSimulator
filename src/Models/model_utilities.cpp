@@ -268,8 +268,8 @@ std::vector<double> nReal(std::vector<double> n_relative) {
 // Calculating thrusts based on relative propellar revs (n). Obs, wrong comments
 //
 //   Expecting n_r is scaled between [0, 1].
-//   Thrust_pos = k_pos * (n*|n| - 0.5²) / (1-0.25), k_pos = Positive bollard pull = 200*g,
-//   Thrust_neg = k_neg * (n*|n| - 0.5²) / (1-0.75), k_neg = Negative bollard pull = 200*g,
+//   Thrust_pos = k_pos * (n*|n| - 0.5²) / (1-0.25), k_pos = Positive bollard pull = 200,
+//   Thrust_neg = k_neg * (n*|n| - 0.5²) / (1-0.75), k_neg = Negative bollard pull = 200,
 //
 //   Same as direct Thrusts calculation;
 //   Thrust_pos = k_pos * n_real*|n_real|, 
@@ -284,8 +284,8 @@ std::vector<double> nReal(std::vector<double> n_relative) {
 //   Assuming max positive and max negative propellar revs are the same.
 Eigen::VectorXd ThrustsFromRealativeN(Eigen::VectorXd n_r) {
     double g = 9.81;
-    double k_pos = 200*g;
-    double k_neg = 200*g; 
+    double k_pos = 200;
+    double k_neg = 200; 
 
     int n_r_size = n_r.size();
 

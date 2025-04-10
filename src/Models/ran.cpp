@@ -160,9 +160,9 @@ void ran(const Eigen::VectorXd x, const Eigen::VectorXd n_input, const Eigen::Ve
     // forward displacement of pods (m)
     double lx  = -1.1 + CO_offset(0);           
     // Positive Bollard
-    double k_pos = 200*g;        
+    double k_pos = 200;        
     // Negative Bollard
-    double k_neg = 200*g;       
+    double k_neg = 200;       
     // relative propellar speed max
     double n_max =  1;           
     // relative propellar speed min

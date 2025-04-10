@@ -383,8 +383,8 @@ int main() {
         alpha = alpha + h/T_alpha * (alpha_c - alpha);  
 
         // - Saturate:
-        double k_pos = 200*9.81;     
-        double k_neg = 200*9.81;     
+        double k_pos = 200;     
+        double k_neg = 200;     
         double n_max =  1;             
         double n_min = -1;           
         double alpha_max = M_PI/2;   
