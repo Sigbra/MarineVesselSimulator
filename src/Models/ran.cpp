@@ -445,3 +445,31 @@ void rk4_ran_step(Eigen::VectorXd& x, const Eigen::VectorXd n, const Eigen::Vect
     // Update state vector x
     x += (k1 + 2 * k2 + 2 * k3 + k4) / 6.0;
 }
+
+Eigen::VectorXd update_n(Eigen::VectorXd n, Eigen::VectorXd n_c, double h, double T_n){
+    double n_max =  1;             
+    double n_min = -1; 
+
+    Eigen::VectorXd n_new = n + h/T_n * (n_c - n);
+
+    for (int j = 0; j < n.size(); ++j) {
+        if (n_new(j) > n_max) n_new(j) = n_max;
+        else if (n_new(j) < n_min) n_new(j) = n_min;
+    }
+
+    return n_new;
+}
+
+Eigen::VectorXd update_alpha(Eigen::VectorXd alpha, Eigen::VectorXd alpha_c, double h, double T_alpha){
+    double alpha_max = M_PI/2;   
+    double alpha_min = -M_PI/2;
+    
+    Eigen::VectorXd alpha_new = alpha + h/T_alpha * (alpha_c - alpha);
+
+    for (int j = 0; j < alpha.size(); ++j) {
+        if (alpha_new(j) > alpha_max) alpha_new(j) = alpha_max;
+        else if (alpha_new(j) < alpha_min) alpha_new(j) = alpha_min;
+    }
+
+    return alpha_new;
+}

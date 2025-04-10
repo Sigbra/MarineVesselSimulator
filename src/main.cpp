@@ -379,24 +379,9 @@ int main() {
         //x(11) = ssa(x(11)); //makes plotting look bad
 
         // - Euler's method
-        n = n + h/T_n * (n_c - n);                      
-        alpha = alpha + h/T_alpha * (alpha_c - alpha);  
+        n = update_n(n, n_c, h, T_n);
+        alpha = update_alpha(alpha, alpha_c, h, T_alpha);                  
 
-        // - Saturate:
-        double k_pos = 200;     
-        double k_neg = 200;     
-        double n_max =  1;             
-        double n_min = -1;           
-        double alpha_max = M_PI/2;   
-        double alpha_min = -M_PI/2;  
-        for (int j = 0; j < n.size(); ++j) {
-            if (n(j) > n_max) n(j) = n_max;
-            else if (n(j) < n_min) n(j) = n_min;
-        }
-        for (int j = 0; j < alpha.size(); ++j) {
-            if (alpha(j) > alpha_max) alpha(j) = alpha_max;
-            else if (alpha(j) < alpha_min) alpha(j) = alpha_min;
-        }
 
         // Show SIM progress once per second
         if (i % 10 == 0) {
