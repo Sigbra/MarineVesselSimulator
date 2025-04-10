@@ -21,8 +21,8 @@ std::vector<double> MPC_control_alloc(double tau_X, double tau_Y, double tau_N,
 
     // Constants from ran()
     double g = 9.81;
-    double k_pos = 200*g;         // Positive Bollard
-    double k_neg = 200*g;         // Negative Bollard
+    double k_pos = 200;         // Positive Bollard
+    double k_neg = 200;         // Negative Bollard
     double n_max =  1;            // Relative propellar speed max (representing max positive revs)
     double n_min = -1;            // Relative propellar speed min (representing max negative revs)
     double alpha_max = M_PI/2; 
