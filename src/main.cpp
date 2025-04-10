@@ -88,6 +88,8 @@ int main() {
     double Delta_h = config["path_following"]["Delta_h"].as<double>();                    
     double gamma_h = config["path_following"]["gamma_h"].as<double>();               
 
+    // Model;
+    RAN ran_model;
 
     // Create the straight line path.
     StraightLinePath straightLinePath;
@@ -117,10 +119,10 @@ int main() {
     x(11) = std::atan2(wpt[1].y - wpt[0].y, wpt[1].x - wpt[0].x);
     
     // Azimuth pod dynamics
-    double T_n = 0.5;                                // Propeller time constant (s)
+    double T_n = ran_model.getT_n();                                // Propeller time constant (s)
     Eigen::Vector2d n = Eigen::Vector2d::Zero();     // Init: [n_left, n_right] = [0, 0]
 
-    double T_alpha = 0.5;                            // Azimuth angle time constant (s)
+    double T_alpha = ran_model.getT_alpha();                            // Azimuth angle time constant (s)
     Eigen::Vector2d alpha = Eigen::Vector2d::Zero(); // Init: [angle_left, angle_right] = [0, 0]
 
     // Choose path type
@@ -173,7 +175,7 @@ int main() {
     Eigen::VectorXd nu = Eigen::VectorXd::Zero(6);
 
     Eigen::MatrixXd M = Eigen::MatrixXd::Zero(6, 6); 
-    Eigen::MatrixXd B = Eigen::MatrixXd::Zero(3, 4); 
+    Eigen::MatrixXd B = Eigen::MatrixXd::Zero(3, 2); 
     double U = 0.0;
 
     // Control system variables
@@ -227,7 +229,11 @@ int main() {
         }
 
         // Update model dynamics
-        ran(x, n, alpha, mp, V_c, beta_c, xdot, U, M, B);
+        ran_model.update(x, mp, V_c, beta_c, h, n_c, alpha_c);
+        M = ran_model.get_M();
+        U = ran_model.get_U();
+        n = ran_model.get_n();
+        alpha = ran_model.get_alpha();
 
         // Guidance
 
@@ -375,12 +381,8 @@ int main() {
         alpha_c = {control_allocation[1], control_allocation[3]};
 
         // Marine Craft Model
-        rk4_ran_step(x, n, alpha, mp, V_c, beta_c, h);
-        //x(11) = ssa(x(11)); //makes plotting look bad
-
-        // - Euler's method
-        n = update_n(n, n_c, h, T_n);
-        alpha = update_alpha(alpha, alpha_c, h, T_alpha);                  
+        ran_model.rk4(x, mp, V_c, beta_c, h, n_c, alpha_c);
+        //x(11) = ssa(x(11)); //makes plotting look bad                
 
 
         // Show SIM progress once per second
