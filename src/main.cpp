@@ -11,6 +11,7 @@
 #include "Control/control_alloc_selector.hpp"
 #include "Control/PID_MIMO_motion_control.hpp"
 #include "Control/PID_heading_motion_control.hpp"
+#include "Control/MPC_motion_control.hpp"
 #include "Control/MPC_control_alloc.hpp"
 #include "Control/non_lin_constrained_control_alloc.hpp"
 
@@ -164,6 +165,7 @@ int main() {
     // Motion control classes
     MIMOPIDController MIMO_PID;
     HeadingPIDController headPID;
+    MPC_Motion_Control mpc(10, h*4, 800, 0.1, 600, 600, 400, 300); //Replace with real numbers
 
     // Desired rate of turn and acceleration
     double r_d = 0.0; 
@@ -318,20 +320,35 @@ int main() {
                 }
                 break;
             }
-            case 2: { // Dynamic positioning using MPC for path
+            case 2: { 
+                // Dynamic positioning using MPC for path
+                // if (angles.empty()) {
+                //     auto [chi_ref, U_ref, xn_ref, yn_ref] = mpc_guidance.update(h, xn, yn, psi, U, wpt[wpt_index-1], wpt[wpt_index]);              
+                //     xn_d  = xn_ref;
+                //     yn_d  = yn_ref;
+                //     psi_d = chi_ref; //+beta_c ? 
+                //     U_d   = U_ref; 
+                // }
+                // else {
+                //     auto [chi_ref, U_ref, xn_ref, yn_ref] = mpc_guidance.update(h, xn, yn, psi, U, wpt[wpt_index-1], wpt[wpt_index]);              
+                //     xn_d  = xn_ref;
+                //     yn_d  = yn_ref;
+                //     psi_d = chi_ref; //+beta_c ? 
+                //     U_d   = U_ref; 
+                // }
+
+                // For MPC motion controller
                 if (angles.empty()) {
-                    auto [chi_ref, U_ref, xn_ref, yn_ref] = mpc_guidance.update(h, xn, yn, psi, U, wpt[wpt_index-1], wpt[wpt_index]);              
-                    xn_d  = xn_ref;
-                    yn_d  = yn_ref;
-                    psi_d = chi_ref; //+beta_c ? 
-                    U_d   = U_ref; 
+                    auto [xn_ref, yn_ref, psi_ref] = DP(xn, yn, wpt[wpt_index].x, wpt[wpt_index].y, wpt[wpt_index-1].x, wpt[wpt_index-1].y);
+                    xn_d = xn_ref;
+                    yn_d = yn_ref;
+                    psi_d = psi_ref;
                 }
                 else {
-                    auto [chi_ref, U_ref, xn_ref, yn_ref] = mpc_guidance.update(h, xn, yn, psi, U, wpt[wpt_index-1], wpt[wpt_index]);              
-                    xn_d  = xn_ref;
-                    yn_d  = yn_ref;
-                    psi_d = chi_ref; //+beta_c ? 
-                    U_d   = U_ref; 
+                    auto [xn_ref, yn_ref, psi_ref] = DP(xn, yn, wpt[wpt_index].x, wpt[wpt_index].y, wpt[wpt_index-1].x, wpt[wpt_index-1].y, angles[wpt_index-1]);
+                    xn_d = xn_ref;
+                    yn_d = yn_ref;
+                    psi_d = psi_ref;
                 }
 
                 break;
@@ -356,11 +373,21 @@ int main() {
 
         // Motion Control
         // - Dynamic positioning 
-        if (GuidanceFlag==1 || GuidanceFlag == 2) {
+        if (GuidanceFlag==1) {
             eta << u, v, w, p, q, r;
             nu  << xn, yn, zn, phi, theta, psi;
             tau_XYN = MIMO_PID.update(h, xn_d, yn_d, psi_d, M, eta, nu);
         } 
+        else if (GuidanceFlag == 2){
+            std::vector<double> x0 = {xn, yn, psi, u, v, r};
+            if (mpc.solve(x0, xn_d, yn_d, psi_d)) {
+                std::vector<double> first_tau = mpc.get_first_tau();
+                tau_XYN = {first_tau[0], first_tau[1], first_tau[2]};
+            } else {
+                std::cerr << "MPC did not solve successfully." << std::endl;
+                tau_XYN = {0.0, 0.0, 0.0};
+            }
+        }
         // - Path following
         else if (GuidanceFlag==3 || GuidanceFlag==4) { 
             tau_XYN[0] = 3;
