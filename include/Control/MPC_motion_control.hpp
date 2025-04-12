@@ -16,19 +16,14 @@ using casadi::OptiSol;
 class MPC_Motion_Control {
 public:
     // Constructor: Sets the prediction horizon, timestep, and vessel parameters.
-    MPC_Motion_Control(int N, double dt, double m, double Iz, double Xu, double Yv, double Npsi, double Npsi_nl);
+    MPC_Motion_Control(int N, double dt);
 
     // Build and solve the MPC problem given the current state (x0 of length 6) and the desired target point (x_d, y_d, psi_d).
     // The problem is constructed, solved, and the solution values over the horizon stored in member vectors.
-    bool solve(const std::vector<double>& x0, double x_d, double y_d, double psi_d);
+    bool solve(const std::vector<double>& x0, double x_s, double y_s, double x_d, double y_d, double psi_d, Eigen::VectorXd n_init, Eigen::VectorXd alpha_init);
 
-    // Returns the first optimal control input as a vector: [tau_x, tau_y, tau_N].
-    std::vector<double> get_first_tau();
-
-    // Optionally, get full horizon control trajectories.
-    std::vector<double> get_tau_x_horizon();
-    std::vector<double> get_tau_y_horizon();
-    std::vector<double> get_tau_N_horizon();
+    Eigen::VectorXd get_n_opt();
+    Eigen::VectorXd get_alpha_opt();
 
 private:
     // Dynamics function: Given state X and control tau, returns the state derivative dX/dt.
@@ -52,9 +47,8 @@ private:
 
     // Storage for the optimal control sequence (over the horizon).
     // Each vector has length N.
-    std::vector<double> tau_x_sol;
-    std::vector<double> tau_y_sol;
-    std::vector<double> tau_N_sol;
+    Eigen::VectorXd n_opt;
+    Eigen::VectorXd alpha_opt;
 };
 
 #endif

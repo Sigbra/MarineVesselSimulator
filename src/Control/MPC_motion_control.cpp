@@ -1,10 +1,13 @@
 #include "Control/MPC_motion_control.hpp"
+#include "Models/ran.hpp"
+#include "Models/model_utilities.hpp"
 #include <iostream>
+#include "Eigen/Dense"
 
 using namespace casadi;
 
-MPC_Motion_Control::MPC_Motion_Control(int N, double dt, double m, double Iz, double Xu, double Yv, double Npsi, double Npsi_nl)
-    : N(N), dt(dt), m(m), Iz(Iz), Xu(Xu), Yv(Yv), Npsi(Npsi), Npsi_nl(Npsi_nl) {
+MPC_Motion_Control::MPC_Motion_Control(int N, double dt)
+    : N(N), dt(dt) {
     // Do not build the Opti problem here—instead, we will build it inside solve() every time.
 }
 
@@ -16,11 +19,6 @@ MX MPC_Motion_Control::f(const MX& X, const MX& tau) {
     MX u    = X(3);
     MX v    = X(4);
     MX r    = X(5);
-
-    // Controls: [tau_x, tau_y, tau_N]
-    MX tau_x = tau(0);
-    MX tau_y = tau(1);
-    MX tau_N = tau(2);
 
     // ---------------------------
     // Kinematics
@@ -45,7 +43,6 @@ MX MPC_Motion_Control::f(const MX& X, const MX& tau) {
     const double m_eff   = 800.0;     // effective surge mass (kg)
     const double Izz_eff = 1000.0;    // effective yaw moment of inertia (kg·m²)
     const double Umax    = 10.0;      // maximum surge speed (m/s)
-    const double g       = 9.81;      // gravitational constant (m/s²)
     const double T_sway  = 1.0;       // sway time constant (s)
     const double T_yaw   = 1.0;       // yaw time constant (s)
     
@@ -69,17 +66,40 @@ MX MPC_Motion_Control::f(const MX& X, const MX& tau) {
     MX current_surge = 0;
     MX current_sway  = 0;
 
+    MX tau_X = tau(0);
+    MX tau_Y = tau(1);
+    MX tau_N = tau(2);
+
     // Compute a quadratic drag term in sway 
     MX drag_v = D_y * v * fabs(v);
 
     // Assemble the dynamic equations for the body velocities.
     // The effective dynamics lump together the thrust contributions, the damping, 
     // and any additional drag:
-    MX du = (tau_x - Xu * u + current_surge) / m_eff;
-    MX dv = (tau_y - Yv * v - drag_v + current_sway) / m_eff;
+    MX du = (tau_X - Xu * u + current_surge) / m_eff;
+    MX dv = (tau_Y - Yv * v - drag_v + current_sway) / m_eff;
     MX dr = (tau_N - Nr_linear * r - Nr_nl * fabs(r) * r) / Izz_eff;
 
     return MX::vertcat({dx, dy, dpsi, du, dv, dr});
+}
+
+MX control_allocation(const MX& n, const MX& alpha, double lx, double ly1, double ly2, 
+    double k_pos, double k_neg) {
+    // n, alpha are 2x1 vectors, for left and right pods.
+    MX n1 = n(0), n2 = n(1);
+    MX alpha1 = alpha(0), alpha2 = alpha(1);
+
+    // Thrust calculation with a sign-dependent gain:
+    MX Thrust1 = if_else(n1 >= 0, k_pos * n1 * fabs(n1), k_neg * n1 * fabs(n1));
+    MX Thrust2 = if_else(n2 >= 0, k_pos * n2 * fabs(n2), k_neg * n2 * fabs(n2));
+
+    // Mapping to forces and moment
+    MX tau_X_model = Thrust1*cos(alpha1) + Thrust2*cos(alpha2);
+    MX tau_Y_model = Thrust1*sin(alpha1) + Thrust2*sin(alpha2);
+    MX tau_N_model = lx * (Thrust1*sin(alpha1) + Thrust2*sin(alpha2))
+                    - (ly1*Thrust1*cos(alpha1) + ly2*Thrust2*cos(alpha2));
+
+    return MX::vertcat({tau_X_model, tau_Y_model, tau_N_model});
 }
 
 
@@ -91,53 +111,139 @@ MX MPC_Motion_Control::rk4(const MX& Xk, const MX& tau, const MX& dt) {
     return Xk + (dt / 6) * (k1 + 2 * k2 + 2 * k3 + k4);
 }
 
-bool MPC_Motion_Control::solve(const std::vector<double>& x0, double x_d, double y_d, double psi_d) {
+bool MPC_Motion_Control::solve(const std::vector<double>& x0, double x_s, double y_s, double x_d, double y_d, double psi_d, Eigen::VectorXd n_init, Eigen::VectorXd alpha_init) {
+    
+    double U = std::sqrt(x0[3]*x0[3] + x0[4]*x0[4]); // Current speed from state x0
+    Eigen::Vector3d CO_offset = CO_Offset(U); 
+    double ly1 =  1.1 - CO_offset(0);    // left pod lever arm
+    double ly2 = -1.1 + CO_offset(1);    // right pod lever arm
+    double lx  = -1.1 - CO_offset(2);    // longitudinal pod location
+    
+    // Constants from the RAN model parameters
+    double k_pos = 200;
+    double k_neg = 200;
+    double n_max =  1, n_min = -1;
+    double alpha_max = M_PI/2, alpha_min = -M_PI/2;
+    double T_n = 0.5, T_alpha = 0.5;
+    
     // Create a fresh Opti object inside the solve function
     Opti opti;
 
     // Decision variables:
     // X: state trajectory (6 x (N+1))
     // U: control inputs (3 x N)
-    MX X = opti.variable(6, N + 1);
-    MX U = opti.variable(3, N);
-
-    // Build the reference trajectory as a constant replication of the desired state for all time steps.
-    // We are only using the first 3 states (position and heading)
-    MX X_ref = repmat(MX::vertcat({x_d, y_d, psi_d}), 1, N + 1);
+    MX X = opti.variable(6, N+1);
 
     // Set initial condition: X(:,0) should equal the current state x0.
-    // Convert x0 (std::vector<double>) to a DM:
+    // Constraint on first iteration values
     opti.subject_to(X(Slice(), 0) == DM(x0));
+    // Constraiints on last iteration values.
+    opti.subject_to(X(3, N) == 0);  // Surge velocity (u) must be 0 at final time.
+    opti.subject_to(X(4, N) == 0);  // Sway velocity (v) must be 0 at final time.
+    opti.subject_to(X(5, N) == 0);  // Yaw rate (r) must be 0 at final time.
 
-    // Set up the dynamics constraints over the horizon.
+    
+    // Pod command states: n and alpha for each pod
+    MX n_vars = opti.variable(2, N+1);
+    MX alpha_vars = opti.variable(2, N+1);
+    // Pod command inputs (rate commands)
+    MX n_cmd = opti.variable(2, N);
+    MX alpha_cmd = opti.variable(2, N);
+
+    double rand_small = ((double)rand() / RAND_MAX - 0.5) * 0.01; 
+
+    opti.set_initial(n_cmd, repmat(DM::vertcat({n_init(0) + rand_small, n_init(1) + rand_small}), 1, N));
+    opti.set_initial(alpha_cmd, repmat(DM::vertcat({alpha_init(0), alpha_init(1)}), 1, N));
+    
+    opti.subject_to(n_vars(Slice(), 0) ==
+    DM::vertcat(std::vector<DM>{DM(n_init(0)), DM(n_init(1))}));
+    opti.subject_to(alpha_vars(Slice(), 0) ==
+    DM::vertcat(std::vector<DM>{DM(alpha_init(0)), DM(alpha_init(1))}));
+
+    // Constraint on change in n and alpha
+    for (int k = 0; k < N; ++k) {
+        MX n_next = n_vars(Slice(), k) + (dt/T_n) * (n_cmd(Slice(), k) - n_vars(Slice(), k));
+        opti.subject_to( n_vars(Slice(), k+1) == n_next );
+
+        MX alpha_next = alpha_vars(Slice(), k) + (dt/T_alpha) * (alpha_cmd(Slice(), k) - alpha_vars(Slice(), k));
+        opti.subject_to( alpha_vars(Slice(), k+1) == alpha_next );
+    }
+
+    // Constraints on maximum and minimum values
+    for (int k = 0; k <= N-1; ++k) {
+        // Control bounds
+        opti.subject_to( n_cmd(Slice(), k) <= DM({n_max, n_max}) );
+        opti.subject_to( n_cmd(Slice(), k) >= DM({n_min, n_min}) );
+        opti.subject_to( alpha_cmd(Slice(), k) <= DM({alpha_max, alpha_max}) );
+        opti.subject_to( alpha_cmd(Slice(), k) >= DM({alpha_min, alpha_min}) );
+    }
+    for (int k = 1; k <= N; ++k) {
+        // State bounds
+        opti.subject_to( n_vars(Slice(), k) <= DM({n_max, n_max}) );
+        opti.subject_to( n_vars(Slice(), k) >= DM({n_min, n_min}) );
+        opti.subject_to( alpha_vars(Slice(), k) <= DM({alpha_max, alpha_max}) );
+        opti.subject_to( alpha_vars(Slice(), k) >= DM({alpha_min, alpha_min}) );
+    }
+
+    // Define path start and goal points
+    MX path_x_start = x_s;
+    MX path_y_start = y_s;
+    MX path_x_goal  = x_d;
+    MX path_y_goal  = y_d;
+
+    // Compute unit direction vector along the path
+    MX path_dx = path_x_goal - path_x_start;
+    MX path_dy = path_y_goal - path_y_start;
+    MX path_length = sqrt(path_dx * path_dx + path_dy * path_dy);
+    MX path_dir_x = path_dx / path_length;
+    MX path_dir_y = path_dy / path_length;
+
     MX cost = 0;
-    for (int i = 0; i < N; ++i) {
-        MX X_next = rk4(X(Slice(), i), U(Slice(), i), dt);
+    for (int i = 0; i < N; i++) {
+        // Compute forces from pod commands at time k.
+        MX tau = control_allocation(n_vars(Slice(), i), alpha_vars(Slice(), i),
+                                    lx, ly1, ly2, k_pos, k_neg);
+        // Discretize the vessel dynamics (forward Euler integration)
+        MX X_next = rk4(X(Slice(), i), tau, dt);
         opti.subject_to(X(Slice(), i + 1) == X_next);
 
-        // Cost: weighted sum of error between predicted (x,y,psi) and reference, plus control effort.
-        // Here we only consider the first three states.
-        MX err_x   = (X(0, i) - X_ref(0, i));
-        MX err_y   = (X(1, i) - X_ref(1, i));
-        MX err_psi = (X(2, i) - X_ref(2, i));
+        // Project current position onto path direction
+        MX rel_x = X(0, i) - path_x_start;
+        MX rel_y = X(1, i) - path_y_start;
+        MX proj_dist_along_path = rel_x * path_dir_x + rel_y * path_dir_y;
 
-        cost += 5*pow(err_x, 2) + 5*pow(err_y, 2) + 10*pow(err_psi, 2);
-        cost += 0.01 * pow(U(0, i), 2) + 0.01 * pow(U(1, i), 2) + 0.01 * pow(U(2, i), 2);
+        // Closest point on the path line
+        MX proj_x = proj_dist_along_path * path_dir_x + path_x_start;
+        MX proj_y = proj_dist_along_path * path_dir_y + path_y_start;
 
-    }
-    // Optionally, you could also add a cost on the terminal state X(:, N)
-    // MX err_term = X(Slice(0, 3), N) - X_ref(Slice(), N);
-    // cost += 100 * dot(err_term, err_term);
+        // Crosstrack error components and squared magnitude
+        MX crosstrack_x = X(0, i) - proj_x;
+        MX crosstrack_y = X(1, i) - proj_y;
+        MX crosstrack_error_sq = crosstrack_x * crosstrack_x + crosstrack_y * crosstrack_y;
 
-    opti.minimize(cost);
+        // Progress error: distance from projected point to goal
+        MX goal_dx = path_x_goal - proj_x;
+        MX goal_dy = path_y_goal - proj_y;
+        MX distance_error_sq = goal_dx * goal_dx + goal_dy * goal_dy;
 
-    // (Optional) Add bounds on U, for example:
-    for (int i = 0; i < N; ++i) {
-        for (int j = 0; j < 3; ++j) {
-            opti.subject_to(U(j, i) <= 200);
-            opti.subject_to(U(j, i) >= -200);
+        // Cost function terms
+        cost += 10 * crosstrack_error_sq;
+        cost += 10 * distance_error_sq;
+        cost += 50 * pow(X(2, i) - psi_d, 2);  // Heading error
+
+        // Control effort cost (times 10 inside because n is only [-1, 1])
+        cost += dot(10*n_cmd(Slice(), i), 10*n_cmd(Slice(), i));
+        cost += 10*dot(alpha_cmd(Slice(), i), alpha_cmd(Slice(), i));
+
+        //Penalize large changes in control input
+        if (i > 0) {
+            MX d_n = n_cmd(Slice(), i) - n_cmd(Slice(), i - 1);
+            MX d_alpha = alpha_cmd(Slice(), i) - alpha_cmd(Slice(), i - 1);
+            cost += 50 * dot(d_n, d_n) + 50 * dot(d_alpha, d_alpha);
         }
     }
+
+    opti.minimize(cost);
 
     Dict solver_opts;
     solver_opts["print_time"] = 0;
@@ -154,22 +260,14 @@ bool MPC_Motion_Control::solve(const std::vector<double>& x0, double x_d, double
         // Solve the optimization problem
         OptiSol sol = opti.solve();
 
-        // Retrive X, Y, and psi from the solution
+        DM n_cmd_sol = opti.value(n_cmd);
+        DM alpha_cmd_sol = opti.value(alpha_cmd);
 
+        n_opt.resize(2);
+        n_opt << double(n_cmd_sol(0, 0)), double(n_cmd_sol(1, 0));
 
-        // Retrieve the solution for U (the control trajectory) over the horizon.
-        // We'll store them in our member vectors (resizing appropriately).
-        tau_x_sol.resize(N);
-        tau_y_sol.resize(N);
-        tau_N_sol.resize(N);
-
-        // In CasADi C++, to convert the MX solution to a standard vector, you can use nonzeros()
-        for (int i = 0; i < N; i++) {
-            std::vector<double> tau_i = sol.value(U(Slice(), i)).nonzeros();
-            tau_x_sol[i] = tau_i[0];
-            tau_y_sol[i] = tau_i[1];
-            tau_N_sol[i] = tau_i[2];
-        }
+        alpha_opt.resize(2);
+        alpha_opt << double(alpha_cmd_sol(0, 0)), double(alpha_cmd_sol(1, 0));
 
         return true;
     }
@@ -179,22 +277,12 @@ bool MPC_Motion_Control::solve(const std::vector<double>& x0, double x_d, double
     }
 }
 
-std::vector<double> MPC_Motion_Control::get_first_tau() {
-    // Return the first control input from the solution trajectory
-    if (!tau_x_sol.empty() && !tau_y_sol.empty() && !tau_N_sol.empty())
-        return {tau_x_sol[0], tau_y_sol[0], tau_N_sol[0]};
-    else
-        return {0.0, 0.0, 0.0};
+Eigen::VectorXd MPC_Motion_Control::get_n_opt() {
+    return n_opt;
 }
 
-std::vector<double> MPC_Motion_Control::get_tau_x_horizon() {
-    return tau_x_sol;
+Eigen::VectorXd MPC_Motion_Control::get_alpha_opt() {
+    return alpha_opt;
 }
 
-std::vector<double> MPC_Motion_Control::get_tau_y_horizon() {
-    return tau_y_sol;
-}
 
-std::vector<double> MPC_Motion_Control::get_tau_N_horizon() {
-    return tau_N_sol;
-}
