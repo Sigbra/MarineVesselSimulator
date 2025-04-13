@@ -30,4 +30,4 @@ std::tuple<double, double> LOS(double xn, double yn, double delta,
     double psi_ref = psi_p - std::atan(y_e / delta);
 
     return std::make_tuple(psi_ref, y_e);
-}
+} 

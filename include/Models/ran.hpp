@@ -38,7 +38,7 @@ class RAN {
         double get_U() const { return U; }
 
         Eigen::VectorXd get_n() const { return n; }
-        Eigen::VectorXd get_alpha() const { return alpha; }
+        Eigen::VectorXd get_alpha() const { return alpha; } 
 
         double getT_n() const { return T_n; }
         double getT_alpha() const { return T_alpha; }

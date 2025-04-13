@@ -10,8 +10,10 @@
 #include <vector>
 
 using casadi::MX;
+using casadi::DM;
 using casadi::Opti;
 using casadi::OptiSol;
+using casadi::Function;
 
 class MPC_Motion_Control {
 public:
@@ -33,6 +35,8 @@ private:
     // Runge-Kutta 4 integrator for propagating the state.
     MX rk4(const MX& Xk, const MX& tau, const MX& dt);
 
+    Function oneStepDynamicsFunction();
+
     // Prediction horizon and timestep.
     int N;
     double dt;
@@ -48,7 +52,12 @@ private:
     // Storage for the optimal control sequence (over the horizon).
     // Each vector has length N.
     Eigen::VectorXd n_opt;
-    Eigen::VectorXd alpha_opt;
+    Eigen::VectorXd alpha_opt;    
+
+    //Warm start variables
+    DM X_prev_;
+    DM n_cmd_prev_;
+    DM alpha_cmd_prev_;
 };
 
 #endif

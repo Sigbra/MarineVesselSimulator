@@ -101,7 +101,7 @@ int main() {
     Eigen::Vector2d n_c = {0.0, 0.0};
     Eigen::Vector2d alpha_c = {0.0, 0.0};
 
-    // Model;
+    // Model;   
     RAN ran_model;
     ran_model.update(x, mp, V_c, beta_c, h, n_c, alpha_c);
     Eigen::MatrixXd M = ran_model.get_M();
@@ -175,11 +175,11 @@ int main() {
     // Motion control classes
     MIMOPIDController MIMO_PID;
     HeadingPIDController headPID;
-    MPC_Motion_Control mpc_control(20, h*4); //Replace with real numbers
+    MPC_Motion_Control mpc_control(30, h*4); 
 
     // Desired rate of turn and acceleration
     double r_d = 0.0; 
-    double a_d = 0.0;           
+    double a_d = 0.0;
 
     // Marine vessel Dynamics
     Eigen::VectorXd eta = Eigen::VectorXd::Zero(6);
@@ -492,6 +492,7 @@ int main() {
             }
             break;
         }
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 
     std::cout << "Simulation completed" << std::endl;
