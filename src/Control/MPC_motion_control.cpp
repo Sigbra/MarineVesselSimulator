@@ -251,15 +251,15 @@ bool MPC_Motion_Control::solve(const std::vector<double>& x0, double x_s, double
         MX distance_error_abs = normalized_remaining_distance*normalized_remaining_distance;
 
         // Cost function terms
-        cost +=  20 * crosstrack_error_abs;
-        cost += 100 * distance_error_abs;
-        cost +=  60 * pow(X(2, i) - psi_d, 2);  
+        cost +=  20 * crosstrack_error_abs; 
+        cost += 120 * distance_error_abs;
+        cost +=  60 * pow(X(2, i) - psi_d, 2);  // Scaled based on progress such that this is not the only parameter of improtance close to the goal. 
         if (i > 0) {
             MX d_n = n_cmd(Slice(), i) - n_cmd(Slice(), i - 1);
             MX d_alpha = alpha_cmd(Slice(), i) - alpha_cmd(Slice(), i - 1);
             cost += 5 * dot(d_n, d_n) + 5 * dot(d_alpha, d_alpha);
         }  
-    }   
+    } 
     
     opti.minimize(cost);
 

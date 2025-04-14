@@ -38,22 +38,22 @@ It's a nice-to-have tool, made using matplotlibcpp, for experimentation, debuggi
   <tr>
     <td>
       <img src="data/live-plotting/Live-DP-MPC_NLOpt.png" width="400"/>
-      <div align="center">Live, 4 square test, DP directly to wpt, MPC NL-Opt Control alloc</div>
+      <div align="center">Live, 4 square test, DP, POD Model MPC Control allocation</div>
     </td>
     <td>
-      <img src="data/Live-DP_MPC-MPC_NLOpt.png" width="400"/>
-      <div align="center">Live, 4 square test, DP using MPC, MPC NL-Opt Control alloc</div>
+      <img src="data/live-plotting/Live-DP-MPC_Control.png" width="400"/>
+      <div align="center">Live, 4 square test, DP, Full Model MPC Control allocation</div>
     </td>
   </tr>
 
   <tr>
     <td>
       <img src="data/live-plotting/Live-StraightPath-LOS-MPC_NLOpt.png" width="400"/>
-      <div align="center">Live, Straight path, LOS, MPC Control alloc</div>
+      <div align="center">Live, Straight path, LOS, POD Model MPC Control allocation</div>
     </td>
     <td>
       <img src="data/live-plotting/Live-CurvedPath-LOS-MPC_NLOpt.png" width="400"/>
-      <div align="center">Live, Curved path, LOS, MPC Control alloc</div>
+      <div align="center">Live, Curved path, LOS, POD Model MPC Control allocation</div>
     </td>
   </tr>
 </table>
@@ -73,11 +73,11 @@ The 4 parts of the this test are:
   <tr>
     <td>
         <img src="data/DP-pictures/DP-NLOpt.png" width="400"/>
-        <div align="center">4 square test, DP directly to wpt, NL-Opt Control alloc</div>
+        <div align="center">4 square test, DP, NL-Opt POD Control allocation</div>
     </td>
     <td>
         <img src="data/DP-pictures/DP-NLOpt-state_errors.png" width="400"/>
-        <div align="center">along track (x_e) and cross track (y_e) error</div>
+        <div align="center">state errors</div>
     </td>
     <td>
         <img src="data/DP-pictures/DP-NLOpt-Psi.png" width="400"/>
@@ -91,52 +91,39 @@ The 4 parts of the this test are:
 <table>
   <tr>
     <td>
-        <img src="data/DP-pictures/DP_MPC-NLOpt.png" width="400"/>
-        <div align="center">4 square test, DP using MPC, NL-Opt Control alloc</div>
-    </td>
-    <td>
-        <img src="data/DP-pictures/DP_MPC-NLOpt-state_errors.png" width="400"/>
-        <div align="center">along track (x_e) and cross track (y_e) error</div>
-    </td>
-    <td>
-        <img src="data/DP-pictures/DP_MPC-NLOpt-Psi.png" width="400"/>
-        <div align="center">Psi vs Psi_d</div>
-    </td>
-  </tr>
-</table>
-</div>
-
-<table>
-  <tr>
-    <td>
         <img src="data/DP-pictures/DP-MPC_NLOpt.png" width="400"/>
-        <div align="center">4 square test, DP directly to wpt, MPC NL-Opt Control alloc</div>
+        <div align="center">4 square test, DP, Pod Model MPC Control allocation</div>
     </td>
     <td>
         <img src="data/DP-pictures/DP-MPC_NLOpt-state_errors.png" width="400"/>
-        <div align="center">along track (x_e) and cross track (y_e) error</div>
+        <div align="center">state errors</div>
     </td>
     <td>
         <img src="data/DP-pictures/DP-MPC_NLOpt-Psi.png" width="400"/>
         <div align="center">Psi vs Psi_d</div>
     </td>
   </tr>
+</table>
+</div>
+
+<div class="scrollable-table">
+<table>
   <tr>
     <td>
-        <img src="data/DP-pictures/DP_MPC-MPC_NLOpt.png" width="400"/>
-        <div align="center">4 square test, DP using MPC, MPC NL-Opt Control alloc</div>
+        <img src="data/DP-pictures/DP-MPC_Control.png" width="400"/>
+        <div align="center">4 square test, DP, Full Model Control allocation</div>
     </td>
     <td>
-        <img src="data/DP-pictures/DP_MPC-MPC_NLOpt-state_errors.png" width="400"/>
-        <div align="center">along track (x_e) and cross track (y_e) error</div>
+        <img src="data/DP-pictures/DP-MPC_Control-state_errors.png" width="400"/>
+        <div align="center">state errors</div>
     </td>
     <td>
-        <img src="data/DP-pictures/DP_MPC-MPC_NLOpt-Psi.png" width="400"/>
+        <img src="data/DP-pictures/DP-MPC_Control-Psi.png" width="400"/>
         <div align="center">Psi vs Psi_d</div>
     </td>
   </tr>
 </table>
-
+</div>
 
 ### Path following performance;
 We test manuverability using 3 simple tests, each showing the performance on a

@@ -175,7 +175,7 @@ int main() {
     // Motion control classes
     MIMOPIDController MIMO_PID;
     HeadingPIDController headPID;
-    MPC_Motion_Control mpc_control(30, h*4); 
+    MPC_Motion_Control mpc_control(40, h*4); 
 
     // Desired rate of turn and acceleration
     double r_d = 0.0; 
