@@ -11,6 +11,7 @@
 #include "Control/control_alloc_selector.hpp"
 #include "Control/PID_MIMO_motion_control.hpp"
 #include "Control/PID_heading_motion_control.hpp"
+#include "Control/MPC_motion_control.hpp"
 #include "Control/MPC_control_alloc.hpp"
 #include "Control/non_lin_constrained_control_alloc.hpp"
 
@@ -88,8 +89,31 @@ int main() {
     double Delta_h = config["path_following"]["Delta_h"].as<double>();                    
     double gamma_h = config["path_following"]["gamma_h"].as<double>();               
 
-    // Model;
+    // x = [u v w p q r xn yn zn phi theta psi]'
+    Eigen::VectorXd x = Eigen::VectorXd::Zero(12); 
+    x(6) = wpt[0].x; // North position (NED frame)
+    x(7) = wpt[0].y; // East position (NED frame)
+    x(11) = std::atan2(wpt[1].y - wpt[0].y, wpt[1].x - wpt[0].x);
+
+    // Control system variables
+    std::vector<double> tau_XYN = {0.0, 0.0, 0.0};
+    std::vector<double> control_allocation = {0.0, 0.0, 0.0, 0.0};
+    Eigen::Vector2d n_c = {0.0, 0.0};
+    Eigen::Vector2d alpha_c = {0.0, 0.0};
+
+    // Model;   
     RAN ran_model;
+    ran_model.update(x, mp, V_c, beta_c, h, n_c, alpha_c);
+    Eigen::MatrixXd M = ran_model.get_M();
+    Eigen::MatrixXd B = ran_model.get_B();
+    double U = ran_model.get_U();
+    Eigen::VectorXd xdot = ran_model.get_xdot();
+
+    double T_n = ran_model.getT_n();          // Propeller time constant (s)
+    double T_alpha = ran_model.getT_alpha();  // Azimuth angle time constant (s)
+
+    Eigen::Vector2d n = ran_model.get_n();           
+    Eigen::Vector2d alpha = ran_model.get_alpha();
 
     // Create the straight line path.
     StraightLinePath straightLinePath;
@@ -111,19 +135,6 @@ int main() {
     ALOS ALOS(Delta_h, gamma_h, 0.1);
     LOSObserver losObserver(h, K_f);
     MPCGuidance mpc_guidance(0.8, 0.5);
-     
-    // Initial states - will be properly set after path generation
-    Eigen::VectorXd x = Eigen::VectorXd::Zero(12);  // x = [u v w p q r xn yn zn phi theta psi]'
-    x(6) = wpt[0].x; // North position (NED frame)
-    x(7) = wpt[0].y; // East position (NED frame)
-    x(11) = std::atan2(wpt[1].y - wpt[0].y, wpt[1].x - wpt[0].x);
-    
-    // Azimuth pod dynamics
-    double T_n = ran_model.getT_n();                                // Propeller time constant (s)
-    Eigen::Vector2d n = Eigen::Vector2d::Zero();     // Init: [n_left, n_right] = [0, 0]
-
-    double T_alpha = ran_model.getT_alpha();                            // Azimuth angle time constant (s)
-    Eigen::Vector2d alpha = Eigen::Vector2d::Zero(); // Init: [angle_left, angle_right] = [0, 0]
 
     // Choose path type
     int pathType = selectPathType();
@@ -164,25 +175,15 @@ int main() {
     // Motion control classes
     MIMOPIDController MIMO_PID;
     HeadingPIDController headPID;
+    MPC_Motion_Control mpc_control(40, h*4); 
 
     // Desired rate of turn and acceleration
     double r_d = 0.0; 
-    double a_d = 0.0;           
+    double a_d = 0.0;
 
     // Marine vessel Dynamics
-    Eigen::VectorXd xdot = Eigen::VectorXd::Zero(12);
     Eigen::VectorXd eta = Eigen::VectorXd::Zero(6);
     Eigen::VectorXd nu = Eigen::VectorXd::Zero(6);
-
-    Eigen::MatrixXd M = Eigen::MatrixXd::Zero(6, 6); 
-    Eigen::MatrixXd B = Eigen::MatrixXd::Zero(3, 2); 
-    double U = 0.0;
-
-    // Control system variables
-    std::vector<double> tau_XYN = {0.0, 0.0, 0.0};
-    std::vector<double> control_allocation = {0.0, 0.0, 0.0, 0.0};
-    Eigen::Vector2d n_c = {0.0, 0.0};
-    Eigen::Vector2d alpha_c = {0.0, 0.0};
     
     // Total number of time steps
     int num_steps = static_cast<int>(T_final / h) + 1;
@@ -200,6 +201,8 @@ int main() {
     }
 
     bool break_flag = false;
+
+    
 
     // Main simulation loop
     for (int i = 0; i < num_steps; ++i) {
@@ -318,7 +321,8 @@ int main() {
                 }
                 break;
             }
-            case 2: { // Dynamic positioning using MPC for path
+            case 2: { 
+                //MPC guidance (Not good)
                 if (angles.empty()) {
                     auto [chi_ref, U_ref, xn_ref, yn_ref] = mpc_guidance.update(h, xn, yn, psi, U, wpt[wpt_index-1], wpt[wpt_index]);              
                     xn_d  = xn_ref;
@@ -333,7 +337,6 @@ int main() {
                     psi_d = chi_ref; //+beta_c ? 
                     U_d   = U_ref; 
                 }
-
                 break;
             }
             case 3: { // LOS heading autopilot
@@ -356,7 +359,7 @@ int main() {
 
         // Motion Control
         // - Dynamic positioning 
-        if (GuidanceFlag==1 || GuidanceFlag == 2) {
+        if (GuidanceFlag==1 && ControlAllocFlag != 3){
             eta << u, v, w, p, q, r;
             nu  << xn, yn, zn, phi, theta, psi;
             tau_XYN = MIMO_PID.update(h, xn_d, yn_d, psi_d, M, eta, nu);
@@ -370,20 +373,34 @@ int main() {
 
         // Control allocation
         if (ControlAllocFlag==1) {
+
             control_allocation = NLOptControlAlloc(tau_XYN[0], tau_XYN[1], tau_XYN[2], U, n, alpha);
+            n_c     = {control_allocation[0], control_allocation[2]};
+            alpha_c = {control_allocation[1], control_allocation[3]};
+
         }
         else if (ControlAllocFlag==2){
-            control_allocation = MPC_control_alloc(tau_XYN[0], tau_XYN[1], tau_XYN[2],
-                                                   U, T_n, T_alpha,
-                                                   n, alpha);
+
+            control_allocation = MPC_control_alloc(tau_XYN[0], tau_XYN[1], tau_XYN[2], U, T_n, T_alpha, n, alpha);
+            n_c     = {control_allocation[0], control_allocation[2]};
+            alpha_c = {control_allocation[1], control_allocation[3]};
+
         }
-        n_c     = {control_allocation[0], control_allocation[2]};
-        alpha_c = {control_allocation[1], control_allocation[3]};
+        else if (ControlAllocFlag==3){
+
+            std::vector<double> x0 = {xn, yn, psi, u, v, r};
+            mpc_control.solve(x0, wpt[wpt_index-1].x, wpt[wpt_index-1].y, xn_d, yn_d, psi_d, n, alpha);
+            n_c = mpc_control.get_n_opt();
+            alpha_c = mpc_control.get_alpha_opt();
+        }
+        else {
+            std::cerr << "Invalid control allocation method selected." << std::endl;
+            break_flag = true;
+        }
 
         // Marine Craft Model
         ran_model.rk4(x, mp, V_c, beta_c, h, n_c, alpha_c);
-        //x(11) = ssa(x(11)); //makes plotting look bad                
-
+        //x(11) = ssa(x(11)); //makes plotting look bad              
 
         // Show SIM progress once per second
         if (i % 10 == 0) {
@@ -475,6 +492,7 @@ int main() {
             }
             break;
         }
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 
     std::cout << "Simulation completed" << std::endl;

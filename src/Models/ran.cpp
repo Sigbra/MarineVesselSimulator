@@ -225,7 +225,7 @@ void RAN::update(const Eigen::VectorXd x, double mp, double V_c, double beta_c,
     // ---------------------------
     // Linear damping terms                        
     // ---------------------------
-    double Xu = -24.4 * g / Umax;
+    double Xu = - 200 / Umax;
     double Yv = -M_sys(1,1) / T_sway;
     double Zw = -2 * 0.3 * w3 * M_sys(2,2);
     double Kp_damp = -2 * 0.2 * w4 * M_sys(3,3);

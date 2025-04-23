@@ -18,13 +18,13 @@ double StraightLinePath::alongTrackError(Vector2D vessel, PathPoint path_point) 
                 +(vessel.y - path_point.pos.y)*std::sin(lamda);
     return x_e;
 }
-
+ 
 double StraightLinePath::crossTrackError(Vector2D vessel, PathPoint path_point) {
     double lamda = std::atan2(path_point.dpos.y, path_point.dpos.x);
     double y_e = -(vessel.x - path_point.pos.x)*std::sin(lamda) 
                  +(vessel.y - path_point.pos.y)*std::cos(lamda);
     return y_e;
-}
+}      
 
 PathTrackingInfo StraightLinePath::getClosestPoint(const Vector2D vessel_position, int &wpt_index) {
     
@@ -54,7 +54,7 @@ PathTrackingInfo StraightLinePath::getClosestPoint(const Vector2D vessel_positio
         tracking_info.point = line_prev_point;
         tracking_info.x_e = x_e_line_prev;
         tracking_info.y_e = y_e_line_prev;
-        return tracking_info;
+        return tracking_info;         
     }
 
     line_point = projectOntoLine(wpt, wpt_next, vessel_position);
@@ -67,7 +67,7 @@ PathTrackingInfo StraightLinePath::getClosestPoint(const Vector2D vessel_positio
         tracking_info.x_e = x_e_line_prev;
         tracking_info.y_e = y_e_line_prev;
     } 
-    else {
+    else {        
         tracking_info.point = line_point;
         tracking_info.x_e = x_e_line;
         tracking_info.y_e = y_e_line;

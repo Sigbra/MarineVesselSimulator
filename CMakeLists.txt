@@ -89,6 +89,7 @@ set(SOURCES
     src/Control/non_lin_constrained_control_alloc.cpp
     src/Control/PID_heading_motion_control.cpp
     src/Control/PID_MIMO_motion_control.cpp
+    src/Control/MPC_motion_control.cpp
 
     src/Guidance/LOS.cpp
     src/Guidance/ALOS.cpp

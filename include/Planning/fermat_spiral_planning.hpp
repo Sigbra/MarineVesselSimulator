@@ -3,7 +3,7 @@
 
 #include "Utilities/calculations.hpp"
 #include <cmath>
-#include <vector>
+#include <vector> 
 
 //----------------------------------------------------------
 // FermatSpiralPath Class Declaration
@@ -93,7 +93,7 @@ class FermatSpiralPath {
         Vector2D computeSpiralThirdDerivative(double theta, double base_angle, double lambda,
                                                            double k, double rho, double theta_max) const;
     
-    
+     
         // Helper functions.
         double f(double theta, double delta_chi) const;
         double fprime(double theta) const;

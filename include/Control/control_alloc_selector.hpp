@@ -14,8 +14,9 @@ class ControlAllocationMethod {
     
     private:
         std::vector<std::string> methods = {
-            "Non-linear optimization",
-            "Model Predictive Control (MPC)"
+            "Non-linear optimization control allocation",
+            "MPC control allocation",
+            "MPC for motion control and allocation (DP)"
         };
     };
 
