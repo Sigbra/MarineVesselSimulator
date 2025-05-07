@@ -1,5 +1,5 @@
-#ifndef MPC_MOTION_CONTROL_HPP
-#define MPC_MOTION_CONTROL_HPP
+#ifndef MPC_CONTROL_SYSTEM_HPP
+#define MPC_CONTROL_SYSTEM_HPP
 
 #include <vector>
 #include <Eigen/Dense>
@@ -15,14 +15,14 @@ using casadi::Opti;
 using casadi::OptiSol;
 using casadi::Function;
 
-class MPC_Motion_Control {
+class MPC_Control_System {
 public:
     // Constructor: Sets the prediction horizon, timestep, and vessel parameters.
-    MPC_Motion_Control(int N, double dt);
+    MPC_Control_System(int N, double dt);
 
     // Build and solve the MPC problem given the current state (x0 of length 6) and the desired target point (x_d, y_d, psi_d).
     // The problem is constructed, solved, and the solution values over the horizon stored in member vectors.
-    bool solve(const std::vector<double>& x0, double x_s, double y_s, double x_d, double y_d, double psi_d, Eigen::VectorXd n_init, Eigen::VectorXd alpha_init);
+    bool solve(const std::vector<double>& x0, double x_s, double y_s, double x_d, double y_d, double psi_d, Eigen::VectorXd n_init, Eigen::VectorXd alpha_init, std::vector<bool> failstate);
 
     Eigen::VectorXd get_n_opt();
     Eigen::VectorXd get_alpha_opt();

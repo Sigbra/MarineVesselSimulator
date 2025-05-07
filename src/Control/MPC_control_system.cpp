@@ -1,4 +1,4 @@
-#include "Control/MPC_motion_control.hpp"
+#include "Control/MPC_control_system.hpp"
 #include "Utilities/plotting.hpp"
 #include "Models/ran.hpp"
 #include "Models/model_utilities.hpp"
@@ -7,7 +7,7 @@
 
 using namespace casadi;
 
-MPC_Motion_Control::MPC_Motion_Control(int N, double dt)
+MPC_Control_System::MPC_Control_System(int N, double dt)
     : N(N), dt(dt)
 {
     X_prev_ = DM(); 
@@ -15,7 +15,7 @@ MPC_Motion_Control::MPC_Motion_Control(int N, double dt)
     alpha_cmd_prev_ = DM();
 }
 
-MX MPC_Motion_Control::f(const MX& X, const MX& tau) {
+MX MPC_Control_System::f(const MX& X, const MX& tau) {
     // States: [x, y, psi, u, v, r]
     MX x    = X(0);
     MX y    = X(1);
@@ -52,12 +52,12 @@ MX MPC_Motion_Control::f(const MX& X, const MX& tau) {
     
     // Damping coefficients (derived from expressions in the full model)
     // For surge, Xu is computed using gravitational acceleration and Umax.
-    double Xu = -200 / Umax;
+    double Xu = 200 / Umax;
     // A simplified sway damping (using the effective mass and a time constant)
-    double Yv = -m_eff / T_sway;
+    double Yv = m_eff / T_sway;
     // Yaw damping coefficient (using effective inertia and yaw time constant).
     // Note: The full model uses a nonlinear yaw term.
-    double Nr_linear = -Izz_eff / T_yaw;
+    double Nr_linear = Izz_eff / T_yaw;
 
     // To include additional nonlinear drag:
     // (i) Cross-flow drag in sway is often modeled as quadratic in v.
@@ -107,7 +107,7 @@ MX control_allocation(const MX& n, const MX& alpha, double lx, double ly1, doubl
 }
 
 
-MX MPC_Motion_Control::rk4(const MX& Xk, const MX& tau, const MX& dt) {
+MX MPC_Control_System::rk4(const MX& Xk, const MX& tau, const MX& dt) {
     MX k1 = f(Xk, tau);
     MX k2 = f(Xk + (dt / 2) * k1, tau);
     MX k3 = f(Xk + (dt / 2) * k2, tau);
@@ -115,7 +115,7 @@ MX MPC_Motion_Control::rk4(const MX& Xk, const MX& tau, const MX& dt) {
     return Xk + (dt / 6) * (k1 + 2 * k2 + 2 * k3 + k4);
 }
 
-Function MPC_Motion_Control::oneStepDynamicsFunction() {
+Function MPC_Control_System::oneStepDynamicsFunction() {
     MX Xk = MX::sym("Xk", 6);
     MX tau = MX::sym("tau", 3);
 
@@ -128,7 +128,7 @@ Function MPC_Motion_Control::oneStepDynamicsFunction() {
     return Function("oneStep", {Xk, tau}, {X_next});
 }
 
-bool MPC_Motion_Control::solve(const std::vector<double>& x0, double x_s, double y_s, double x_d, double y_d, double psi_d, Eigen::VectorXd n_init, Eigen::VectorXd alpha_init) {
+bool MPC_Control_System::solve(const std::vector<double>& x0, double x_s, double y_s, double x_d, double y_d, double psi_d, Eigen::VectorXd n_init, Eigen::VectorXd alpha_init, std::vector<bool> failstate) {
     
     double U = std::sqrt(x0[3]*x0[3] + x0[4]*x0[4]); // Current speed from state x0
     Eigen::Vector3d CO_offset = CO_Offset(U); 
@@ -193,19 +193,54 @@ bool MPC_Motion_Control::solve(const std::vector<double>& x0, double x_s, double
     }
 
     // Constraints on maximum and minimum values
+    // for (int k = 0; k <= N-1; ++k) {
+    //     // Control bounds
+    //     opti.subject_to( n_cmd(Slice(), k) <= DM({n_max, n_max}) );
+    //     opti.subject_to( n_cmd(Slice(), k) >= DM({n_min, n_min}) );
+    //     opti.subject_to( alpha_cmd(Slice(), k) <= DM({alpha_max, alpha_max}) );
+    //     opti.subject_to( alpha_cmd(Slice(), k) >= DM({alpha_min, alpha_min}) );
+    // }
+    // for (int k = 1; k <= N; ++k) {
+    //     // State bounds
+    //     opti.subject_to( n_vars(Slice(), k) <= DM({n_max, n_max}) );
+    //     opti.subject_to( n_vars(Slice(), k) >= DM({n_min, n_min}) );
+    //     opti.subject_to( alpha_vars(Slice(), k) <= DM({alpha_max, alpha_max}) );
+    //     opti.subject_to( alpha_vars(Slice(), k) >= DM({alpha_min, alpha_min}) );
+    // }
     for (int k = 0; k <= N-1; ++k) {
-        // Control bounds
-        opti.subject_to( n_cmd(Slice(), k) <= DM({n_max, n_max}) );
-        opti.subject_to( n_cmd(Slice(), k) >= DM({n_min, n_min}) );
-        opti.subject_to( alpha_cmd(Slice(), k) <= DM({alpha_max, alpha_max}) );
-        opti.subject_to( alpha_cmd(Slice(), k) >= DM({alpha_min, alpha_min}) );
+        for (int i = 0; i < 2; ++i) {
+            if (failstate[i]) {
+                // opti.subject_to(n_cmd(i, k) == 0);
+                // opti.subject_to(alpha_cmd(i, k) == alpha_init(i));  // Use appropriate reference
+                opti.subject_to(n_cmd(i, k) <= 0);
+                opti.subject_to(n_cmd(i, k) >= 0);
+                opti.subject_to(alpha_cmd(i, k) <= alpha_init(i));
+                opti.subject_to(alpha_cmd(i, k) >= alpha_init(i));
+            } else {
+                opti.subject_to(n_cmd(i, k) <= n_max);
+                opti.subject_to(n_cmd(i, k) >= n_min);
+                opti.subject_to(alpha_cmd(i, k) <= alpha_max);
+                opti.subject_to(alpha_cmd(i, k) >= alpha_min);
+            }
+        }
     }
+    
     for (int k = 1; k <= N; ++k) {
-        // State bounds
-        opti.subject_to( n_vars(Slice(), k) <= DM({n_max, n_max}) );
-        opti.subject_to( n_vars(Slice(), k) >= DM({n_min, n_min}) );
-        opti.subject_to( alpha_vars(Slice(), k) <= DM({alpha_max, alpha_max}) );
-        opti.subject_to( alpha_vars(Slice(), k) >= DM({alpha_min, alpha_min}) );
+        for (int i = 0; i < 2; ++i) {
+            if (failstate[i]) {
+                // opti.subject_to(n_vars(i, k) == 0);
+                // opti.subject_to(alpha_vars(i, k) == alpha_init(i));  // Keep alpha fixed
+                opti.subject_to(n_vars(i, k) <= 0);
+                opti.subject_to(n_vars(i, k) >= 0);
+                opti.subject_to(alpha_vars(i, k) <= alpha_init(i));
+                opti.subject_to(alpha_vars(i, k) >= alpha_init(i));
+            } else {
+                opti.subject_to(n_vars(i, k) <= n_max);
+                opti.subject_to(n_vars(i, k) >= n_min);
+                opti.subject_to(alpha_vars(i, k) <= alpha_max);
+                opti.subject_to(alpha_vars(i, k) >= alpha_min);
+            }
+        }
     }
 
     // Define path start and goal points
@@ -253,7 +288,12 @@ bool MPC_Motion_Control::solve(const std::vector<double>& x0, double x_s, double
         // Cost function terms
         cost +=  20 * crosstrack_error_abs; 
         cost += 120 * distance_error_abs;
-        cost +=  60 * pow(X(2, i) - psi_d, 2);  // Scaled based on progress such that this is not the only parameter of improtance close to the goal. 
+        if (failstate[0] || failstate[1]) {
+            cost +=  5 * pow(X(2, i) - psi_d, 2);
+        }
+        else {
+            cost +=  60 * pow(X(2, i) - psi_d, 2);  // Scaled based on progress such that this is not the only parameter of improtance close to the goal. 
+        }
         if (i > 0) {
             MX d_n = n_cmd(Slice(), i) - n_cmd(Slice(), i - 1);
             MX d_alpha = alpha_cmd(Slice(), i) - alpha_cmd(Slice(), i - 1);
@@ -304,11 +344,11 @@ bool MPC_Motion_Control::solve(const std::vector<double>& x0, double x_s, double
     }
 }
 
-Eigen::VectorXd MPC_Motion_Control::get_n_opt() {
+Eigen::VectorXd MPC_Control_System::get_n_opt() {
     return n_opt;
 }
 
-Eigen::VectorXd MPC_Motion_Control::get_alpha_opt() {
+Eigen::VectorXd MPC_Control_System::get_alpha_opt() {
     return alpha_opt;
 }
 

@@ -8,7 +8,7 @@ using namespace casadi;
 
 std::vector<double> MPC_control_alloc(double tau_X, double tau_Y, double tau_N,
     double U, double T_n, double T_alpha,
-    Eigen::Vector2d n_input, Eigen::Vector2d alpha_input) 
+    Eigen::Vector2d n_input, Eigen::Vector2d alpha_input, std::vector<bool> failstate) 
 {
     double horizon = 5.0;
     double delta   = 0.5;
@@ -61,19 +61,46 @@ std::vector<double> MPC_control_alloc(double tau_X, double tau_Y, double tau_N,
     }
 
     // Constraints on maximum and minimum values
+    // for (int k = 0; k <= N-1; ++k) {
+    //     // Control bounds
+    //     opti.subject_to( n_cmd(Slice(), k) <= DM({n_max, n_max}) );
+    //     opti.subject_to( n_cmd(Slice(), k) >= DM({n_min, n_min}) );
+    //     opti.subject_to( alpha_cmd(Slice(), k) <= DM({alpha_max, alpha_max}) );
+    //     opti.subject_to( alpha_cmd(Slice(), k) >= DM({alpha_min, alpha_min}) );
+    // }
+    // for (int k = 1; k <= N; ++k) {
+    //     // State bounds
+    //     opti.subject_to( n_vars(Slice(), k) <= DM({n_max, n_max}) );
+    //     opti.subject_to( n_vars(Slice(), k) >= DM({n_min, n_min}) );
+    //     opti.subject_to( alpha_vars(Slice(), k) <= DM({alpha_max, alpha_max}) );
+    //     opti.subject_to( alpha_vars(Slice(), k) >= DM({alpha_min, alpha_min}) );
+    // }
     for (int k = 0; k <= N-1; ++k) {
-        // Control bounds
-        opti.subject_to( n_cmd(Slice(), k) <= DM({n_max, n_max}) );
-        opti.subject_to( n_cmd(Slice(), k) >= DM({n_min, n_min}) );
-        opti.subject_to( alpha_cmd(Slice(), k) <= DM({alpha_max, alpha_max}) );
-        opti.subject_to( alpha_cmd(Slice(), k) >= DM({alpha_min, alpha_min}) );
+        for (int i = 0; i < 2; ++i) {
+            if (failstate[i]) {
+                opti.subject_to(n_cmd(i, k) == 0);
+                opti.subject_to(alpha_cmd(i, k) == alpha_input(i));  // Use appropriate reference
+            } else {
+                opti.subject_to(n_cmd(i, k) <= n_max);
+                opti.subject_to(n_cmd(i, k) >= n_min);
+                opti.subject_to(alpha_cmd(i, k) <= alpha_max);
+                opti.subject_to(alpha_cmd(i, k) >= alpha_min);
+            }
+        }
     }
+    
     for (int k = 1; k <= N; ++k) {
-        // State bounds
-        opti.subject_to( n_vars(Slice(), k) <= DM({n_max, n_max}) );
-        opti.subject_to( n_vars(Slice(), k) >= DM({n_min, n_min}) );
-        opti.subject_to( alpha_vars(Slice(), k) <= DM({alpha_max, alpha_max}) );
-        opti.subject_to( alpha_vars(Slice(), k) >= DM({alpha_min, alpha_min}) );
+        for (int i = 0; i < 2; ++i) {
+            if (failstate[i]) {
+                opti.subject_to(n_vars(i, k) == 0);
+                opti.subject_to(alpha_vars(i, k) == alpha_input(i));  // Keep alpha fixed
+            } else {
+                opti.subject_to(n_vars(i, k) <= n_max);
+                opti.subject_to(n_vars(i, k) >= n_min);
+                opti.subject_to(alpha_vars(i, k) <= alpha_max);
+                opti.subject_to(alpha_vars(i, k) >= alpha_min);
+            }
+        }
     }
 
     MX J = 0;

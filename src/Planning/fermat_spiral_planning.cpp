@@ -477,7 +477,6 @@ Waypoints FermatSpiralPath::samplePath(double delta)
     return path;
 }
 
-
 void FermatSpiralPath::printParameters() const {
     std::cout << std::fixed << std::setprecision(4);
     std::cout << "Kappa max: " << kappa_max_ << "\n";

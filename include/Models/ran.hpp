@@ -43,6 +43,14 @@ class RAN {
         double getT_n() const { return T_n; }
         double getT_alpha() const { return T_alpha; }
 
+        void fail_state_n1() { n1_fail = true; }
+        void fail_state_n2() { n2_fail = true; }
+        void recover_n1() { n1_fail = false; }
+        void recover_n2() { n2_fail = false; }
+        
+        void select_failure_mode();
+        std::vector<bool> check_failstate();
+
     private:
         void update_n(Eigen::VectorXd n_c, double h);
         void update_alpha(Eigen::VectorXd alpha_c, double h);
@@ -109,6 +117,10 @@ class RAN {
         double alpha_max;   
         // minimum azimuth angle (rad)
         double alpha_min; 
+
+        // Failure state flags (true => proppeller speed 0)
+        bool n1_fail;
+        bool n2_fail;
 };
                 
 #endif // RAN_HPP

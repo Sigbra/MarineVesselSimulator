@@ -7,11 +7,12 @@
 #include <Eigen/Dense>
 #include "Control/non_lin_constrained_control_alloc.hpp"
 #include "Models/model_utilities.hpp"
+#include "Models/ran.hpp"
 #include "Utilities/calculations.hpp"
 
 using namespace casadi;
 
-std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N, double U, Eigen::Vector2d n, Eigen::Vector2d alpha) {
+std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N, double U, Eigen::Vector2d n, Eigen::Vector2d alpha, std::vector<bool> failstate) {
 
     // Lever arms from ran()
     Eigen::Vector3d CO_offset = CO_Offset(U);
@@ -44,15 +45,25 @@ std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N, 
     opti.set_initial(vars(2), n(1) + rand_small);
     opti.set_initial(vars(3), alpha(1));
 
-    opti.subject_to(vars(0) >= n_min);
-    opti.subject_to(vars(0) <= n_max);
-    opti.subject_to(vars(1) >= alpha_min);
-    opti.subject_to(vars(1) <= alpha_max);
+    if (failstate[0]){
+        opti.subject_to(vars(0) == 0);
+        opti.subject_to(vars(1) == alpha(0));
+    } else {
+        opti.subject_to(vars(0) >= n_min);
+        opti.subject_to(vars(0) <= n_max);
+        opti.subject_to(vars(1) >= alpha_min);
+        opti.subject_to(vars(1) <= alpha_max);
+    }
 
-    opti.subject_to(vars(2) >= n_min);
-    opti.subject_to(vars(2) <= n_max);
-    opti.subject_to(vars(3) >= alpha_min);
-    opti.subject_to(vars(3) <= alpha_max);
+    if (failstate[1]){
+        opti.subject_to(vars(2) == 0);
+        opti.subject_to(vars(3) == alpha(1));
+    } else {
+        opti.subject_to(vars(2) >= n_min);
+        opti.subject_to(vars(2) <= n_max);
+        opti.subject_to(vars(3) >= alpha_min);
+        opti.subject_to(vars(3) <= alpha_max);
+    }
 
 
     MX Thrust1 = if_else(vars(0) >= 0, k_pos * vars(0) * abs(vars(0)), k_neg * vars(0) * abs(vars(0)));

@@ -48,6 +48,9 @@ RAN::RAN() {
     xdot = Eigen::VectorXd::Zero(12);
 
     propagate = true;
+
+    n1_fail = false;
+    n2_fail = false;
 }
 
 void RAN::update(const Eigen::VectorXd x, double mp, double V_c, double beta_c,
@@ -239,6 +242,14 @@ void RAN::update(const Eigen::VectorXd x, double mp, double V_c, double beta_c,
         update_alpha(alpha_c, h);
     }
 
+    // Check fail state:
+    if (n1_fail) {
+        n(0) = 0;
+    }
+    if (n2_fail) {
+        n(1) = 0;
+    }
+
     // Thrusts from podded propellars
     Eigen::VectorXd Thrusts = ThrustsFromRealativeN(n);
 
@@ -424,4 +435,39 @@ void RAN::rk4(Eigen::VectorXd& x, double mp, double V_c, double beta_c, double h
 
    propagate = true;
 
+}
+
+std::vector<bool> RAN::check_failstate() {
+    std::vector<bool> failstate;
+    failstate.push_back(n1_fail);
+    failstate.push_back(n2_fail);
+    return failstate;
+}
+
+void RAN::select_failure_mode() {
+    std::string input;
+
+    while (true) {
+        std::cout << "\nSelect operating mode:\n";
+        std::cout << "1 - Fully operational\n";
+        std::cout << "2 - Pod 1 failure\n";
+        std::cout << "3 - Pod 2 failure\n";
+        std::cout << "Enter your choice (1/2/3): ";
+        std::cin >> input;
+
+        if (input == "1") {
+            std::cout << "\n";
+            break; 
+        } else if (input == "2") {
+            fail_state_n1();
+            std::cout << "\n";
+            break; 
+        } else if (input == "3") {
+            fail_state_n2();
+            std::cout << "\n";
+            break; 
+        } else {
+            std::cout << "Invalid choice. Please try again.\n";
+        }
+    }
 }
