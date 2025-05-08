@@ -1,41 +1,60 @@
 #include <Eigen/Dense>
+#include <vector>
 #include <cmath>
+#include <cassert>
 
+// tau_XYN:      {τX, τY, τN}
+// B:            3×4 geometry‐only matrix T_e
+// k_pos, k_neg: thrust coefficients for forward (n>=0) / reverse (n<0)
+// returns:      {n1, alpha1, n2, alpha2}
 std::vector<double> pseudo_inverse_allocation(
     const std::vector<double>& tau_XYN,
     const Eigen::MatrixXd& B,
     double k_pos,
     double k_neg)
 {
-    Eigen::Vector3d tau;
-    tau << tau_XYN[0], tau_XYN[1], tau_XYN[2];
+    assert(tau_XYN.size()==3);
+    assert(B.rows()==3 && B.cols()==4);
 
-    // 1) Compute Moore–Penrose pseudo-inverse of B:
-    //    B^+ = B^T * (B * B^T)^(-1)
-    Eigen::Matrix3d BBt = B * B.transpose();       // 3×3
-    Eigen::Matrix3d BBt_inv = BBt.inverse();       // (B B^T)^(-1)
-    Eigen::MatrixXd Bplus = B.transpose() * BBt_inv; // (cols_B)×3
+    // 1) Build τ
+    Eigen::Vector3d tau(tau_XYN[0], tau_XYN[1], tau_XYN[2]);
 
-    // 2) Solve for “extended” forces u_ext = B^+ * tau
-    Eigen::VectorXd u_ext = Bplus * tau;  // 4×1 if B is 3×4
+    // 2) Compute B⁺ = Bᵀ (B Bᵀ)⁻¹ → 4×3
+    Eigen::Matrix3d BBt    = B * B.transpose();
+    Eigen::Matrix3d BBtInv = BBt.inverse();
+    Eigen::Matrix<double,4,3> Bplus = B.transpose() * BBtInv;
 
-    // 3) Split into x/y components
+    // 3) Solve for extended forces [u1x,u1y,u2x,u2y]ᵀ
+    Eigen::Vector4d u_ext = Bplus * tau;
     double u1x = u_ext(0), u1y = u_ext(1);
     double u2x = u_ext(2), u2y = u_ext(3);
 
-    // 4) Recover azimuth angles
-    double alpha1 = std::atan2(u1y, u1x);
+    // 4) Compute the total thrust magnitude and raw angle:
+    double F1    = std::hypot(u1x, u1y);
+    double alpha1 = std::atan2(u1y, u1x);  // in (−π,π]
+
+    // 5) Clamp alpha into [−π/2,π/2] and record flip s1:
+    double s1 = +1.0;
+    if      (alpha1 >  M_PI_2) { alpha1 -= M_PI; s1 = -1; }
+    else if (alpha1 < -M_PI_2) { alpha1 += M_PI; s1 = -1; }
+
+    // 6) Pick the correct thrust coefficient:
+    double k1 = (s1 > 0 ? k_pos : k_neg);
+
+    // 7) Solve F1 = k1 * n1 * |n1|  ⇒  |n1| = sqrt(F1/k1), then re‐apply sign:
+    double n1 = s1 * std::sqrt(std::abs(F1) / k1);
+
+    // Repeat for thruster 2:
+    double F2    = std::hypot(u2x, u2y);
     double alpha2 = std::atan2(u2y, u2x);
-    //    (Assume alpha_i in [–pi/2, +pi/2] so cos(alpha_i) >= 0)
+    double s2 = +1.0;
+    if      (alpha2 >  M_PI_2) { alpha2 -= M_PI; s2 = -1; }
+    else if (alpha2 < -M_PI_2) { alpha2 += M_PI; s2 = -1; }
+    double k2 = (s2 > 0 ? k_pos : k_neg);
+    double n2 = s2 * std::sqrt(std::abs(F2) / k2);
 
-    // 5) Choose the correct gain based on the sign of u_i_x
-    double k1 = (u1x >= 0 ? k_pos : k_neg);
-    double k2 = (u2x >= 0 ? k_pos : k_neg);
 
-    // 6) Back-substitute for speeds: u_i_x = k_i * n_i * cos(alpha_i)
-    double n1 = u1x / (k1 * std::cos(alpha1));
-    double n2 = u2x / (k2 * std::cos(alpha2));
-
-    return { n1, n2, alpha1, alpha2 };
+    // 8) Return in the order {n1, alpha1, n2, alpha2}
+    return { n1, alpha1, n2, alpha2 };
 }
 

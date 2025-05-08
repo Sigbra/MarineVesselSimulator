@@ -177,7 +177,7 @@ int main() {
     // Motion control classes
     MIMOPIDController MIMO_PID;
     HeadingPIDController headPID;
-    MPC_Control_System mpc_control(30, 4*h); 
+    MPC_Control_System mpc_control(30, 3*h); 
 
     // Desired rate of turn and acceleration
     double r_d = 0.0; 
@@ -241,6 +241,7 @@ int main() {
         U = ran_model.get_U();
         n = ran_model.get_n();
         alpha = ran_model.get_alpha();
+        B = ran_model.get_B();
 
         // ------------------------------ Mode switch ------------------------------
 
@@ -345,7 +346,7 @@ int main() {
         // ------------------------------ Control System ------------------------------
 
         // - Motion Control: Dynamic positioning
-        if (GuidanceFlag==1 && ControlAllocFlag != 3){
+        if (GuidanceFlag==1 && ControlAllocFlag != 4){
             eta << u, v, w, p, q, r;
             nu  << xn, yn, zn, phi, theta, psi;
             tau_XYN = MIMO_PID.update(h, xn_d, yn_d, psi_d, M, eta, nu);
@@ -443,7 +444,7 @@ int main() {
             << "n_c(0), n_c(1):         " << n_c(0) << ", " << n_c(1) << std::endl
             << "n(0),   n(1):           " << n(0) << ", " << n(1) << std::endl
             << "------------------------------------------------" << std::endl
-            << std::fixed << std::setprecision(0)
+            << std::fixed << std::setprecision(2)
             << "alpha_c(0), alpha_c(1): " << rad2deg(alpha_c(0)) << ", " << rad2deg(alpha_c(1)) << std::endl
             << "alpha(0), alpha(1):     " << rad2deg(alpha(0)) << ", " << rad2deg(alpha(1)) << std::endl
             << "------------------------------------------------" << std::endl

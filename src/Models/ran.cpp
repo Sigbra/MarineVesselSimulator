@@ -348,37 +348,43 @@ void RAN::update(const Eigen::VectorXd x, double mp, double V_c, double beta_c,
         // Input matrix B (3x2). 
         // (Fossen Chapter 9.4 and 11.2)
         //----------------------------
-        Eigen::MatrixXd B_ = Eigen::MatrixXd::Zero(3,2);
-        double F1 = 0;
-        double F2 = 0;
+        // Eigen::MatrixXd B_ = Eigen::MatrixXd::Zero(3,4);
+        // double F1 = 0;
+        // double F2 = 0;
 
-        if (n(0) >= 0) {
-            F1 = k_pos;
-        } else if (n(0) < 0) {
-            F1 = k_neg;
-        }
+        // if (n(0) >= 0) {
+        //     F1 = k_pos;
+        // } else if (n(0) < 0) {
+        //     F1 = k_neg;
+        // }
 
-        if (n(1) >= 0) {
-            F2 = k_pos;
-        } else if (n(1) < 0) {
-            F2 = k_neg;
-        }
+        // if (n(1) >= 0) {
+        //     F2 = k_pos;
+        // } else if (n(1) < 0) {
+        //     F2 = k_neg;
+        // }
 
-        // First row: contribution to surge (X)
-        B_(0,0) = F1*cos(alpha(0));
-        B_(0,1) = F2*cos(alpha(1));
+        // // First row: contribution to surge (X)
+        // B_(0,0) = F1*cos(alpha(0));
+        // B_(0,1) = F2*cos(alpha(1));
 
-        // Second row: contribution to sway (Y)
-        B_(1,0) = F1*sin(alpha(0));
-        B_(1,1) = F2*sin(alpha(1));
+        // // Second row: contribution to sway (Y)
+        // B_(1,0) = F1*sin(alpha(0));
+        // B_(1,1) = F2*sin(alpha(1));
 
-        // Third row: contribution to yaw moment (N)
-        B_(2,0) =  F1*(lx*sin(alpha(0) - ly1*cos(alpha(0))));
-        B_(2,1) =  F2*(lx*sin(alpha(1) - ly2*cos(alpha(1))));
+        // // Third row: contribution to yaw moment (N)
+        // B_(2,0) =  F1*(lx*sin(alpha(0) - ly1*cos(alpha(0))));
+        // B_(2,1) =  F2*(lx*sin(alpha(1) - ly2*cos(alpha(1))));
 
-        //std::cout << "B : \n" << B_ << std::endl;
-        B = B_;
+        // //std::cout << "B : \n" << B_ << std::endl;
+        // B = B_;
 
+        Eigen::Matrix<double,3,4> B_e;
+        B_e <<  1,    0,    1,    0,
+              0,    1,    0,    1,
+             -ly1*cos(alpha[0]), lx*sin(alpha[0]), -ly2*cos(alpha[1]), lx*sin(alpha[1]);
+
+        B = B_e;
     }
     else {
         xdot_rk4.resize(12);

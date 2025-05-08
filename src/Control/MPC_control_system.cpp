@@ -147,7 +147,7 @@ bool MPC_Control_System::solve(const std::vector<double>& x0, double x_s, double
     Opti opti;
 
     // Decision variables:
-    // X: state trajectory (6 x (N+1))
+    // X: state trajectory (6 x (N+1)) 
     // U: control inputs (3 x N)
     MX X = opti.variable(6, N+1);
 
@@ -247,59 +247,57 @@ bool MPC_Control_System::solve(const std::vector<double>& x0, double x_s, double
     MX path_x_start = x_s;
     MX path_y_start = y_s;
     MX path_x_goal  = x_d;
-    MX path_y_goal  = y_d;
+    MX path_y_goal  = y_d;  
 
     // Compute unit direction vector along the path
     MX path_dx = path_x_goal - path_x_start;
     MX path_dy = path_y_goal - path_y_start;
-    MX path_length = sqrt(path_dx * path_dx + path_dy * path_dy);
+    MX path_length = sqrt(path_dx*path_dx + path_dy*path_dy);
     MX path_dir_x = path_dx / path_length;
     MX path_dir_y = path_dy / path_length;
 
+
+
     MX cost = 0;
-    for (int i = 0; i < N; i++) {
-        
+    for(int i = 0; i < N; ++i) {
         MX tau = control_allocation(n_vars(Slice(), i), alpha_vars(Slice(), i),
                                     lx, ly1, ly2, k_pos, k_neg);
 
         MX X_next = oneStepFunc({X(Slice(), i), tau})[0];
         opti.subject_to(X(Slice(), i + 1) == X_next);
 
-        // Project current position onto path direction
-        MX rel_x = X(0, i) - path_x_start;
-        MX rel_y = X(1, i) - path_y_start;
-        MX proj_dist_along_path = rel_x * path_dir_x + rel_y * path_dir_y;
-        // Compute normalized progress (from 1 at start to 0 at goal)
-        MX progress = proj_dist_along_path / path_length; 
-        MX progress_scaled = abs(1.0 - progress);     
-        // Closest point on the path line
-        MX proj_x = proj_dist_along_path * path_dir_x + path_x_start;
-        MX proj_y = proj_dist_along_path * path_dir_y + path_y_start;
-        // Crosstrack error components and squared magnitude
-        MX crosstrack_x = X(0, i) - proj_x;
-        MX crosstrack_y = X(1, i) - proj_y;
-        MX crosstrack_error_square = sqrt(crosstrack_x*crosstrack_x + crosstrack_y*crosstrack_y + 1e-6);
-        // Progress error: distance from projected point to goal
-        MX remaining_distance = path_length - proj_dist_along_path;
-        // Normalize the remaining distance (so that 1 corresponds to the full path length)
-        MX normalized_remaining_distance = remaining_distance / path_length;
-        MX distance_error_square = sqrt(normalized_remaining_distance*normalized_remaining_distance + 1e-6);
+        // --- 1) cross-track error to infinite line ---
+        MX rel_x = X(0,i) - path_x_start;
+        MX rel_y = X(1,i) - path_y_start;
+        MX proj_dist = rel_x*path_dir_x + rel_y*path_dir_y;    
+        MX cross_x = rel_x - proj_dist*path_dir_x;
+        MX cross_y = rel_y - proj_dist*path_dir_y;
+        MX crosstrack_error_sq = sqrt(cross_x*cross_x + cross_y*cross_y + 1e-4);
+    
+        // --- 2) position error along the line (1 @ start → 0 @ goal) ---
+        MX normalized_along = proj_dist / path_length;
+        MX position_error   = 1 - normalized_along;       // 1→0 along segment
+        MX position_error_sq = sqrt(position_error * position_error + 1e-4); 
+    
+        // --- 3) heading error ---
+        MX heading_error = X(2,i) - psi_d;
+        MX heading_error_sq = sqrt(heading_error * heading_error + 1e-4);
 
         if (failstate[0] || failstate[1]) { // Penalties when error state
-            cost +=  crosstrack_error_square; 
-            cost +=  55 * distance_error_square;
-            cost +=  pow(X(2, i) - psi_d, 2); 
+            cost +=  0 * crosstrack_error_sq; 
+            cost += 30 * position_error_sq;
+            cost +=  1 * heading_error_sq;  
         } 
         else { // Penalties in normal operation
-            cost +=   2 * crosstrack_error_square; 
-            cost +=  15 * distance_error_square;
-            cost +=  10 * pow(X(2, i) - psi_d, 2);  // Scaled based on progress such that this is not the only parameter of improtance close to the goal. 
+            cost +=  2 * crosstrack_error_sq; 
+            cost +=  8 * position_error_sq;
+            cost += 10 * heading_error_sq;  
         }
 
         if (i > 0) {
             MX d_n = n_cmd(Slice(), i) - n_cmd(Slice(), i - 1);
             MX d_alpha = alpha_cmd(Slice(), i) - alpha_cmd(Slice(), i - 1);
-            cost += 5*dot(d_n, d_n) + 1*dot(d_alpha, d_alpha);
+            cost += 5*dot(d_n, d_n) + dot(d_alpha, d_alpha);
         }  
     } 
     
