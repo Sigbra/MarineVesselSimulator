@@ -9,6 +9,7 @@
 #include <thread>
 
 #include "Control/control_alloc_selector.hpp"
+#include "Control/pseudo_inverse_allocation.hpp"
 #include "Control/PID_MIMO_motion_control.hpp"
 #include "Control/PID_heading_motion_control.hpp"
 #include "Control/MPC_control_system.hpp"
@@ -176,7 +177,7 @@ int main() {
     // Motion control classes
     MIMOPIDController MIMO_PID;
     HeadingPIDController headPID;
-    MPC_Control_System mpc_control(40, h*4); 
+    MPC_Control_System mpc_control(30, 4*h); 
 
     // Desired rate of turn and acceleration
     double r_d = 0.0; 
@@ -358,19 +359,25 @@ int main() {
 
         // - Control allocation
         switch (ControlAllocFlag) {
-            case 1: { // Nonlinear optimization with constraints
+            case 1: { // Pseudo-inverse control allocation
+                control_allocation = pseudo_inverse_allocation(tau_XYN, B, 200, 200);
+                n_c     = {control_allocation[0], control_allocation[2]};
+                alpha_c = {control_allocation[1], control_allocation[3]};
+                break;
+            }
+            case 2: { // Nonlinear optimization with constraints
                 control_allocation = NLOptControlAlloc(tau_XYN[0], tau_XYN[1], tau_XYN[2], U, n, alpha, failstate);
                 n_c     = {control_allocation[0], control_allocation[2]};
                 alpha_c = {control_allocation[1], control_allocation[3]};
                 break;
             }
-            case 2: { // Nonlinear optimization with constraints over a horizon taking rate constriants into account
+            case 3: { // Nonlinear optimization with constraints over a horizon taking rate constriants into account
                 control_allocation = MPC_control_alloc(tau_XYN[0], tau_XYN[1], tau_XYN[2], U, T_n, T_alpha, n, alpha, failstate);
                 n_c     = {control_allocation[0], control_allocation[2]};
                 alpha_c = {control_allocation[1], control_allocation[3]};
                 break;
             }
-            case 3: { // Model Predictive Control System (Motion control and control allocation using vessel model)
+            case 4: { // Model Predictive Control System (Motion control and control allocation using vessel model)
                 std::vector<double> x0 = {xn, yn, psi, u, v, r}; 
                 mpc_control.solve(x0, wpt[wpt_index-1].x, wpt[wpt_index-1].y, xn_d, yn_d, psi_d, n, alpha, failstate);
                 n_c = mpc_control.get_n_opt();

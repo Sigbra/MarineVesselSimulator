@@ -197,7 +197,7 @@ void plotStateErrors() {
         return;
     }
 
-    plt::figure_size(800, 600);
+    plt::figure_size(2481, 1240);
     plt::named_plot("Error x position", time, error_x, "r-");
     plt::named_plot("Error y position", time, error_y, "g-");
     plt::named_plot("Error psi",        time, error_psi, "b-");
@@ -251,7 +251,7 @@ void plotAngles() {
         return;
     }
     
-    plt::figure_size(800, 600);
+    plt::figure_size(2481, 1240);
     plt::named_plot("psi", time, psi, "r-");
     plt::named_plot("psi_d", time, psi_d, "g-");
     plt::xlabel("Time (s)");
@@ -357,7 +357,7 @@ void plotClosestPointErrors() {
     oss_y << "cross track error y_e (total = " << total_y_e << "): ";
     std::string title_y = oss_y.str();
 
-    plt::figure_size(800, 600);
+    plt::figure_size(2481, 1240);
     plt::named_plot(title_x, time, x_e, "r-");
     plt::named_plot(title_y, time, y_e, "g-");
     //plt::named_plot("position error:        ", time, position_e, "b-");

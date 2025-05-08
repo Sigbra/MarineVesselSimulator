@@ -278,26 +278,28 @@ bool MPC_Control_System::solve(const std::vector<double>& x0, double x_s, double
         // Crosstrack error components and squared magnitude
         MX crosstrack_x = X(0, i) - proj_x;
         MX crosstrack_y = X(1, i) - proj_y;
-        MX crosstrack_error_abs = crosstrack_x*crosstrack_x + crosstrack_y*crosstrack_y;
+        MX crosstrack_error_square = sqrt(crosstrack_x*crosstrack_x + crosstrack_y*crosstrack_y + 1e-6);
         // Progress error: distance from projected point to goal
         MX remaining_distance = path_length - proj_dist_along_path;
         // Normalize the remaining distance (so that 1 corresponds to the full path length)
         MX normalized_remaining_distance = remaining_distance / path_length;
-        MX distance_error_abs = normalized_remaining_distance*normalized_remaining_distance;
+        MX distance_error_square = sqrt(normalized_remaining_distance*normalized_remaining_distance + 1e-6);
 
-        // Cost function terms
-        cost +=  20 * crosstrack_error_abs; 
-        cost += 120 * distance_error_abs;
-        if (failstate[0] || failstate[1]) {
-            cost +=  5 * pow(X(2, i) - psi_d, 2);
+        if (failstate[0] || failstate[1]) { // Penalties when error state
+            cost +=  crosstrack_error_square; 
+            cost +=  55 * distance_error_square;
+            cost +=  pow(X(2, i) - psi_d, 2); 
+        } 
+        else { // Penalties in normal operation
+            cost +=   2 * crosstrack_error_square; 
+            cost +=  15 * distance_error_square;
+            cost +=  10 * pow(X(2, i) - psi_d, 2);  // Scaled based on progress such that this is not the only parameter of improtance close to the goal. 
         }
-        else {
-            cost +=  60 * pow(X(2, i) - psi_d, 2);  // Scaled based on progress such that this is not the only parameter of improtance close to the goal. 
-        }
+
         if (i > 0) {
             MX d_n = n_cmd(Slice(), i) - n_cmd(Slice(), i - 1);
             MX d_alpha = alpha_cmd(Slice(), i) - alpha_cmd(Slice(), i - 1);
-            cost += 5 * dot(d_n, d_n) + 5 * dot(d_alpha, d_alpha);
+            cost += 5*dot(d_n, d_n) + 1*dot(d_alpha, d_alpha);
         }  
     } 
     

@@ -85,6 +85,7 @@ set(SOURCES
     src/main.cpp
 
     src/Control/control_alloc_selector.cpp
+    src/Control/pseudo_inverse_allocation.cpp
     src/Control/MPC_control_alloc.cpp
     src/Control/non_lin_constrained_control_alloc.cpp
     src/Control/PID_heading_motion_control.cpp
