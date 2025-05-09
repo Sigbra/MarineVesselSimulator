@@ -17,14 +17,14 @@ MIMOPIDController::MIMOPIDController(){
 
     // Tunable params
     Omega_b = Eigen::MatrixXd::Zero(3, 3);
-    Omega_b(0, 0) = 0.06;
-    Omega_b(1, 1) = 0.06;
-    Omega_b(2, 2) = 1;
+    Omega_b(0, 0) = 0.15;
+    Omega_b(1, 1) = 0.2;
+    Omega_b(2, 2) = 1.2;
 
     Z = Eigen::MatrixXd::Zero(3, 3);
-    Z(0, 0) = 1;
-    Z(1, 1) = 1;
-    Z(2, 2) = 1;
+    Z(0, 0) = 1.0;
+    Z(1, 1) = 0.3;
+    Z(2, 2) = 1.0;
 
     // Natural Frequencies
     Omega_n = Eigen::MatrixXd::Zero(3,3);
@@ -75,7 +75,7 @@ std::vector<double> MIMOPIDController::update(double h, double xn_d, double yn_d
     Eigen::MatrixXd Ki = (Kp*Omega_n)/10;
 
     //Low pass filtered derivative term
-    double alpha = 0.2; //More filtering 0 < alpha < 1 No filtering.
+    double alpha = 0.1; //More filtering 0 < alpha < 1 No filtering.
     nu_der = alpha * ((nu_error - nu_prev_error) / h) + (1 - alpha) * nu_der;
 
     //Anti-windup clamping
