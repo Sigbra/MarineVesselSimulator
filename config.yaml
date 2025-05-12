@@ -17,15 +17,15 @@ waypoints:
 
 # Waypoint lists for DP simulation
 
-  x:      [0,  0, 20, 20, 0] 
-  y:      [0, 20, 20,  0, 0] 
-  angles: [90,  90, 90, 135]
+  #x:      [0,  0, 20, 20, 0] 
+  #y:      [0, 20, 20,  0, 0] 
+  #angles: [90,  90, 90, 135]
 
 # Waypoint list for path following simulation
 
   # Right turn
-  #x: [0,  0, 20] 
-  #y: [0, 20, 20] 
+  x: [0,  0, 20] 
+  y: [0, 20, 20] 
 
   # Left turn
   #x: [0, 0, -20]

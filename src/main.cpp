@@ -136,7 +136,7 @@ int main() {
 
     // Initialize guidance methods and LOS observer 
     ALOS ALOS(Delta_h, gamma_h, 0.1);
-    LOSObserver losObserver(h, K_f);
+    LOSObserver losObserver(h, K_f, x(11));
 
     // Choose path type
     int pathType = selectPathType();
@@ -163,9 +163,9 @@ int main() {
     int ControlAllocFlag = controlAlloc.selectMethod();
 
     // Initial desired states
-    double xn_d  = 0.0;        
-    double yn_d  = 0.0;        
-    double psi_d = 0.0; 
+    double xn_d  = x(6);        
+    double yn_d  = x(7);        
+    double psi_d = x(11); 
     double U_d   = 0.0;
 
     // ALOS variables
@@ -494,6 +494,8 @@ int main() {
     plotClosestPointErrors();
     plotStateErrors();
     plotAngles();
+    plotPropellerSpeeds();
+    plotAlphas();
 
     return 0;
 }

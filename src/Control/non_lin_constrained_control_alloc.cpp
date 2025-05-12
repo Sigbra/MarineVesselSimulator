@@ -15,10 +15,13 @@ using namespace casadi;
 std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N, double U, Eigen::Vector2d n, Eigen::Vector2d alpha, std::vector<bool> failstate) {
 
     // Lever arms from ran()
-    Eigen::Vector3d CO_offset = CO_Offset(U);
-    double ly1 =  1.1 - CO_offset(1);    
-    double ly2 = -1.1 + CO_offset(1);    
-    double lx  = -1.1 - CO_offset(0);    
+    // Eigen::Vector3d CO_offset = CO_Offset(U);
+    // double ly1 =  1.1 - CO_offset(1);    
+    // double ly2 = -1.1 + CO_offset(1);    
+    // double lx  = -1.1 - CO_offset(0);   
+    double ly1 =  1.1;    
+    double ly2 = -1.1;    
+    double lx  = -1.1;  
 
     // Constants from ran()
     double g = 9.81;

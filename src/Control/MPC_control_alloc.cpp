@@ -14,10 +14,13 @@ std::vector<double> MPC_control_alloc(double tau_X, double tau_Y, double tau_N,
     double delta   = 0.5;
     int N = static_cast<int>(horizon/delta); 
 
-    Eigen::Vector3d CO_offset = CO_Offset(U);
-    double ly1 =  1.1 - CO_offset(1);    // Left pod lever arm
-    double ly2 = -1.1 + CO_offset(1);    // Right pod lever arm
-    double lx  = -1.1 - CO_offset(0);    // Pod locations in x
+    //Eigen::Vector3d CO_offset = CO_Offset(U);
+    //double ly1 =  1.1 - CO_offset(1);    // Left pod lever arm
+    //double ly2 = -1.1 + CO_offset(1);    // Right pod lever arm
+    //double lx  = -1.1 - CO_offset(0);    // Pod locations in x
+    double ly1 =  1.1;    // Left pod lever arm
+    double ly2 = -1.1;    // Right pod lever arm
+    double lx  = -1.1;    // Pod locations in x
 
     // Constants from ran()
     double g = 9.81;

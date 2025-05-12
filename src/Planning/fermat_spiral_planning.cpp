@@ -50,10 +50,13 @@ FermatSpiralPath::FSParameters FermatSpiralPath::computeFSParameters(const Vecto
     params.u_max = std::sqrt(params.theta_end);
 
     if (std::isnan(params.chi0) || std::isnan(params.x0) || std::isnan(params.y0) ||
-    std::isnan(params.chi_end) || std::isnan(params.x_end) || std::isnan(params.y_end) ||
-    std::isnan(params.k) || std::isnan(params.rho)) {
-    std::cerr << "Error: Invalid FSParameters detected!" << std::endl;
-    std::abort();
+        std::isnan(params.chi_end) || std::isnan(params.x_end) || std::isnan(params.y_end) ||
+        std::isnan(params.k) || std::isnan(params.rho)) {
+        std::cerr << "Error: Invalid FSParameters detected!" << std::endl;
+        std::cerr << "chi0: " << params.chi0 << ", x0: " << params.x0 << ", y0: " << params.y0 << std::endl;
+        std::cerr << "chi_end: " << params.chi_end << ", x_end: " << params.x_end << ", y_end: " << params.y_end << std::endl;
+        std::cerr << "k: " << params.k << ", rho: " << params.rho << std::endl;
+        std::abort();
     }
 
     return params;

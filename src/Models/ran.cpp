@@ -79,13 +79,17 @@ void RAN::update(const Eigen::VectorXd x, double mp, double V_c, double beta_c,
     // - Assuming CO = (0, 0, 0) means center of the boat.
     //----------------------------
     // - Coordinate origin (CO) offset update (Speed dependant)
-    Eigen::Vector3d CO_offset = CO_Offset(U);
-    // - CO to center of gravity for hull only.
-    Eigen::Vector3d rg_hull = Eigen::Vector3d( -0.5, 0.0, -0.2) - CO_offset;
-    // - CO to payload location (front cabin).
-    Eigen::Vector3d rp      = Eigen::Vector3d( 0.75, 0.0, -0.2) - CO_offset;
-    // - CO to longditudinal center of flotation (LCF).
-    Eigen::Vector3d LCF_vec = Eigen::Vector3d( -0.2, 0.0,  0.0) - CO_offset;
+    // Eigen::Vector3d CO_offset = CO_Offset(U);
+    // // - CO to center of gravity for hull only.
+    // Eigen::Vector3d rg_hull = Eigen::Vector3d( -0.5, 0.0, -0.2) - CO_offset;
+    // // - CO to payload location (front cabin).
+    // Eigen::Vector3d rp      = Eigen::Vector3d( 0.75, 0.0, -0.2) - CO_offset;
+    // // - CO to longditudinal center of flotation (LCF).
+    // Eigen::Vector3d LCF_vec = Eigen::Vector3d( -0.2, 0.0,  0.0) - CO_offset;
+
+    Eigen::Vector3d rg_hull = Eigen::Vector3d( -0.5, 0.0, -0.2);
+    Eigen::Vector3d rp      = Eigen::Vector3d( 0.75, 0.0, -0.2);
+    Eigen::Vector3d LCF_vec = Eigen::Vector3d( -0.2, 0.0,  0.0);
     
     // ---------------------------
     // Ocean current and relative velocity
@@ -135,11 +139,15 @@ void RAN::update(const Eigen::VectorXd x, double mp, double V_c, double beta_c,
     // Azimuth pods / Pontoon data and control forces
     // ---------------------------
     // left pod lever arm (m)
-    double ly1 = y_pont - CO_offset(1);         
-    // right pod lever arm (m)
-    double ly2 = -y_pont + CO_offset(1);        
-    // forward displacement of pods (m)
-    double lx  = -1.1 + CO_offset(0);   
+    // double ly1 = y_pont - CO_offset(1);         
+    // // right pod lever arm (m)
+    // double ly2 = -y_pont + CO_offset(1);        
+    // // forward displacement of pods (m)
+    // double lx  = -1.1 + CO_offset(0); 
+      
+    double ly1 = y_pont;         
+    double ly2 = -y_pont;        
+    double lx  = -1.1;
 
     // ---------------------------
     // Rigid-body (MRB) and Coriolis (CRB) matrices at the CG

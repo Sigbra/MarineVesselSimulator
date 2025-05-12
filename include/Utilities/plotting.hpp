@@ -17,6 +17,10 @@ void plotStateErrors();
 
 void plotAngles();
 
+void plotPropellerSpeeds();
+
+void plotAlphas();
+
 void plot_points(const std::vector<Vector2D>& vessels, const std::vector<Vector2D>& projections);
 
 void plotClosestPointErrors();

@@ -186,7 +186,7 @@ void plotStateErrors() {
             time.push_back(t);
             error_x.push_back(xn_d - xn);
             error_y.push_back(yn_d - yn);
-            error_psi.push_back(ssa(psi_d - psi));
+            error_psi.push_back(psi_d - psi);
         }
         
     }
@@ -261,6 +261,108 @@ void plotAngles() {
     plt::grid(true);
     plt::show();
 }      
+
+void plotPropellerSpeeds() {
+    std::filesystem::path filepath = std::filesystem::path(getRepositoryPath()) / "data" / "simdata.csv";
+    if (!std::filesystem::exists(filepath)) {
+        std::cerr << "File does not exist: " << filepath << std::endl;
+        return;
+    }
+    std::ifstream file(filepath);
+    if (!file.is_open()) {
+        std::cerr << "Error: Unable to open " << filepath << std::endl;
+        return;
+    }
+
+    std::vector<double> time, n1, n2, nc1, nc2;
+    std::string line;
+    while (std::getline(file, line)) {
+        std::stringstream ss(line);
+        std::vector<double> vals;
+        std::string cell;
+        while (std::getline(ss, cell, ',')) {
+            try { vals.push_back(std::stod(cell)); }
+            catch (const std::invalid_argument&) { /* skip non-numeric */ }
+        }
+        if (vals.size() >= 20) {
+            time.push_back(vals[0]);
+            nc1 .push_back(vals[16]);  // n_c(0)
+            nc2 .push_back(vals[17]);  // n_c(1)
+            n1  .push_back(vals[18]);  // n(0)
+            n2  .push_back(vals[19]);  // n(1)
+        }
+    }
+    file.close();
+
+    if (time.empty()) {
+        std::cerr << "Error: No valid data found in " << filepath << std::endl;
+        return;
+    }
+
+    plt::figure_size(2481, 1240);
+    plt::named_plot("n1 commanded", time, nc1, "C0-");
+    plt::named_plot("n2 commanded", time, nc2, "C2-");
+    plt::named_plot("n1 actual",    time, n1,  "C1--");
+    plt::named_plot("n2 actual",    time, n2,  "C3--");
+    plt::xlabel("Time (s)");
+    plt::ylabel("Propeller speed n");
+    plt::title("Actual vs. Commanded Propeller Speeds");
+    plt::ylim(-1.0, 1.0);
+    plt::legend();
+    plt::grid(true);
+    plt::show();
+}
+
+void plotAlphas() {
+    std::filesystem::path filepath = std::filesystem::path(getRepositoryPath()) / "data" / "simdata.csv";
+    if (!std::filesystem::exists(filepath)) {
+        std::cerr << "File does not exist: " << filepath << std::endl;
+        return;
+    }
+    std::ifstream file(filepath);
+    if (!file.is_open()) {
+        std::cerr << "Error: Unable to open " << filepath << std::endl;
+        return;
+    }
+
+    std::vector<double> time, a1, a2, ac1, ac2;
+    std::string line;
+    while (std::getline(file, line)) {
+        std::stringstream ss(line);
+        std::vector<double> vals;
+        std::string cell;
+        while (std::getline(ss, cell, ',')) {
+            try { vals.push_back(std::stod(cell)); }
+            catch (const std::invalid_argument&) { /* skip non-numeric */ }
+        }
+        if (vals.size() >= 24) {
+            time.push_back(vals[0]);
+            ac1.push_back(rad2deg(vals[20]));  // alpha_c(0) → degrees
+            ac2.push_back(rad2deg(vals[21]));  // alpha_c(1)
+            a1 .push_back(rad2deg(vals[22]));  // alpha(0)
+            a2 .push_back(rad2deg(vals[23]));  // alpha(1)
+        }
+    }
+    file.close();
+
+    if (time.empty()) {
+        std::cerr << "Error: No valid data found in " << filepath << std::endl;
+        return;
+    }
+
+    plt::figure_size(2481, 1240);
+    plt::named_plot("alpha1 commanded", time, ac1, "C0-");
+    plt::named_plot("alpha2 commanded", time, ac2, "C2-");
+    plt::named_plot("alpha1 actual",    time, a1,  "C1--");
+    plt::named_plot("alpha2 actual",    time, a2,  "C3--");
+    plt::xlabel("Time (s)");
+    plt::ylabel("alpha (deg)");
+    plt::title("Actual vs. Commanded alpha Angles");
+    plt::ylim(-90.0, 90.0);
+    plt::legend();
+    plt::grid(true);
+    plt::show();
+}
 
 void plot_points(const std::vector<Vector2D>& vessels, const std::vector<Vector2D>& projections) {
     std::vector<double> vessel_x, vessel_y;

@@ -131,10 +131,13 @@ Function MPC_Control_System::oneStepDynamicsFunction() {
 bool MPC_Control_System::solve(const std::vector<double>& x0, double x_s, double y_s, double x_d, double y_d, double psi_d, Eigen::VectorXd n_init, Eigen::VectorXd alpha_init, std::vector<bool> failstate) {
     
     double U = std::sqrt(x0[3]*x0[3] + x0[4]*x0[4]); // Current speed from state x0
-    Eigen::Vector3d CO_offset = CO_Offset(U); 
-    double ly1 =  1.1 - CO_offset(0);    // left pod lever arm
-    double ly2 = -1.1 + CO_offset(1);    // right pod lever arm
-    double lx  = -1.1 - CO_offset(2);    // longitudinal pod location
+    //Eigen::Vector3d CO_offset = CO_Offset(U); 
+    // double ly1 =  1.1 - CO_offset(0);    // left pod lever arm
+    // double ly2 = -1.1 + CO_offset(1);    // right pod lever arm
+    // double lx  = -1.1 - CO_offset(2);    // longitudinal pod location
+    double ly1 =  1.1;    // left pod lever arm
+    double ly2 = -1.1;    // right pod lever arm
+    double lx  = -1.1;    // longitudinal pod location
     
     // Constants from the RAN model parameters
     double k_pos = 200;
