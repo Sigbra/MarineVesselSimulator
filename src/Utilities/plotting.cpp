@@ -63,8 +63,8 @@ void plotPath(const Waypoints& path) {
         plt::figure();
         plt::plot(x, y, "b-");  
         plt::title("Fermat Spiral Path");
-        plt::xlabel("X");
-        plt::ylabel("Y");
+        plt::xlabel("x [m]");
+        plt::ylabel("y [m]");
         plt::grid(true);
         plt::axis("equal");    
         plt::show();
@@ -123,8 +123,8 @@ void plotTrajectory() {
     
     plt::figure_size(800, 600);
     plt::plot(xn, yn, "b-");
-    plt::xlabel("x(t)");
-    plt::ylabel("y(t)");
+    plt::xlabel("x(t) [m]");
+    plt::ylabel("y(t) [m]");
     plt::title("Vessel Path with Heading Angles");
     
     // Prepare data for quiver (vector field plot)
@@ -132,7 +132,7 @@ void plotTrajectory() {
     double arrowLength = 0.2;  // Scale factor for arrows
     std::vector<double> xq, yq;
     
-    for (size_t i = 0; i < xn.size(); i += 400) { 
+    for (size_t i = 0; i < xn.size(); i += 200) { 
         xq.push_back(xn[i]);
         yq.push_back(yn[i]);
         u.push_back(arrowLength * cos(psi[i]));
@@ -198,10 +198,10 @@ void plotStateErrors() {
     }
 
     plt::figure_size(2481, 1240);
-    plt::named_plot("Error x position", time, error_x, "r-");
-    plt::named_plot("Error y position", time, error_y, "g-");
-    plt::named_plot("Error psi",        time, error_psi, "b-");
-    plt::xlabel("Time (s)");
+    plt::named_plot("Error x position [m]", time, error_x, "r-");
+    plt::named_plot("Error y position [m]", time, error_y, "g-");
+    plt::named_plot("Error $\\psi$ heading [deg]", time, error_psi, "b-");
+    plt::xlabel("Time [s]");
     plt::ylabel("State Error");
     plt::title("State Errors over Time");
     plt::legend();
@@ -239,8 +239,8 @@ void plotAngles() {
 
         if (values.size() >= 24) {
             time.push_back(values[0]);
-            psi.push_back(values[12]);
-            psi_d.push_back(values[15]);
+            psi.push_back(rad2deg(values[12]));
+            psi_d.push_back(rad2deg(values[15]));
         }
         
     }
@@ -252,11 +252,11 @@ void plotAngles() {
     }
     
     plt::figure_size(2481, 1240);
-    plt::named_plot("psi", time, psi, "r-");
-    plt::named_plot("psi_d", time, psi_d, "g-");
-    plt::xlabel("Time (s)");
-    plt::ylabel("Angle");
-    plt::title("Psi vs Psi Desired");
+    plt::named_plot("$\\psi$", time, psi, "r-");
+    plt::named_plot("$\\psi_{\\mathrm{desired}}$", time, psi_d, "g-"); 
+    plt::xlabel("Time [s]");
+    plt::ylabel("Angle [deg]");
+    plt::title("$\\psi$ vs $\\psi_{\\mathrm{desired}}$");
     plt::legend();
     plt::grid(true);
     plt::show();
@@ -300,12 +300,12 @@ void plotPropellerSpeeds() {
     }
 
     plt::figure_size(2481, 1240);
-    plt::named_plot("n1 commanded", time, nc1, "C0-");
-    plt::named_plot("n2 commanded", time, nc2, "C2-");
-    plt::named_plot("n1 actual",    time, n1,  "C1--");
-    plt::named_plot("n2 actual",    time, n2,  "C3--");
-    plt::xlabel("Time (s)");
-    plt::ylabel("Propeller speed n");
+    plt::named_plot("$n_1$ commanded", time, nc1, "C0-");
+    plt::named_plot("$n_2$ commanded", time, nc2, "C2-");
+    plt::named_plot("$n_1$ actual",    time, n1,  "C3-");
+    plt::named_plot("$n_2$ actual",    time, n2,  "C1-");
+    plt::xlabel("Time [s]");
+    plt::ylabel("Relative propeller speed $n$");
     plt::title("Actual vs. Commanded Propeller Speeds");
     plt::ylim(-1.0, 1.0);
     plt::legend();
@@ -351,13 +351,13 @@ void plotAlphas() {
     }
 
     plt::figure_size(2481, 1240);
-    plt::named_plot("alpha1 commanded", time, ac1, "C0-");
-    plt::named_plot("alpha2 commanded", time, ac2, "C2-");
-    plt::named_plot("alpha1 actual",    time, a1,  "C1--");
-    plt::named_plot("alpha2 actual",    time, a2,  "C3--");
-    plt::xlabel("Time (s)");
-    plt::ylabel("alpha (deg)");
-    plt::title("Actual vs. Commanded alpha Angles");
+    plt::named_plot("$\\alpha_1$ commanded", time, ac1, "C0-");
+    plt::named_plot("$\\alpha_2$ commanded", time, ac2, "C2-");
+    plt::named_plot("$\\alpha_1$ actual",    time, a1,  "C3-");
+    plt::named_plot("$\\alpha_2$ actual",    time, a2,  "C1-");
+    plt::xlabel("Time [s]");
+    plt::ylabel("Angle [deg]");
+    plt::title("Actual vs. Commanded $\\alpha$ Angles");
     plt::ylim(-90.0, 90.0);
     plt::legend();
     plt::grid(true);
@@ -385,8 +385,8 @@ void plot_points(const std::vector<Vector2D>& vessels, const std::vector<Vector2
     plt::scatter(proj_x, proj_y, 30.0, {{"color", "blue"}, {"label", "Projection"}});
 
     // Set labels and legend
-    plt::xlabel("X Position");
-    plt::ylabel("Y Position");
+    plt::xlabel("x Position [m]");
+    plt::ylabel("y Position [m]");
     plt::legend();
 
     // Show the plot
@@ -449,23 +449,23 @@ void plotClosestPointErrors() {
         std::cerr << "Error: No valid data found in " << filepath << std::endl;
         return;
     }
-    std::ostringstream oss_x;
-    oss_x << std::fixed << std::setprecision(1);
-    oss_x << "along track error x_e (total = " << total_x_e << "): ";
-    std::string title_x = oss_x.str();
+    // std::ostringstream oss_x;
+    // oss_x << std::fixed << std::setprecision(1);
+    // oss_x << "along track error x_e (total = " << total_x_e << "): ";
+    // std::string title_x = oss_x.str();
 
-    std::ostringstream oss_y;
-    oss_y << std::fixed << std::setprecision(1);
-    oss_y << "cross track error y_e (total = " << total_y_e << "): ";
-    std::string title_y = oss_y.str();
+    // std::ostringstream oss_y;
+    // oss_y << std::fixed << std::setprecision(1);
+    // oss_y << "cross track error y_e (total = " << total_y_e << "): ";
+    // std::string title_y = oss_y.str();
 
     plt::figure_size(2481, 1240);
-    plt::named_plot(title_x, time, x_e, "r-");
-    plt::named_plot(title_y, time, y_e, "g-");
+    //plt::named_plot(title_x, time, x_e, "r-");
+    plt::named_plot("Cross-track error", time, y_e, "g-");
     //plt::named_plot("position error:        ", time, position_e, "b-");
-    plt::xlabel("Time (s)");
-    plt::ylabel("Error (m)");
-    plt::title("Position errors over Time");
+    plt::xlabel("Time [s]");
+    plt::ylabel("Error [m]");
+    plt::title("Cross-track error over time");
     plt::legend();
     plt::grid(true);
     plt::show();
@@ -473,9 +473,9 @@ void plotClosestPointErrors() {
 
 RealTimePlotter::RealTimePlotter() {
     plt::figure();   
-    plt::xlabel("x(t)");
-    plt::ylabel("y(t)");
-    plt::title("Vessel Path with Heading Angles");
+    plt::xlabel("x(t) [m]");
+    plt::ylabel("y(t) [m]");
+    plt::title("Live Plot: Current Vessel Status");
     plt::axis("equal");
     plt::grid(true);
     plt::xlim(-50, 100);
@@ -563,9 +563,9 @@ void RealTimePlotter::updatePlot(double x, double y, double psi_value, double ar
     std::vector<double> curPosY = { y };
     plt::plot(curPosX, curPosY, "ro");
 
-    plt::xlabel("x(t)");
-    plt::ylabel("y(t)");
-    plt::title("Vessel Path with Heading Angles");
+    plt::xlabel("x(t) [m]");
+    plt::ylabel("y(t) [m]");
+    plt::title("Live Plot: Current Vessel Status");
     plt::axis("equal");
     plt::grid(true);
 

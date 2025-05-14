@@ -401,7 +401,7 @@ int main() {
         // ------------------------------ Plotting and Info ------------------------------
 
         // Show SIM progress once in a while
-        if (i % 10 == 0) {
+        if (i % 5 == 0) {
             std::vector<double> GuidanceVectorX;
             std::vector<double> GuidanceVectorY;
             if (GuidanceFlag == 1){
