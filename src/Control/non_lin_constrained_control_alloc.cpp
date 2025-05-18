@@ -77,9 +77,9 @@ std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N, 
     MX tau_N_model = lx * (Thrust1*sin(vars(1)) + Thrust2*sin(vars(3)))
                     -(ly1*Thrust1*cos(vars(1)) + ly2*Thrust2*cos(vars(3)));
     
-    J = 10 * (pow(tau_X - tau_X_model, 2) +
-              pow(tau_Y - tau_Y_model, 2) +
-              pow(tau_N - tau_N_model, 2));
+    J = 0.5 * (pow(tau_X - tau_X_model, 2) +
+               pow(tau_Y - tau_Y_model, 2) +
+               pow(tau_N - tau_N_model, 2));
 
     // - Penalty for both pods forward, leading to loss of sway control.
     // MX a1 = exp( -pow( abs(vars(1)), 2 ) / 0.1 ); 
@@ -89,10 +89,10 @@ std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N, 
     // - Penalties for directing thrust into another pod slip stream 
     //   (effect not captured by the current ran model, but on the real vessel)
     MX b1 = exp( -pow((vars(1) + M_PI/2), 2) / 0.2 ); 
-    J += 5 * b1; 
+    J += 10 * b1; 
 
     MX b2 = exp( -pow((vars(3) - M_PI/2), 2) / 0.2 ); 
-    J += 5 * b2;
+    J += 10 * b2;
 
     // Penalties for pods beeing +90 or -90 at the same time,
     // leading to loss of surge control because of slowly time variying dynamics
@@ -100,6 +100,14 @@ std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N, 
     MX d1 = exp( -pow(abs(vars(1)) - M_PI/2, 2) / 0.1 );
     MX d2 = exp( -pow(abs(vars(3)) - M_PI/2, 2) / 0.1 );
     J += 10 * d1 * d2;
+
+    // Penalty for large changes in propeller speed and azimuth angle
+    MX d_n1 = vars(0) - n(0);
+    MX d_n2 = vars(2) - n(1);
+    MX d_alpha1 = vars(1) - alpha(0);
+    MX d_alpha2 = vars(3) - alpha(1);
+    J += 15*(dot(d_n1,d_n1) + dot(d_n1,d_n1)) 
+         + 45*(dot(d_alpha1,d_alpha1) + dot(d_alpha2,d_alpha2));
 
     opti.minimize(J);
 

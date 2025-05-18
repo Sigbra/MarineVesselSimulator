@@ -177,7 +177,7 @@ int main() {
     // Motion control classes
     MIMOPIDController MIMO_PID;
     HeadingPIDController headPID;
-    MPC_Control_System mpc_control(30, 3*h); 
+    MPC_Control_System mpc_control(30, 0.4); 
 
     // Desired rate of turn and acceleration
     double r_d = 0.0; 
@@ -203,8 +203,7 @@ int main() {
     }
 
     bool break_flag = false;
-
-    
+    std::vector<double> wpt_change_times;        
 
     // Main simulation loop
     for (int i = 0; i < num_steps; ++i) {
@@ -267,6 +266,7 @@ int main() {
                     if (std::abs(ssa(psi_d-psi)) < deg2rad(1) && U < 0.01) {
                         if (wpt_index < wpt.size()-1) {
                             wpt_index += 1;
+                            wpt_change_times.push_back(t[i]);
                         }
                         else {
                             std::cout << "Reached the last waypoint." << std::endl;
@@ -487,15 +487,16 @@ int main() {
 
     std::cout << "Simulation completed" << std::endl;
     storeSimulationData(simdata, "simdata.csv");
+    storeWaypointChangeTimes(wpt_change_times, "wpt_change_times.csv");
 
     plotter.finalizePlot();
 
+    plotPropellerSpeeds();
+    plotAlphas();
     plotTrajectory();
     plotClosestPointErrors();
     plotStateErrors();
     plotAngles();
-    plotPropellerSpeeds();
-    plotAlphas();
 
     return 0;
 }

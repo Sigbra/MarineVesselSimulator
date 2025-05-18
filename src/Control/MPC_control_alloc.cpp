@@ -10,8 +10,8 @@ std::vector<double> MPC_control_alloc(double tau_X, double tau_Y, double tau_N,
     double U, double T_n, double T_alpha,
     Eigen::Vector2d n_input, Eigen::Vector2d alpha_input, std::vector<bool> failstate) 
 {
-    double horizon = 5.0;
-    double delta   = 0.5;
+    double horizon = 8.0;
+    double delta   = 0.4;
     int N = static_cast<int>(horizon/delta); 
 
     //Eigen::Vector3d CO_offset = CO_Offset(U);
@@ -107,8 +107,6 @@ std::vector<double> MPC_control_alloc(double tau_X, double tau_Y, double tau_N,
     }
 
     MX J = 0;
-    double tau_weight = 10.0;  
-
     for (int k = 0; k < N; ++k) {
         MX n1 = n_vars(0, k);
         MX n2 = n_vars(1, k);
@@ -126,9 +124,9 @@ std::vector<double> MPC_control_alloc(double tau_X, double tau_Y, double tau_N,
                          -(ly1*Thrust1*cos(alpha1) + ly2*Thrust2*cos(alpha2));
 
         // Error cost
-        J = J + tau_weight * (pow(tau_X - tau_X_model, 2) + 
-                              pow(tau_Y - tau_Y_model, 2) + 
-                              pow(tau_N - tau_N_model, 2));
+        J += 0.5 * (pow(tau_X - tau_X_model, 2) + 
+                    pow(tau_Y - tau_Y_model, 2) + 
+                    pow(tau_N - tau_N_model, 2));
 
         // - Penalty for both pods forward, leading to loss of sway control.
         // MX a1 = exp( -pow( abs(vars(1)), 2 ) / 0.1 ); 
@@ -138,10 +136,10 @@ std::vector<double> MPC_control_alloc(double tau_X, double tau_Y, double tau_N,
         // - Penalties for directing thrust into another pod slip stream 
         //   (effect not captured by the current ran model, but on the real vessel)
         MX b1 = exp( -pow((alpha1 + M_PI/2), 2) / 0.2 ); 
-        J += 5 * b1; 
+        J += 10 * b1; 
 
         MX b2 = exp( -pow((alpha2 - M_PI/2), 2) / 0.2 ); 
-        J += 5 * b2;
+        J += 10 * b2;
 
         // Penalties for pods beeing +90 or -90 at the same time,
         // leading to loss of surge control because of slowly time variying dynamics
@@ -149,6 +147,14 @@ std::vector<double> MPC_control_alloc(double tau_X, double tau_Y, double tau_N,
         MX d1 = exp( -pow(abs(alpha1) - M_PI/2, 2) / 0.1 );
         MX d2 = exp( -pow(abs(alpha2) - M_PI/2, 2) / 0.1 );
         J += 10 * d1 * d2;
+
+        // Penalty for large changes in propeller speed and azimuth angle
+        MX d_n1 = n_cmd(0, k) - n_vars(0, k);
+        MX d_n2 = n_cmd(1, k) - n_vars(1, k);
+        MX d_alpha1 = alpha_cmd(0, k) - alpha_vars(0, k);
+        MX d_alpha2 = alpha_cmd(1, k) - alpha_vars(1, k);
+        J += 20*(dot(d_n1,d_n1) + dot(d_n2,d_n2)) 
+            + 35*(dot(d_alpha1,d_alpha1) + dot(d_alpha2,d_alpha2));
     }
 
     // Optimization:

@@ -292,16 +292,20 @@ bool MPC_Control_System::solve(const std::vector<double>& x0, double x_s, double
             cost +=  1 * heading_error_sq;  
         } 
         else { // Penalties in normal operation
-            cost +=  2 * crosstrack_error_sq; 
-            cost +=  8 * position_error_sq;
-            cost += 10 * heading_error_sq;  
+            cost +=  5 * crosstrack_error_sq; 
+            cost += 14 * position_error_sq;
+            cost +=  9 * heading_error_sq;  
         }
 
-        if (i > 0) {
-            MX d_n = n_cmd(Slice(), i) - n_cmd(Slice(), i - 1);
-            MX d_alpha = alpha_cmd(Slice(), i) - alpha_cmd(Slice(), i - 1);
-            cost += 5*dot(d_n, d_n) + dot(d_alpha, d_alpha);
-        }  
+       
+        MX d_n = n_cmd(Slice(), i) - n_vars(Slice(), i);
+        MX d_alpha = alpha_cmd(Slice(), i) - alpha_vars(Slice(), i);
+        cost += 5*dot(d_n, d_n) + dot(d_alpha, d_alpha);
+
+        // Penalize large speed resulting in large discretization steps that the MPC can't handle
+        MX U_i = sqrt(X(3,i)*X(3,i) + X(4,i)*X(4,i) + 1e-4);
+        cost+= exp((U_i-1.5)/0.1); 
+    
     } 
     
     opti.minimize(cost);

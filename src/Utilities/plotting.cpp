@@ -45,6 +45,38 @@ void storeSimulationData(const Eigen::MatrixXd& simdata, std::string filename) {
     }
 }
 
+void storeWaypointChangeTimes(const std::vector<double>& times, const std::string& filename)
+{
+    namespace fs = std::filesystem;
+
+    // 1) Build path and ensure the data/ directory exists
+    fs::path dir = fs::path(getRepositoryPath()) / "data";
+    if (!fs::exists(dir) && !fs::create_directories(dir)) {
+    std::cerr << "Error: could not create directory " << dir << "\n";
+    return;
+    }
+
+    fs::path filepath = dir / filename;
+
+    // 2) Open the file (truncate/overwrite)
+    std::ofstream ofs(filepath, std::ios::out | std::ios::trunc);
+    if (!ofs.is_open()) {
+    std::cerr << "Error opening waypoint times file for writing: "
+    << filepath << "\n";
+    return;
+    }
+
+    // 3) Write each time on its own line
+    for (double t : times) {
+    ofs << t << "\n";
+    }
+    // 4) Explicit close (also flushes)
+    ofs.close();
+
+    std::cout << "Waypoint change times stored to: "
+    << filepath << std::endl;
+}
+
 void plotPath(const Waypoints& path) {
     // Check if the path is empty.
     if (path.empty()) {
@@ -197,13 +229,29 @@ void plotStateErrors() {
         return;
     }
 
-    plt::figure_size(2481, 1240);
+    // Load waypoint change times
+    std::vector<double> wpt_change_times = loadWaypointChangeTimes();
+
+    plt::figure_size(2480, 620);
+
+    // Add waypoint change lines
+    for (double t : wpt_change_times) {
+        // Create a vertical line at time t
+        std::vector<double> x_line = {t, t};
+        std::vector<double> y_line = {-200, 200};  // Very large range to ensure visibility
+        
+        // Plot a simple black dashed line
+        plt::plot(x_line, y_line, "k-");
+    }
+
     plt::named_plot("Error x position [m]", time, error_x, "r-");
     plt::named_plot("Error y position [m]", time, error_y, "g-");
     plt::named_plot("Error $\\psi$ heading [deg]", time, error_psi, "b-");
+    
     plt::xlabel("Time [s]");
     plt::ylabel("State Error");
     plt::title("State Errors over Time");
+    plt::ylim(-50, 50);
     plt::legend();
     plt::grid(true);
     plt::show();
@@ -251,12 +299,28 @@ void plotAngles() {
         return;
     }
     
-    plt::figure_size(2481, 1240);
+    // Load waypoint change times
+    std::vector<double> wpt_change_times = loadWaypointChangeTimes();
+    
+    plt::figure_size(2480, 620);
+
+    // Add waypoint change lines
+    for (double t : wpt_change_times) {
+        // Create a vertical line at time t
+        std::vector<double> x_line = {t, t};
+        std::vector<double> y_line = {-200, 200};  // Very large range to ensure visibility
+        
+        // Plot a simple black dashed line
+        plt::plot(x_line, y_line, "k-");
+    }
+
     plt::named_plot("$\\psi$", time, psi, "r-");
     plt::named_plot("$\\psi_{\\mathrm{desired}}$", time, psi_d, "g-"); 
+    
     plt::xlabel("Time [s]");
     plt::ylabel("Angle [deg]");
     plt::title("$\\psi$ vs $\\psi_{\\mathrm{desired}}$");
+    plt::ylim(0, 180);
     plt::legend();
     plt::grid(true);
     plt::show();
@@ -299,15 +363,30 @@ void plotPropellerSpeeds() {
         return;
     }
 
-    plt::figure_size(2481, 1240);
+    // Load waypoint change times
+    std::vector<double> wpt_change_times = loadWaypointChangeTimes();
+
+    plt::figure_size(2480, 620);
+
+    // Add waypoint change lines
+    for (double t : wpt_change_times) {
+        // Create a vertical line at time t
+        std::vector<double> x_line = {t, t};
+        std::vector<double> y_line = {-200, 200};  // Very large range to ensure visibility
+        
+        // Plot a simple black dashed line
+        plt::plot(x_line, y_line, "k-");
+    }
+
     plt::named_plot("$n_1$ commanded", time, nc1, "C0-");
     plt::named_plot("$n_2$ commanded", time, nc2, "C2-");
     plt::named_plot("$n_1$ actual",    time, n1,  "C3-");
     plt::named_plot("$n_2$ actual",    time, n2,  "C1-");
+    
     plt::xlabel("Time [s]");
     plt::ylabel("Relative propeller speed $n$");
     plt::title("Actual vs. Commanded Propeller Speeds");
-    plt::ylim(-1.0, 1.0);
+    plt::ylim(-1.1, 1.1);
     plt::legend();
     plt::grid(true);
     plt::show();
@@ -350,15 +429,30 @@ void plotAlphas() {
         return;
     }
 
-    plt::figure_size(2481, 1240);
+    // Load waypoint change times
+    std::vector<double> wpt_change_times = loadWaypointChangeTimes();
+
+    plt::figure_size(2480, 620);
+
+    // Add waypoint change lines
+    for (double t : wpt_change_times) {
+        // Create a vertical line at time t
+        std::vector<double> x_line = {t, t};
+        std::vector<double> y_line = {-200, 200};  // Very large range to ensure visibility
+        
+        // Plot a simple black dashed line
+        plt::plot(x_line, y_line, "k-");
+    }
+
     plt::named_plot("$\\alpha_1$ commanded", time, ac1, "C0-");
     plt::named_plot("$\\alpha_2$ commanded", time, ac2, "C2-");
     plt::named_plot("$\\alpha_1$ actual",    time, a1,  "C3-");
     plt::named_plot("$\\alpha_2$ actual",    time, a2,  "C1-");
+    
     plt::xlabel("Time [s]");
     plt::ylabel("Angle [deg]");
     plt::title("Actual vs. Commanded $\\alpha$ Angles");
-    plt::ylim(-90.0, 90.0);
+    plt::ylim(-100, 100);
     plt::legend();
     plt::grid(true);
     plt::show();
@@ -449,20 +543,24 @@ void plotClosestPointErrors() {
         std::cerr << "Error: No valid data found in " << filepath << std::endl;
         return;
     }
-    // std::ostringstream oss_x;
-    // oss_x << std::fixed << std::setprecision(1);
-    // oss_x << "along track error x_e (total = " << total_x_e << "): ";
-    // std::string title_x = oss_x.str();
+    
+    // Load waypoint change times
+    std::vector<double> wpt_change_times = loadWaypointChangeTimes();
 
-    // std::ostringstream oss_y;
-    // oss_y << std::fixed << std::setprecision(1);
-    // oss_y << "cross track error y_e (total = " << total_y_e << "): ";
-    // std::string title_y = oss_y.str();
+    plt::figure_size(2480, 620);
 
-    plt::figure_size(2481, 1240);
-    //plt::named_plot(title_x, time, x_e, "r-");
+    // Add waypoint change lines
+    for (double t : wpt_change_times) {
+        // Create a vertical line at time t
+        std::vector<double> x_line = {t, t};
+        std::vector<double> y_line = {-200, 200};  // Very large range to ensure visibility
+        
+        // Plot a simple black dashed line
+        plt::plot(x_line, y_line, "k-");
+    }
+
     plt::named_plot("Cross-track error", time, y_e, "g-");
-    //plt::named_plot("position error:        ", time, position_e, "b-");
+    
     plt::xlabel("Time [s]");
     plt::ylabel("Error [m]");
     plt::title("Cross-track error over time");
@@ -580,4 +678,44 @@ void RealTimePlotter::finalizePlot(const std::string& filename) {
     plt::show();
     plt::close();
 }
+
+// Add this function to load waypoint change times
+std::vector<double> loadWaypointChangeTimes() {
+    std::vector<double> times;
+    std::filesystem::path filepath = std::filesystem::path(getRepositoryPath()) / "data" / "wpt_change_times.csv";
+    
+    if (!std::filesystem::exists(filepath)) {
+        return times; // Return empty vector if file doesn't exist
+    }
+    
+    std::ifstream file(filepath);
+    if (file.is_open()) {
+        std::string line;
+        while (std::getline(file, line)) {
+            try {
+                times.push_back(std::stod(line));
+            } catch (const std::invalid_argument&) {
+                // Skip invalid entries
+            }
+        }
+        file.close();
+    }
+    
+    return times;
+}
+
+// Add this helper function for waypoint change lines
+// void addWaypointChangeLines(const std::vector<double>& change_times) {
+//     std::map<std::string, std::string> keywords = {
+//         {"color", "black"},
+//         {"linestyle", "--"},
+//         {"alpha", "0.7"},
+//         {"linewidth", "1.0"}
+//     };
+    
+//     for (const auto& change_time : change_times) {
+//         plt::axvline(change_time, 0.0, 1.0, keywords);
+//     }
+// }
+
 

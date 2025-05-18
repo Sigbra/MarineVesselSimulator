@@ -9,6 +9,8 @@ std::string getRepositoryPath();
 
 void storeSimulationData(const Eigen::MatrixXd& simdata, std::string filename);
 
+void storeWaypointChangeTimes(const std::vector<double>& times, const std::string& filename);
+
 void plotPath(const Waypoints &path);
 
 void plotTrajectory();
@@ -24,6 +26,10 @@ void plotAlphas();
 void plot_points(const std::vector<Vector2D>& vessels, const std::vector<Vector2D>& projections);
 
 void plotClosestPointErrors();
+
+std::vector<double> loadWaypointChangeTimes();
+
+//void addWaypointChangeLines(const std::vector<double>& change_times);
 
 class RealTimePlotter {
     public:
