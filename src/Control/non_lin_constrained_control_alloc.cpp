@@ -89,10 +89,10 @@ std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N, 
     // - Penalties for directing thrust into another pod slip stream 
     //   (effect not captured by the current ran model, but on the real vessel)
     MX b1 = exp( -pow((vars(1) + M_PI/2), 2) / 0.2 ); 
-    J += 10 * b1; 
+    J += 5 * b1; 
 
     MX b2 = exp( -pow((vars(3) - M_PI/2), 2) / 0.2 ); 
-    J += 10 * b2;
+    J += 5 * b2;
 
     // Penalties for pods beeing +90 or -90 at the same time,
     // leading to loss of surge control because of slowly time variying dynamics
@@ -106,8 +106,8 @@ std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N, 
     MX d_n2 = vars(2) - n(1);
     MX d_alpha1 = vars(1) - alpha(0);
     MX d_alpha2 = vars(3) - alpha(1);
-    J += 15*(dot(d_n1,d_n1) + dot(d_n1,d_n1)) 
-         + 45*(dot(d_alpha1,d_alpha1) + dot(d_alpha2,d_alpha2));
+    J += 5*(dot(d_n1,d_n1) + dot(d_n1,d_n1)) 
+         + 10*(dot(d_alpha1,d_alpha1) + dot(d_alpha2,d_alpha2));
 
     opti.minimize(J);
 

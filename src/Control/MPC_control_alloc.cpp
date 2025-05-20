@@ -136,10 +136,10 @@ std::vector<double> MPC_control_alloc(double tau_X, double tau_Y, double tau_N,
         // - Penalties for directing thrust into another pod slip stream 
         //   (effect not captured by the current ran model, but on the real vessel)
         MX b1 = exp( -pow((alpha1 + M_PI/2), 2) / 0.2 ); 
-        J += 10 * b1; 
+        J += 5 * b1; 
 
         MX b2 = exp( -pow((alpha2 - M_PI/2), 2) / 0.2 ); 
-        J += 10 * b2;
+        J += 5 * b2;
 
         // Penalties for pods beeing +90 or -90 at the same time,
         // leading to loss of surge control because of slowly time variying dynamics
@@ -153,8 +153,8 @@ std::vector<double> MPC_control_alloc(double tau_X, double tau_Y, double tau_N,
         MX d_n2 = n_cmd(1, k) - n_vars(1, k);
         MX d_alpha1 = alpha_cmd(0, k) - alpha_vars(0, k);
         MX d_alpha2 = alpha_cmd(1, k) - alpha_vars(1, k);
-        J += 20*(dot(d_n1,d_n1) + dot(d_n2,d_n2)) 
-            + 35*(dot(d_alpha1,d_alpha1) + dot(d_alpha2,d_alpha2));
+        J += 5*(dot(d_n1,d_n1) + dot(d_n2,d_n2)) 
+            + 10*(dot(d_alpha1,d_alpha1) + dot(d_alpha2,d_alpha2));
     }
 
     // Optimization:
