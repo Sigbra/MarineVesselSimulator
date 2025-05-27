@@ -15,6 +15,7 @@
 
 namespace plt = matplotlibcpp;
 
+
 std::string getRepositoryPath() {
     const char* home = std::getenv("HOME");  // Get the user's home directory
     if (home) {
@@ -77,7 +78,17 @@ void storeWaypointChangeTimes(const std::vector<double>& times, const std::strin
     << filepath << std::endl;
 }
 
-void plotPath(const Waypoints& path) {
+void plotPath(const Waypoints& wpt, const Waypoints& path) {
+    plt::rcparams({
+        {"font.size",       "10"},    // base font size for all text
+        //{"font.family",     "sans-serif"},
+        {"axes.titlesize",  "16"},    // title size
+        {"axes.labelsize",  "14"},    // axis‐label size
+        //{"axes.labelweight","bold"},  // axis‐label weight
+        {"xtick.labelsize", "10"},    // x‐tick label size
+        {"ytick.labelsize", "10"}     // y‐tick label size
+    });  
+
     // Check if the path is empty.
     if (path.empty()) {
         std::cerr << "Warning: The path is empty. Nothing to plot." << std::endl;
@@ -90,10 +101,19 @@ void plotPath(const Waypoints& path) {
         x.push_back(pt.x);
         y.push_back(pt.y);
     }
+
+    std::vector<double> wx, wy;
+    wx.reserve(wpt.size());
+    wy.reserve(wpt.size());
+    for (auto &wp : wpt) {
+        wx.push_back(wp.x);
+        wy.push_back(wp.y);
+    }
     
     try {
         plt::figure();
         plt::plot(x, y, "b-");  
+        plt::plot(wx, wy, "ro");  
         plt::title("Fermat Spiral Path");
         plt::xlabel("x [m]");
         plt::ylabel("y [m]");
@@ -161,7 +181,7 @@ void plotTrajectory() {
     
     // Prepare data for quiver (vector field plot)
     std::vector<double> u, v;  // dx, dy components of arrows
-    double arrowLength = 0.2;  // Scale factor for arrows
+    double arrowLength = 0.3;  // Scale factor for arrows
     std::vector<double> xq, yq;
     
     for (size_t i = 0; i < xn.size(); i += 200) { 
@@ -458,6 +478,70 @@ void plotAlphas() {
     plt::show();
 }
 
+void plotTau() {
+    std::filesystem::path filepath = std::filesystem::path(getRepositoryPath()) / "data" / "simdata.csv";
+    if (!std::filesystem::exists(filepath)) {
+        std::cerr << "File does not exist: " << filepath << std::endl;
+        return;
+    }
+    std::ifstream file(filepath);
+    if (!file.is_open()) {
+        std::cerr << "Error: Unable to open " << filepath << std::endl;
+        return;
+    }
+
+    std::vector<double> time, tauX, tauY, tauN;
+    std::string line;
+    while (std::getline(file, line)) {
+        std::stringstream ss(line);
+        std::vector<double> vals;
+        std::string cell;
+        while (std::getline(ss, cell, ',')) {
+            try { vals.push_back(std::stod(cell)); }
+            catch (const std::invalid_argument&) { /* skip non-numeric */ }
+        }
+        if (vals.size() >= 27) {
+            time.push_back(vals[0]);
+            tauX.push_back(vals[24]);
+            tauY.push_back(vals[25]);
+            tauN.push_back(vals[26]);
+        }
+    }
+    file.close();
+
+    if (time.empty()) {
+        std::cerr << "Error: No valid data found in " << filepath << std::endl;
+        return;
+    }
+
+    // Load waypoint change times
+    std::vector<double> wpt_change_times = loadWaypointChangeTimes();
+
+    plt::figure_size(2480, 620);
+
+    // Add waypoint change lines
+    for (double t : wpt_change_times) {
+        // Create a vertical line at time t
+        std::vector<double> x_line = {t, t};
+        std::vector<double> y_line = {-200, 200};  // Very large range to ensure visibility
+        
+        // Plot a simple black dashed line
+        plt::plot(x_line, y_line, "k-");
+    }
+
+    plt::named_plot("$\\tau_X$", time, tauX, "C0-");
+    plt::named_plot("$\\tau_Y$", time, tauY, "C2-");
+    plt::named_plot("$\\tau_N$", time, tauN, "C1-");
+    
+    plt::xlabel("Time [s]");
+    plt::ylabel("Torque [Nm]");
+    plt::title("$\\tau$ over Time");
+    plt::ylim(-400, 400);
+    plt::legend();
+    plt::grid(true);
+    plt::show();
+}
+
 void plot_points(const std::vector<Vector2D>& vessels, const std::vector<Vector2D>& projections) {
     std::vector<double> vessel_x, vessel_y;
     std::vector<double> proj_x, proj_y;
@@ -479,6 +563,7 @@ void plot_points(const std::vector<Vector2D>& vessels, const std::vector<Vector2
     plt::scatter(proj_x, proj_y, 30.0, {{"color", "blue"}, {"label", "Projection"}});
 
     // Set labels and legend
+    plt::title("Projections onto Spiral Path");
     plt::xlabel("x Position [m]");
     plt::ylabel("y Position [m]");
     plt::legend();

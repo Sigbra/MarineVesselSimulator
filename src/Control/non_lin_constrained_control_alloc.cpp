@@ -107,7 +107,7 @@ std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N, 
     MX d_alpha1 = vars(1) - alpha(0);
     MX d_alpha2 = vars(3) - alpha(1);
     J += 5*(dot(d_n1,d_n1) + dot(d_n1,d_n1)) 
-         + 10*(dot(d_alpha1,d_alpha1) + dot(d_alpha2,d_alpha2));
+         + 10*(dot(d_alpha1,d_alpha1) + dot(d_alpha2,d_alpha2)); 
 
     opti.minimize(J);
 

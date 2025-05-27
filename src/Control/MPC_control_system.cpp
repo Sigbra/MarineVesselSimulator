@@ -270,20 +270,19 @@ bool MPC_Control_System::solve(const std::vector<double>& x0, double x_s, double
         opti.subject_to(X(Slice(), i + 1) == X_next);
 
         // --- 1) cross-track error to infinite line ---
-        MX rel_x = X(0,i) - path_x_start;
-        MX rel_y = X(1,i) - path_y_start;
+        MX rel_x = path_x_goal - X(0,i);
+        MX rel_y = path_y_goal - X(1,i);
         MX proj_dist = rel_x*path_dir_x + rel_y*path_dir_y;    
         MX cross_x = rel_x - proj_dist*path_dir_x;
         MX cross_y = rel_y - proj_dist*path_dir_y;
         MX crosstrack_error_sq = sqrt(cross_x*cross_x + cross_y*cross_y + 1e-4);
     
         // --- 2) position error along the line (1 @ start → 0 @ goal) ---
-        MX normalized_along = proj_dist / path_length;
-        MX position_error   = 1 - normalized_along;       // 1→0 along segment
-        MX position_error_sq = sqrt(position_error * position_error + 1e-4); 
+        MX normalized_along_error = proj_dist / path_length;
+        MX position_error_sq = sqrt(normalized_along_error * normalized_along_error + 1e-4); 
     
         // --- 3) heading error ---
-        MX heading_error = X(2,i) - psi_d;
+        MX heading_error = psi_d - X(2,i);
         MX heading_error_sq = sqrt(heading_error * heading_error + 1e-4);
 
         if (failstate[0] || failstate[1]) { // Penalties when error state

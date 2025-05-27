@@ -46,7 +46,8 @@ int main() {
     double mp = config["load_condition"]["mp"].as<double>(); 
     
     // Ocean current
-    double V_c = config["ocean_current"]["V_c"].as<double>();   
+    double V_c_s = config["ocean_current"]["V_c"].as<double>(); 
+    double V_c = V_c_s * h; // Scale current speed by time step 
     double beta_c = deg2rad(config["ocean_current"]["beta_c"].as<double>());
 
     // Load original waypoints from config
@@ -123,7 +124,7 @@ int main() {
     straightLinePath.updateWaypoints(wpt);
     Waypoints pathLine = straightLinePath.samplePath(0.05);
     std::cout << "Path size: " << pathLine.size() << std::endl;
-    plotPath(pathLine);
+    plotPath(wpt, pathLine);
 
     // Create the Fermat spiral path.
     // - Set the curvature constraint (k_max in rad/m).
@@ -132,7 +133,7 @@ int main() {
     spiral.updateWaypoints(wpt);
     Waypoints pathFS = spiral.samplePath(0.05);
     std::cout << "Path size: " << pathFS.size() << std::endl;
-    plotPath(pathFS);
+    plotPath(wpt, pathFS);
 
     // Initialize guidance methods and LOS observer 
     ALOS ALOS(Delta_h, gamma_h, 0.1);
@@ -266,6 +267,7 @@ int main() {
                     if (std::abs(ssa(psi_d-psi)) < deg2rad(1) && U < 0.01) {
                         if (wpt_index < wpt.size()-1) {
                             wpt_index += 1;
+                            MIMO_PID.reset();
                             wpt_change_times.push_back(t[i]);
                         }
                         else {
@@ -347,9 +349,9 @@ int main() {
 
         // - Motion Control: Dynamic positioning
         if (GuidanceFlag==1 && ControlAllocFlag != 4){
-            eta << u, v, w, p, q, r;
-            nu  << xn, yn, zn, phi, theta, psi;
-            tau_XYN = MIMO_PID.update(h, xn_d, yn_d, psi_d, M, eta, nu);
+            nu << u, v, w, p, q, r;
+            eta  << xn, yn, zn, phi, theta, psi;
+            tau_XYN = MIMO_PID.update(h, xn_d, yn_d, psi_d, M, eta, nu, V_c, beta_c);
         } 
         // - Motion Control: Path following: 
         else if (GuidanceFlag==2 || GuidanceFlag==3) { 
@@ -421,11 +423,13 @@ int main() {
             << "------------------------------------------------" << std::endl
             << "Path type: " << pathType << ", Guidance flag: " << GuidanceFlag << ", Control flag: " << ControlAllocFlag << std::endl
             << "wpt index: " << wpt_index
-            << std::fixed << std::setprecision(0)
             << ", current wpt: (" << wpt[wpt_index].x << ", " << wpt[wpt_index].y << ")" << std::endl
+            << "Failstate: [" << failstate[0] << ", " << failstate[1]
+            << std::fixed << std::setprecision(4)
+            << "], V_c: " << V_c_s << ", beta_c: " << beta_c << std::endl
+            << std::fixed << std::setprecision(1)
             << "------------------------------------------------" << std::endl
             << "closest point: " << closest.point.pos.x << ", " << closest.point.pos.y << std::endl
-            << std::fixed << std::setprecision(1)
             << "x_e: " << x_e << ", y_e: " << y_e << std::endl
             << "------------------------------------------------" << std::endl;
             if (GuidanceFlag == 1){
@@ -493,6 +497,7 @@ int main() {
 
     plotPropellerSpeeds();
     plotAlphas();
+    plotTau();
     plotTrajectory();
     plotClosestPointErrors();
     plotStateErrors();
