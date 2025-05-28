@@ -126,7 +126,7 @@ void plotPath(const Waypoints& wpt, const Waypoints& path) {
 }
 
 
-void plotTrajectory() {
+void plotTrajectory(const Waypoints& wpt) {
     std::filesystem::path filepath = std::filesystem::path(getRepositoryPath()) / "data" / "simdata.csv";
     if (!std::filesystem::exists(filepath)) {
         std::cerr << "File does not exist: " << filepath << std::endl;
@@ -172,8 +172,17 @@ void plotTrajectory() {
         xn.push_back(pos.x);
         yn.push_back(pos.y);
     }
+
+    std::vector<double> wx, wy;
+    wx.reserve(wpt.size());
+    wy.reserve(wpt.size());
+    for (auto &wp : wpt) {
+        wx.push_back(wp.x);
+        wy.push_back(wp.y);
+    }
     
     plt::figure_size(800, 600);
+    plt::plot(wx, wy, "ro");  
     plt::plot(xn, yn, "b-");
     plt::xlabel("x(t) [m]");
     plt::ylabel("y(t) [m]");

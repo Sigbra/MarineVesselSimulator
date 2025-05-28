@@ -38,6 +38,13 @@ int main() {
     srand(time(0)); 
     YAML::Node config = YAML::LoadFile("../config.yaml");
 
+    std::random_device rd;
+    std::mt19937 gen(rd());
+
+    // Distributions for each σ (std dev)
+    std::normal_distribution<double> noise_nu(0.0, 0.01);  
+    std::normal_distribution<double> noise_eta(0.0, 0.001);
+
     // Simulation parameters
     double h = config["simulation"]["h"].as<double>();
     double T_final = config["simulation"]["T_final"].as<double>();
@@ -46,8 +53,7 @@ int main() {
     double mp = config["load_condition"]["mp"].as<double>(); 
     
     // Ocean current
-    double V_c_s = config["ocean_current"]["V_c"].as<double>(); 
-    double V_c = V_c_s * h; // Scale current speed by time step 
+    double V_c = config["ocean_current"]["V_c"].as<double>(); 
     double beta_c = deg2rad(config["ocean_current"]["beta_c"].as<double>());
 
     // Load original waypoints from config
@@ -108,7 +114,6 @@ int main() {
     Eigen::MatrixXd M = ran_model.get_M();
     Eigen::MatrixXd B = ran_model.get_B();
     double U = ran_model.get_U();
-    Eigen::VectorXd xdot = ran_model.get_xdot();
 
     double T_n = ran_model.getT_n();          // Propeller time constant (s)
     double T_alpha = ran_model.getT_alpha();  // Azimuth angle time constant (s)
@@ -116,8 +121,8 @@ int main() {
     ran_model.select_failure_mode();
     std::vector<bool> failstate = ran_model.check_failstate();
 
-    Eigen::Vector2d n = ran_model.get_n();           
-    Eigen::Vector2d alpha = ran_model.get_alpha();
+    Eigen::Vector2d n = Eigen::Vector2d::Zero(); // Propeller speeds (rad/s)      
+    Eigen::Vector2d alpha = Eigen::Vector2d::Zero(); // Azimuth angles (rad)
 
     // Create the straight line path.
     StraightLinePath straightLinePath;
@@ -213,22 +218,22 @@ int main() {
         
         // ------------------------------ Navigation System ------------------------------
         // (Fake measurements using noise)
-
-        double random = ((double)rand() / RAND_MAX - 0.5);
+        double random_nu = noise_nu(gen);
+        double random_eta = noise_eta(gen);
   
-        double u     = x(0)  +  0.01 * random; // Surge velocity (BODY frame)
-        double v     = x(1)  +  0.01 * random; // Sway velocity  (BODY frame)
-        double w     = x(2)  +  0.01 * random; // Heave velocity (BODY frame)
-        double p     = x(3)  + 0.001 * random; // Roll rate      (BODY frame)
-        double q     = x(4)  + 0.001 * random; // Pitch rate     (BODY frame)
-        double r     = x(5)  + 0.001 * random; // Yaw rate       (BODY frame)
+        double u     = x(0)  + random_nu; // Surge velocity (BODY frame)
+        double v     = x(1)  + random_nu; // Sway velocity  (BODY frame)
+        double w     = x(2)  + random_nu; // Heave velocity (BODY frame)
+        double p     = x(3)  + random_nu; // Roll rate      (BODY frame)
+        double q     = x(4)  + random_nu; // Pitch rate     (BODY frame)
+        double r     = x(5)  + random_nu; // Yaw rate       (BODY frame)
     
-        double xn    = x(6)  +  0.01 * random; // North position  (NED frame)
-        double yn    = x(7)  +  0.01 * random; // East position   (NED frame)
-        double zn    = x(8)  +  0.01 * random; // Down position   (NED frame)
-        double phi   = x(9)  + 0.001 * random; // Roll angle      (NED frame)
-        double theta = x(10) + 0.001 * random; // Pitch angle     (NED frame)
-        double psi   = x(11) + 0.001 * random; // Heading angle   (NED frame)
+        double xn    = x(6)  + random_eta; // North position  (NED frame)
+        double yn    = x(7)  + random_eta; // East position   (NED frame)
+        double zn    = x(8)  + random_eta; // Down position   (NED frame)
+        double phi   = x(9)  + random_eta; // Roll angle      (NED frame)
+        double theta = x(10) + random_eta; // Pitch angle     (NED frame)
+        double psi   = x(11) + random_eta; // Heading angle   (NED frame)
 
         if (std::isnan(psi)) {
             std::cerr << "NaN detected for psi at iteration " << i << ", time: " << t[i] << "s\n";
@@ -236,12 +241,10 @@ int main() {
         }
 
         // ------------------------------ Update model dynamics ------------------------------
-        ran_model.update(x, mp, V_c, beta_c, h, n_c, alpha_c);
-        M = ran_model.get_M();
-        U = ran_model.get_U();
-        n = ran_model.get_n();
-        alpha = ran_model.get_alpha();
-        B = ran_model.get_B();
+        ran_model.update(x, mp, V_c, beta_c, h, n, alpha);
+        M = ran_model.get_M(); // Const?
+        U = ran_model.get_U(); // Dependent on x
+        B = ran_model.get_B(); // Dependent on alpha
 
         // ------------------------------ Mode switch ------------------------------
 
@@ -394,11 +397,15 @@ int main() {
             }
         }
 
-        // ------------------------------ State update (x) ------------------------------
+        // ------------------------------ State updates ------------------------------
 
-        // Marine Craft Model
-        ran_model.rk4(x, mp, V_c, beta_c, h, n_c, alpha_c);
-        //x(11) = ssa(x(11)); //makes plotting look bad              
+        // Marine Craft Model, update states: x
+        ran_model.rk4(x, mp, V_c, beta_c, h, n, alpha);
+        //x(11) = ssa(x(11)); //makes plotting look bad       
+        
+        // Pod model, update states: n and alpha
+        ran_model.update_n(n, n_c, h);
+        ran_model.update_alpha(alpha, alpha_c, h);
 
         // ------------------------------ Plotting and Info ------------------------------
 
@@ -426,7 +433,7 @@ int main() {
             << ", current wpt: (" << wpt[wpt_index].x << ", " << wpt[wpt_index].y << ")" << std::endl
             << "Failstate: [" << failstate[0] << ", " << failstate[1]
             << std::fixed << std::setprecision(4)
-            << "], V_c: " << V_c_s << ", beta_c: " << beta_c << std::endl
+            << "], V_c: " << V_c << ", beta_c: " << beta_c << std::endl
             << std::fixed << std::setprecision(1)
             << "------------------------------------------------" << std::endl
             << "closest point: " << closest.point.pos.x << ", " << closest.point.pos.y << std::endl
@@ -498,7 +505,7 @@ int main() {
     plotPropellerSpeeds();
     plotAlphas();
     plotTau();
-    plotTrajectory();
+    plotTrajectory(wpt);
     plotClosestPointErrors();
     plotStateErrors();
     plotAngles();

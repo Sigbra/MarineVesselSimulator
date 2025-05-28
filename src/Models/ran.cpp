@@ -40,9 +40,6 @@ RAN::RAN() {
     T_n = 0.5;
     T_alpha = 0.5;
 
-    n = Eigen::VectorXd::Zero(2);
-    alpha = Eigen::VectorXd::Zero(2);
-
     M = Eigen::MatrixXd::Zero(6, 6);
     B = Eigen::MatrixXd::Zero(3, 2);
     xdot = Eigen::VectorXd::Zero(12);
@@ -54,7 +51,7 @@ RAN::RAN() {
 }
 
 void RAN::update(const Eigen::VectorXd x, double mp, double V_c, double beta_c,
-              double h, Eigen::VectorXd n_c, Eigen::VectorXd alpha_c)
+              double h, Eigen::Vector2d n, Eigen::Vector2d alpha)
 {
     // Check dimensions
     if (x.size() != 12) {
@@ -244,12 +241,6 @@ void RAN::update(const Eigen::VectorXd x, double mp, double V_c, double beta_c,
     double Nr = -M_sys(5,5) / T_yaw;
     
 
-    // Compute propeller speeds and angles
-    if (propagate){
-        update_n(n_c, h);
-        update_alpha(alpha_c, h);
-    }
-
     // Check fail state:
     if (n1_fail) {
         n(0) = 0;
@@ -400,9 +391,9 @@ void RAN::update(const Eigen::VectorXd x, double mp, double V_c, double beta_c,
     }
 }
 
-void RAN::update_n(Eigen::VectorXd n_c, double h){
+void RAN::update_n(Eigen::Vector2d& n, Eigen::Vector2d n_c, double h){
 
-    Eigen::VectorXd n_new = n + h/T_n * (n_c - n);
+    Eigen::Vector2d n_new = n + h/T_n * (n_c - n);
 
     for (int j = 0; j < n.size(); ++j) {
         if (n_new(j) > n_max) n_new(j) = n_max;
@@ -412,9 +403,9 @@ void RAN::update_n(Eigen::VectorXd n_c, double h){
     n = n_new;
 }
 
-void RAN::update_alpha(Eigen::VectorXd alpha_c, double h){
+void RAN::update_alpha(Eigen::Vector2d& alpha, Eigen::Vector2d alpha_c, double h){
     
-    Eigen::VectorXd alpha_new = alpha + h/T_alpha * (alpha_c - alpha);
+    Eigen::Vector2d alpha_new = alpha + h/T_alpha * (alpha_c - alpha);
 
     for (int j = 0; j < alpha.size(); ++j) {
         if (alpha_new(j) > alpha_max) alpha_new(j) = alpha_max;
@@ -424,24 +415,24 @@ void RAN::update_alpha(Eigen::VectorXd alpha_c, double h){
     alpha = alpha_new;
 }
 
-void RAN::rk4(Eigen::VectorXd& x, double mp, double V_c, double beta_c, double h, Eigen::VectorXd n_c, Eigen::VectorXd alpha_c)
+void RAN::rk4(Eigen::VectorXd& x, double mp, double V_c, double beta_c, double h, Eigen::Vector2d n, Eigen::Vector2d alpha)
 {
    propagate = false;
    
    // Compute k1
-   update(x, mp, V_c, beta_c, h, n_c, alpha_c);
+   update(x, mp, V_c, beta_c, h, n, alpha);
    Eigen::VectorXd k1 = h * xdot_rk4;
 
    // Compute k2
-   update(x + 0.5 * k1, mp, V_c, beta_c, h, n_c, alpha_c);
+   update(x + 0.5 * k1, mp, V_c, beta_c, h, n, alpha);
    Eigen::VectorXd k2 = h * xdot_rk4;
 
    // Compute k3
-   update(x + 0.5 * k2, mp, V_c, beta_c, h, n_c, alpha_c);
+   update(x + 0.5 * k2, mp, V_c, beta_c, h, n, alpha);
    Eigen::VectorXd k3 = h * xdot_rk4;
 
    // Compute k4
-   update(x + k3, mp, V_c, beta_c, h, n_c, alpha_c);
+   update(x + k3, mp, V_c, beta_c, h, n, alpha);
    Eigen::VectorXd k4 = h * xdot_rk4;
 
    // Update state vector x
