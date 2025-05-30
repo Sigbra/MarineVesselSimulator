@@ -15,7 +15,7 @@ MPC_Control_System::MPC_Control_System(int N, double dt)
     alpha_cmd_prev_ = DM();
 }
 
-MX MPC_Control_System::f(const MX& X, const MX& tau) {
+MX MPC_Control_System::f(const MX& X, const MX& tau, const MX& V_c, const MX& beta_c) {
     // States: [x, y, psi, u, v, r]
     MX x    = X(0);
     MX y    = X(1);
@@ -33,6 +33,14 @@ MX MPC_Control_System::f(const MX& X, const MX& tau) {
     MX dpsi = r;
 
     // ---------------------------
+    // Current in body frame
+    // ---------------------------
+    MX Vcn = V_c * cos(beta_c);     // current north
+    MX Vce = V_c * sin(beta_c);     // current east
+    MX u_c =  Vcn * cos(psi) + Vce * sin(psi);
+    MX v_c = -Vcn * sin(psi) + Vce * cos(psi);
+
+    // ---------------------------
     // Dynamics (Lumped Model)
     // ---------------------------
     // To capture the hydrodynamic effects from the detailed model we introduce
@@ -44,16 +52,17 @@ MX MPC_Control_System::f(const MX& X, const MX& tau) {
     //   - An extra cross-flow (or quadratic) drag in sway and an extra nonlinear yaw term
     //
     // The values below are constants based on the full model’s parameters.
-    const double m_eff   = 600.0;    // effective surge mass (kg)
-    const double Izz_eff = 800.0;    // effective yaw moment of inertia (kg·m²)
+    const double m_eff_surge   =  880.0;    // effective surge mass (kg)
+    const double m_eff_sway    = 1200.0;    // effective sway mass (kg)
+    const double Izz_eff       = 1250.0;    // effective yaw moment of inertia (kg·m²)
     const double T_surge = 5;        // maximum surge speed (m/s)
     const double T_sway  = 6;        // sway time constant (s)
     const double T_yaw   = 5;        // yaw time constant (s)
     
     // Damping coefficients (derived from expressions in the full model)
-    double Xu = m_eff / T_surge;                                           //                <--
+    double Xu = m_eff_surge / T_surge;                                           //                <--
     // A simplified sway damping (using the effective mass and a time constant)
-    double Yv = m_eff / T_sway;
+    double Yv = m_eff_sway / T_sway;
     // Yaw damping coefficient (using effective inertia and yaw time constant).
     // Note: The full model uses a nonlinear yaw term.
     double Nr_linear = Izz_eff / T_yaw;
@@ -64,23 +73,24 @@ MX MPC_Control_System::f(const MX& X, const MX& tau) {
     double D_y     = 0.5;  // cross-flow drag coefficient (to be tuned)
     double Nr_nl   = 10.0; // nonlinear yaw damping factor (tuned factor)
 
-    // For these simplified MPC dynamics we may neglect the current effects.
-    // Current correction terms
-    MX current_surge = 0;
-    MX current_sway  = 0;
-
     MX tau_X = tau(0);
     MX tau_Y = tau(1);
     MX tau_N = tau(2);
 
+    //-----------------------------
+    // Relative velocities in body frame
+    //-----------------------------
+    MX u_rel = u - u_c;
+    MX v_rel = v - v_c;
+
     // Compute a quadratic drag term in sway 
-    MX drag_v = D_y * v * fabs(v);
+    MX drag_v = D_y * v_rel * fabs(v_rel);
 
     // Assemble the dynamic equations for the body velocities.
     // The effective dynamics lump together the thrust contributions, the damping, 
     // and any additional drag:
-    MX du = (tau_X - Xu * u + current_surge) / m_eff;
-    MX dv = (tau_Y - Yv * v - drag_v + current_sway) / m_eff;
+    MX du = (tau_X - Xu * u_rel) / m_eff_surge;
+    MX dv = (tau_Y - Yv * v_rel - drag_v) / m_eff_sway;
     MX dr = (tau_N - Nr_linear * r - Nr_nl * fabs(r) * r) / Izz_eff;
 
     return MX::vertcat({dx, dy, dpsi, du, dv, dr});
@@ -106,28 +116,30 @@ MX control_allocation(const MX& n, const MX& alpha, double lx, double ly1, doubl
 }
 
 
-MX MPC_Control_System::rk4(const MX& Xk, const MX& tau, const MX& dt) {
-    MX k1 = f(Xk, tau);
-    MX k2 = f(Xk + (dt / 2) * k1, tau);
-    MX k3 = f(Xk + (dt / 2) * k2, tau);
-    MX k4 = f(Xk + dt * k3, tau);
+MX MPC_Control_System::rk4(const MX& Xk, const MX& tau, const MX& V_c, const MX& beta_c, const MX& dt) {
+    MX k1 = f(Xk, tau, V_c, beta_c);
+    MX k2 = f(Xk + (dt / 2) * k1, tau, V_c, beta_c);
+    MX k3 = f(Xk + (dt / 2) * k2, tau, V_c, beta_c);
+    MX k4 = f(Xk + dt * k3, tau, V_c, beta_c);
     return Xk + (dt / 6) * (k1 + 2 * k2 + 2 * k3 + k4);
 }
 
 Function MPC_Control_System::oneStepDynamicsFunction() {
     MX Xk = MX::sym("Xk", 6);
     MX tau = MX::sym("tau", 3);
+    MX V_c     = MX::sym("Vc");        
+    MX beta_c  = MX::sym("beta_c");    
 
-    MX k1 = f(Xk, tau);
-    MX k2 = f(Xk + (dt/2) * k1, tau);
-    MX k3 = f(Xk + (dt/2) * k2, tau);
-    MX k4 = f(Xk + dt * k3, tau);
+    MX k1 = f(Xk, tau, V_c, beta_c);
+    MX k2 = f(Xk + (dt/2) * k1, tau, V_c, beta_c);
+    MX k3 = f(Xk + (dt/2) * k2, tau, V_c, beta_c);
+    MX k4 = f(Xk + dt * k3, tau, V_c, beta_c);
 
     MX X_next = Xk + (dt / 6) * (k1 + 2 * k2 + 2 * k3 + k4);
-    return Function("oneStep", {Xk, tau}, {X_next});
+    return Function("oneStep", {Xk, tau, V_c, beta_c}, {X_next});
 }
 
-bool MPC_Control_System::solve(const std::vector<double>& x0, double x_s, double y_s, double x_d, double y_d, double psi_d, Eigen::VectorXd n_init, Eigen::VectorXd alpha_init, std::vector<bool> failstate) {
+bool MPC_Control_System::solve(const std::vector<double>& x0, double x_s, double y_s, double x_d, double y_d, double psi_d, double Vc, double betac, Eigen::VectorXd n_init, Eigen::VectorXd alpha_init, std::vector<bool> failstate) {
     
     double U = std::sqrt(x0[3]*x0[3] + x0[4]*x0[4]); // Current speed from state x0
     //Eigen::Vector3d CO_offset = CO_Offset(U); 
@@ -153,14 +165,19 @@ bool MPC_Control_System::solve(const std::vector<double>& x0, double x_s, double
     // U: control inputs (3 x N)
     MX X = opti.variable(6, N+1);
 
+    MX V_c = opti.parameter();  // Desired surge speed
+    MX beta_c = opti.parameter(); // Desired beta angle
+    opti.set_value(V_c, Vc);
+    opti.set_value(beta_c, betac);
+
     Function oneStepFunc = oneStepDynamicsFunction();
 
     // Constraint on first iteration values: X(:,0) should equal the current state x0.
     opti.subject_to(X(Slice(), 0) == DM(x0));
     // Constraiints on last iteration values.
-    opti.subject_to(X(3, N) == 0);  // Surge velocity (u) must be 0 at final time.
-    opti.subject_to(X(4, N) == 0);  // Sway velocity (v) must be 0 at final time.
-    opti.subject_to(X(5, N) == 0);  // Yaw rate (r) must be 0 at final time.
+    //opti.subject_to(X(3, N) == 0);  // Surge velocity (u) must be 0 at final time.
+    //opti.subject_to(X(4, N) == 0);  // Sway velocity (v) must be 0 at final time.
+    //opti.subject_to(X(5, N) == 0);  // Yaw rate (r) must be 0 at final time.
 
     // Pod command states
     MX n_vars = opti.variable(2, N+1);
@@ -265,7 +282,7 @@ bool MPC_Control_System::solve(const std::vector<double>& x0, double x_s, double
         MX tau = control_allocation(n_vars(Slice(), i), alpha_vars(Slice(), i),
                                     lx, ly1, ly2, k_pos, k_neg);
 
-        MX X_next = oneStepFunc({X(Slice(), i), tau})[0];
+        MX X_next = oneStepFunc({X(Slice(), i), tau, V_c, beta_c})[0];
         opti.subject_to(X(Slice(), i + 1) == X_next);
 
         // --- 1) cross-track error to infinite line ---
@@ -285,24 +302,24 @@ bool MPC_Control_System::solve(const std::vector<double>& x0, double x_s, double
         MX heading_error_sq = sqrt(heading_error * heading_error + 1e-4);
 
         if (failstate[0] || failstate[1]) { // Penalties when error state
-            cost +=  0 * crosstrack_error_sq; 
-            cost += 30 * position_error_sq;
-            cost +=  1 * heading_error_sq;  
+            cost +=   4 * crosstrack_error_sq; //                                 <- Fix this
+            cost += 120 * position_error_sq;
+            cost +=   6 * heading_error_sq;  
         } 
         else { // Penalties in normal operation
-            cost +=  7 * crosstrack_error_sq; //5
-            cost += 14 * position_error_sq;  //14
-            cost += 12 * heading_error_sq;  //9
+            cost += 10 * crosstrack_error_sq; //9
+            cost += 12 * position_error_sq;  //12
+            cost += 20 * heading_error_sq;  //18
         }
 
        
         MX d_n = n_cmd(Slice(), i) - n_vars(Slice(), i);
         MX d_alpha = alpha_cmd(Slice(), i) - alpha_vars(Slice(), i);
-        cost += 5*dot(d_n, d_n) + dot(d_alpha, d_alpha);
+        cost += 10*dot(d_n, d_n) + 2*dot(d_alpha, d_alpha); // 5 and 1
 
         // Penalize large speed resulting in large discretization steps that the MPC can't handle
         MX U_i = sqrt(X(3,i)*X(3,i) + X(4,i)*X(4,i) + 1e-4);
-        cost+= exp((U_i-1.5)/0.1); 
+        cost+= exp((U_i-0.8)/0.1); 
     
     } 
     

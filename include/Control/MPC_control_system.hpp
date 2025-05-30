@@ -22,7 +22,7 @@ public:
 
     // Build and solve the MPC problem given the current state (x0 of length 6) and the desired target point (x_d, y_d, psi_d).
     // The problem is constructed, solved, and the solution values over the horizon stored in member vectors.
-    bool solve(const std::vector<double>& x0, double x_s, double y_s, double x_d, double y_d, double psi_d, Eigen::VectorXd n_init, Eigen::VectorXd alpha_init, std::vector<bool> failstate);
+    bool solve(const std::vector<double>& x0, double x_s, double y_s, double x_d, double y_d, double psi_d, double Vc, double betac, Eigen::VectorXd n_init, Eigen::VectorXd alpha_init, std::vector<bool> failstate);
 
     Eigen::VectorXd get_n_opt();
     Eigen::VectorXd get_alpha_opt();
@@ -30,10 +30,10 @@ public:
 private:
     // Dynamics function: Given state X and control tau, returns the state derivative dX/dt.
     // The state X is [x, y, psi, u, v, r] and controls tau is [tau_x, tau_y, tau_N].
-    MX f(const MX& X, const MX& tau);
+    MX f(const MX& X, const MX& tau, const MX& V_c, const MX& beta_c);
 
     // Runge-Kutta 4 integrator for propagating the state.
-    MX rk4(const MX& Xk, const MX& tau, const MX& dt);
+    MX rk4(const MX& Xk, const MX& tau, const MX& V_c, const MX& beta_c, const MX& dt);
 
     Function oneStepDynamicsFunction();
 

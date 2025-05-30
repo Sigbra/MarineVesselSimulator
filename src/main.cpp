@@ -385,7 +385,7 @@ int main() {
             }
             case 4: { // Model Predictive Control System (Motion control and control allocation using vessel model)
                 std::vector<double> x0 = {xn, yn, psi, u, v, r}; 
-                mpc_control.solve(x0, wpt[wpt_index-1].x, wpt[wpt_index-1].y, xn_d, yn_d, psi_d, n, alpha, failstate);
+                mpc_control.solve(x0, wpt[wpt_index-1].x, wpt[wpt_index-1].y, xn_d, yn_d, psi_d, V_c, beta_c, n, alpha, failstate);
                 n_c = mpc_control.get_n_opt();
                 alpha_c = mpc_control.get_alpha_opt();
                 break;
