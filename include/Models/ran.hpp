@@ -83,6 +83,8 @@ class RAN {
         // - in yaw
         double R66;        
 
+        // - surge time constant (s)
+        double T_surge;
         // - sway time constant (s)
         double T_sway;                      
         // - yaw time constant (s)

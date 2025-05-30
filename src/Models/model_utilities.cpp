@@ -327,7 +327,7 @@ std::vector<double> nReal(std::vector<double> n_relative) {
 Eigen::VectorXd ThrustsFromRealativeN(Eigen::VectorXd n_r) {
     double g = 9.81;
     double k_pos = 200;
-    double k_neg = 200; 
+    double k_neg = 140; 
 
     int n_r_size = n_r.size();
 

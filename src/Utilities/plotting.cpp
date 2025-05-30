@@ -538,9 +538,9 @@ void plotTau() {
         plt::plot(x_line, y_line, "k-");
     }
 
-    plt::named_plot("$\\tau_X$", time, tauX, "C0-");
-    plt::named_plot("$\\tau_Y$", time, tauY, "C2-");
     plt::named_plot("$\\tau_N$", time, tauN, "C1-");
+    plt::named_plot("$\\tau_Y$", time, tauY, "C2-");
+    plt::named_plot("$\\tau_X$", time, tauX, "C0-");
     
     plt::xlabel("Time [s]");
     plt::ylabel("Torque [Nm]");

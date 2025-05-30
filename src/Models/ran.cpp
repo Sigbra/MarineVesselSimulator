@@ -20,10 +20,11 @@ RAN::RAN() {
     R55 = 0.25 * L;                    
     R66 = 0.25 * L;   
 
-    T_sway = 1.0;                      
-    T_yaw  = 1.0;     
+    T_surge = 5;
+    T_sway = 6;                      
+    T_yaw  = 5;     
 
-    Umax   = 10;      
+    Umax   = 8;      
 
     Beam_pont = 0.70;                 
     y_pont    = 1.1;                    
@@ -31,7 +32,7 @@ RAN::RAN() {
     Cb_pont   = 0.5;
 
     k_pos = 200;        
-    k_neg = 200;       
+    k_neg = 140;       
     n_max =  1;           
     n_min = -1;           
     alpha_max = M_PI/2;   
@@ -233,8 +234,8 @@ void RAN::update(const Eigen::VectorXd x, double mp, double V_c, double beta_c,
     // ---------------------------
     // Linear damping terms                        
     // ---------------------------
-    double Xu = - 200 / Umax;
-    double Yv = -M_sys(1,1) / T_sway;
+    double Xu = - M_sys(0,0) / T_surge;
+    double Yv = - M_sys(1,1) / T_sway;
     double Zw = -2 * 0.3 * w3 * M_sys(2,2);
     double Kp_damp = -2 * 0.2 * w4 * M_sys(3,3);
     double Mq_damp = -2 * 0.4 * w5 * M_sys(4,4);

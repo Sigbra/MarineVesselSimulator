@@ -366,7 +366,7 @@ int main() {
         // - Control allocation
         switch (ControlAllocFlag) {
             case 1: { // Pseudo-inverse control allocation
-                control_allocation = pseudo_inverse_allocation(tau_XYN, B, 200, 200);
+                control_allocation = pseudo_inverse_allocation(tau_XYN, B, 200, 140);
                 n_c     = {control_allocation[0], control_allocation[2]};
                 alpha_c = {control_allocation[1], control_allocation[3]};
                 break;

@@ -26,7 +26,7 @@ std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N, 
     // Constants from ran()
     double g = 9.81;
     double k_pos = 200;         
-    double k_neg = 200;         
+    double k_neg = 140;         
     double n_max =  1;           
     double n_min = -1;            
     double alpha_max = M_PI/2; 
@@ -39,9 +39,8 @@ std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N, 
     MX vars = opti.variable(n_effectors);
     // Objective function
     MX J = 0;
-    double tau_weight = 10.0; 
     // Small randomness to avoid local minima
-    double rand_small = ((double)rand() / RAND_MAX - 0.5) * 0.01;
+    double rand_small = ((double)rand() / RAND_MAX - 0.5) * 0.001;
 
     opti.set_initial(vars(0), n(0) + rand_small);
     opti.set_initial(vars(1), alpha(0));
@@ -106,8 +105,8 @@ std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N, 
     MX d_n2 = vars(2) - n(1);
     MX d_alpha1 = vars(1) - alpha(0);
     MX d_alpha2 = vars(3) - alpha(1);
-    J += 5*(dot(d_n1,d_n1) + dot(d_n1,d_n1)) 
-         + 10*(dot(d_alpha1,d_alpha1) + dot(d_alpha2,d_alpha2)); 
+    J += 60*(dot(d_n1,d_n1) + dot(d_n1,d_n1)) 
+         + 20*(dot(d_alpha1,d_alpha1) + dot(d_alpha2,d_alpha2)); 
 
     opti.minimize(J);
 

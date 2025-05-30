@@ -8,7 +8,7 @@ load_condition:
   mp: 0.0               # Payload mass (front cabin) [kg]
 
 ocean_current:
-  V_c: 0.1              # Ocean current speed [m/s] #0.2
+  V_c: 0.0 #0.1              # Ocean current speed [m/s] #0.2
   beta_c: 30.0          # Ocean current heading [rad]
 
 
@@ -17,8 +17,8 @@ waypoints:
 
 # Waypoint lists for DP simulation
 
-  x:      [0,  0, 20, 20, 0] 
-  y:      [0, 20, 20,  0, 0] 
+  x:      [0,  0, 15, 15, 0] 
+  y:      [0, 15, 15,  0, 0] 
   angles: [90,  90, 90, 135]
 
 # Waypoint list for path following simulation
