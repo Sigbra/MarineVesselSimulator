@@ -653,6 +653,16 @@ void plotClosestPointErrors() {
         plt::plot(x_line, y_line, "k-");
     }
 
+    if (!time.empty()) {
+    double t_start = time.front();
+    double t_end   = time.back();
+    plt::plot(
+        std::vector<double>{t_start, t_end},
+        std::vector<double>{0.0, 0.0},
+        "k-"
+    );
+    }
+
     plt::named_plot("Cross-track error", time, y_e, "g-");
     
     plt::xlabel("Time [s]");

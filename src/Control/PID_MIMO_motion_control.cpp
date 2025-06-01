@@ -18,14 +18,14 @@ MIMOPIDController::MIMOPIDController(){
 
     // Tunable params
     Omega_b = Eigen::MatrixXd::Zero(3, 3);
-    Omega_b(0, 0) = 0.25;  // 0.2
-    Omega_b(1, 1) = 0.35;  // 0.3
-    Omega_b(2, 2) = 1.3;   // 1.3
+    Omega_b(0, 0) = 0.2;  // ideal: 0.2
+    Omega_b(1, 1) = 0.3;  // ideal: 0.3
+    Omega_b(2, 2) = 1.1;   // ideal: 1.2
 
     Z = Eigen::MatrixXd::Zero(3, 3);
-    Z(0, 0) = 1.0; 
-    Z(1, 1) = 0.7; 
-    Z(2, 2) = 1.2; 
+    Z(0, 0) = 0.8; 
+    Z(1, 1) = 0.7; //ideal:0.7
+    Z(2, 2) = 1.1; // ideal: 1.2
 
     // Natural Frequencies
     Omega_n = Eigen::MatrixXd::Zero(3,3);
@@ -66,9 +66,9 @@ std::vector<double> MIMOPIDController::update(
     double ey = -s*ex_N + c*ey_N;
 
     //—— 4) Compute desired body‐frame velocities (simple P)
-    const double Kpx    = 0.6;   // [1/s]
-    const double Kpy    = 0.6;   // [1/s] 
-    const double Kp_psi = 0.9;   // [rad/s per rad]
+    const double Kpx    = 1;   // [1/s]
+    const double Kpy    = 1;   // [1/s] 
+    const double Kp_psi = 1;   // [rad/s per rad]
     
     double u_d = Kpx * ex;
     double v_d = Kpy * ey; 
@@ -110,7 +110,7 @@ std::vector<double> MIMOPIDController::update(
            + (1 - alpha) * nu_der;
 
     //—— 11) Integrator w/ anti-windup
-    constexpr double integral_limit = 10.0; //40
+    constexpr double integral_limit = 10.0; //10
     nu_z += nu_error * h;
     nu_z = nu_z.cwiseMax(-integral_limit)
            .cwiseMin( integral_limit);

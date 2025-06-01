@@ -52,9 +52,9 @@ MX MPC_Control_System::f(const MX& X, const MX& tau, const MX& V_c, const MX& be
     //   - An extra cross-flow (or quadratic) drag in sway and an extra nonlinear yaw term
     //
     // The values below are constants based on the full model’s parameters.
-    const double m_eff_surge   =  880.0;    // effective surge mass (kg)
-    const double m_eff_sway    = 1200.0;    // effective sway mass (kg)
-    const double Izz_eff       = 1250.0;    // effective yaw moment of inertia (kg·m²)
+    const double m_eff_surge   = 880.0;    // 880  effective surge mass (kg)
+    const double m_eff_sway    = 1200.0;    // 1200 effective sway mass (kg) //1200
+    const double Izz_eff       = 1250.0;    // 1250 effective yaw moment of inertia (kg·m²)
     const double T_surge = 5;        // maximum surge speed (m/s)
     const double T_sway  = 6;        // sway time constant (s)
     const double T_yaw   = 5;        // yaw time constant (s)
@@ -151,8 +151,9 @@ bool MPC_Control_System::solve(const std::vector<double>& x0, double x_s, double
     double lx  = -1.1;    // longitudinal pod location
     
     // Constants from the RAN model parameters
-    double k_pos = 200;
-    double k_neg = 140;
+    double g = 9.81; // gravitational acceleration (m/s^2)
+    double k_pos = 880;
+    double k_neg = 880;
     double n_max =  1, n_min = -1;
     double alpha_max = M_PI/2, alpha_min = -M_PI/2;
     double T_n = 0.5, T_alpha = 0.5;
@@ -302,14 +303,14 @@ bool MPC_Control_System::solve(const std::vector<double>& x0, double x_s, double
         MX heading_error_sq = sqrt(heading_error * heading_error + 1e-4);
 
         if (failstate[0] || failstate[1]) { // Penalties when error state
-            cost +=   4 * crosstrack_error_sq; //                                 <- Fix this
-            cost += 120 * position_error_sq;
-            cost +=   6 * heading_error_sq;  
+            cost +=  11   * crosstrack_error_sq; //                                 <- Fix this
+            cost += 140   * position_error_sq;
+            cost +=  11.5 * heading_error_sq;  
         } 
         else { // Penalties in normal operation
-            cost += 10 * crosstrack_error_sq; //9
+            cost +=  9 * crosstrack_error_sq; //9
             cost += 12 * position_error_sq;  //12
-            cost += 20 * heading_error_sq;  //18
+            cost += 18 * heading_error_sq;  //18
         }
 
        

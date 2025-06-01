@@ -31,8 +31,8 @@ RAN::RAN() {
     Cw_pont   = 1;                       
     Cb_pont   = 0.5;
 
-    k_pos = 200;        
-    k_neg = 140;       
+    k_pos = 880;        
+    k_neg = 880;       
     n_max =  1;           
     n_min = -1;           
     alpha_max = M_PI/2;   

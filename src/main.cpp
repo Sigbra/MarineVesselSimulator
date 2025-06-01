@@ -41,7 +41,7 @@ int main() {
     std::random_device rd;
     std::mt19937 gen(rd());
 
-    // Distributions for each σ (std dev)
+    // Distributions for each o (std dev)
     std::normal_distribution<double> noise_nu(0.0, 0.01);  
     std::normal_distribution<double> noise_eta(0.0, 0.001);
 
@@ -136,7 +136,7 @@ int main() {
     double kappa_max = 0.2; 
     FermatSpiralPath spiral(kappa_max);
     spiral.updateWaypoints(wpt);
-    Waypoints pathFS = spiral.samplePath(0.05);
+    Waypoints pathFS = spiral.samplePath(0.02);
     std::cout << "Path size: " << pathFS.size() << std::endl;
     plotPath(wpt, pathFS);
 
@@ -267,7 +267,7 @@ int main() {
         switch (pathType) {
             case 1: { // Dynamic Positioning.
                 if (R_switch > std::sqrt(std::pow(xn - wpt[wpt_index].x, 2) + std::pow(yn - wpt[wpt_index].y, 2))){
-                    if (std::abs(ssa(psi_d-psi)) < deg2rad(1) && U < 0.01) {
+                    if (std::abs(ssa(psi_d-psi)) < deg2rad(3) && U < 0.01) {
                         if (wpt_index < wpt.size()-1) {
                             wpt_index += 1;
                             MIMO_PID.reset();
@@ -358,7 +358,7 @@ int main() {
         } 
         // - Motion Control: Path following: 
         else if (GuidanceFlag==2 || GuidanceFlag==3) { 
-            tau_XYN[0] = 3;
+            tau_XYN[0] = 80;
             tau_XYN[1] = 0;
             tau_XYN[2] = headPID.update(h, M, psi, psi_d, r, r_d, a_d);
         }              
@@ -366,7 +366,7 @@ int main() {
         // - Control allocation
         switch (ControlAllocFlag) {
             case 1: { // Pseudo-inverse control allocation
-                control_allocation = pseudo_inverse_allocation(tau_XYN, B, 200, 140);
+                control_allocation = pseudo_inverse_allocation(tau_XYN, B, 880, 880);
                 n_c     = {control_allocation[0], control_allocation[2]};
                 alpha_c = {control_allocation[1], control_allocation[3]};
                 break;
@@ -401,7 +401,7 @@ int main() {
 
         // Marine Craft Model, update states: x
         ran_model.rk4(x, mp, V_c, beta_c, h, n, alpha);
-        //x(11) = ssa(x(11)); //makes plotting look bad       
+        x(11) = ssa(x(11)); //makes plotting look bad       
         
         // Pod model, update states: n and alpha
         ran_model.update_n(n, n_c, h);

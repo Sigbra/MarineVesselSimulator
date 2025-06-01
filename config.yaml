@@ -8,7 +8,7 @@ load_condition:
   mp: 0.0               # Payload mass (front cabin) [kg]
 
 ocean_current:
-  V_c: 0.0 #0.1              # Ocean current speed [m/s] #0.2
+  V_c: 0.0 #0.3         # Ocean current speed [m/s] #0.2
   beta_c: 30.0          # Ocean current heading [rad]
 
 
@@ -17,15 +17,15 @@ waypoints:
 
 # Waypoint lists for DP simulation
 
-  x:      [0,  0, 15, 15, 0] 
-  y:      [0, 15, 15,  0, 0] 
-  angles: [90,  90, 90, 135]
+  #x:      [0,  0, 15, 15, 0] 
+  #y:      [0, 15, 15,  0, 0] 
+  #angles: [90,  90, 90, 135]
 
 # Waypoint list for path following simulation
 
   # Right turn then left turn
-  #x: [0,  0, 25, 25] 
-  #y: [0, 25, 25, 50] 
+  x: [0,  0, 30, 30] 
+  y: [0, 30, 30, 60] 
 
   #Zig zag
   #x: [5,  0,  5,  0,  5,  0]
@@ -33,10 +33,10 @@ waypoints:
 
 path_following:
   #Additional parameters for MPC DP mode
-  R_switch: 0.2  # Radius for wpt switching in DP[m]
+  R_switch: 0.4  # Radius for wpt switching in DP[m] #ideal: 0.25
   K_f: 0.3       # LOS observer gain
 
   #LOS and ALOS parameters
-  Delta_h: 10    # Look-ahead distance
+  Delta_h: 5     # Look-ahead distance
   gamma_h: 0.001 # ALOS adaptive gain
 

@@ -302,8 +302,8 @@ Eigen::Vector3d CO_Offset(double U) {
 std::vector<double> nReal(std::vector<double> n_relative) {
     //n_relative: 0 to 1
     //n_real:   100 to -100
-    double n1_real = 200 * n_relative[0] - 100; 
-    double n2_real = 200 * n_relative[1] - 100; 
+    double n1_real = 200*9.81 * n_relative[0] - 100; 
+    double n2_real = 200*9.81 * n_relative[1] - 100; 
     return {n1_real, n2_real};
 }
 
@@ -326,8 +326,8 @@ std::vector<double> nReal(std::vector<double> n_relative) {
 //   Assuming max positive and max negative propellar revs are the same.
 Eigen::VectorXd ThrustsFromRealativeN(Eigen::VectorXd n_r) {
     double g = 9.81;
-    double k_pos = 200;
-    double k_neg = 140; 
+    double k_pos = 880;
+    double k_neg = 880; 
 
     int n_r_size = n_r.size();
 
