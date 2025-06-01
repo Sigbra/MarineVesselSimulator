@@ -401,6 +401,13 @@ void RAN::update_n(Eigen::Vector2d& n, Eigen::Vector2d n_c, double h){
         else if (n_new(j) < n_min) n_new(j) = n_min;
     }
 
+    if (n1_fail) {
+        n_new(0) = 0; 
+    }
+    if (n2_fail) {
+        n_new(1) = 0; 
+    }
+
     n = n_new;
 }
 
@@ -411,6 +418,13 @@ void RAN::update_alpha(Eigen::Vector2d& alpha, Eigen::Vector2d alpha_c, double h
     for (int j = 0; j < alpha.size(); ++j) {
         if (alpha_new(j) > alpha_max) alpha_new(j) = alpha_max;
         else if (alpha_new(j) < alpha_min) alpha_new(j) = alpha_min;
+    }
+
+    if (n1_fail) {
+        alpha_new(0) = 0; 
+    }
+    if (n2_fail) {
+        alpha_new(1) = 0; 
     }
 
     alpha = alpha_new;

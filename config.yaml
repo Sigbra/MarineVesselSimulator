@@ -24,8 +24,8 @@ waypoints:
 # Waypoint list for path following simulation
 
   # Right turn then left turn
-  x: [0,  0, 30, 30] 
-  y: [0, 30, 30, 60] 
+  x: [0,  0, 40, 40] 
+  y: [0, 40, 40, 80] 
 
   #Zig zag
   #x: [5,  0,  5,  0,  5,  0]
@@ -37,6 +37,6 @@ path_following:
   K_f: 0.3       # LOS observer gain
 
   #LOS and ALOS parameters
-  Delta_h: 5     # Look-ahead distance
+  Delta_h: 10    # Look-ahead distance
   gamma_h: 0.001 # ALOS adaptive gain
 

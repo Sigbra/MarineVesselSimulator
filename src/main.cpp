@@ -133,10 +133,10 @@ int main() {
 
     // Create the Fermat spiral path.
     // - Set the curvature constraint (k_max in rad/m).
-    double kappa_max = 0.2; 
+    double kappa_max = 0.15; 
     FermatSpiralPath spiral(kappa_max);
     spiral.updateWaypoints(wpt);
-    Waypoints pathFS = spiral.samplePath(0.02);
+    Waypoints pathFS = spiral.samplePath(0.05);
     std::cout << "Path size: " << pathFS.size() << std::endl;
     plotPath(wpt, pathFS);
 
