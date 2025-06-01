@@ -663,7 +663,7 @@ void plotClosestPointErrors() {
     );
     }
 
-    plt::named_plot("Cross-track error", time, y_e, "g-");
+    plt::named_plot("Cross-track error", time, y_e, "r-"); //g- <- changed from green for better visibility
     
     plt::xlabel("Time [s]");
     plt::ylabel("Error [m]");
