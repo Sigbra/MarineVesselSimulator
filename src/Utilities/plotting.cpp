@@ -80,13 +80,13 @@ void storeWaypointChangeTimes(const std::vector<double>& times, const std::strin
 
 void plotPath(const Waypoints& wpt, const Waypoints& path) {
     plt::rcparams({
-        {"font.size",       "10"},    // base font size for all text
+        {"font.size",       "14"},    // base font size for all text
         //{"font.family",     "sans-serif"},
         {"axes.titlesize",  "16"},    // title size
         {"axes.labelsize",  "14"},    // axis‐label size
         //{"axes.labelweight","bold"},  // axis‐label weight
-        {"xtick.labelsize", "10"},    // x‐tick label size
-        {"ytick.labelsize", "10"}     // y‐tick label size
+        {"xtick.labelsize", "12"},    // x‐tick label size
+        {"ytick.labelsize", "12"}     // y‐tick label size
     });  
 
     // Check if the path is empty.
@@ -126,7 +126,7 @@ void plotPath(const Waypoints& wpt, const Waypoints& path) {
 }
 
 
-void plotTrajectory(const Waypoints& wpt) {
+void plotTrajectory(const Waypoints& wpt, const Waypoints& path) {
     std::filesystem::path filepath = std::filesystem::path(getRepositoryPath()) / "data" / "simdata.csv";
     if (!std::filesystem::exists(filepath)) {
         std::cerr << "File does not exist: " << filepath << std::endl;
@@ -180,8 +180,17 @@ void plotTrajectory(const Waypoints& wpt) {
         wx.push_back(wp.x);
         wy.push_back(wp.y);
     }
+
+    std::vector<double> px, py;
+    px.reserve(path.size());
+    py.reserve(path.size());
+    for (auto &p : path) {
+        px.push_back(p.x);
+        py.push_back(p.y);
+    }
     
-    plt::figure_size(800, 600);
+    plt::figure_size(800, 800);
+    plt::plot(px, py, "r-"); 
     plt::plot(wx, wy, "ro");  
     plt::plot(xn, yn, "b-");
     plt::xlabel("x(t) [m]");
@@ -190,7 +199,7 @@ void plotTrajectory(const Waypoints& wpt) {
     
     // Prepare data for quiver (vector field plot)
     std::vector<double> u, v;  // dx, dy components of arrows
-    double arrowLength = 0.3;  // Scale factor for arrows
+    double arrowLength = 0.4;  // Scale factor for arrows
     std::vector<double> xq, yq;
     
     for (size_t i = 0; i < xn.size(); i += 200) { 

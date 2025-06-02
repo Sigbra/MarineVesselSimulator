@@ -133,7 +133,7 @@ int main() {
 
     // Create the Fermat spiral path.
     // - Set the curvature constraint (k_max in rad/m).
-    double kappa_max = 0.15; 
+    double kappa_max = 0.10; 
     FermatSpiralPath spiral(kappa_max);
     spiral.updateWaypoints(wpt);
     Waypoints pathFS = spiral.samplePath(0.05);
@@ -505,7 +505,11 @@ int main() {
     plotPropellerSpeeds();
     plotAlphas();
     plotTau();
-    plotTrajectory(wpt);
+    if (pathType == 1 || pathType == 2) {
+        plotTrajectory(wpt, pathLine);
+    } else if (pathType == 3) {
+        plotTrajectory(wpt, pathFS);
+    }
     plotClosestPointErrors();
     plotStateErrors();
     plotAngles();

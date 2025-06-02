@@ -13,7 +13,7 @@ void storeWaypointChangeTimes(const std::vector<double>& times, const std::strin
 
 void plotPath(const Waypoints& wpt, const Waypoints &path);
 
-void plotTrajectory(const Waypoints& wpt);
+void plotTrajectory(const Waypoints& wpt, const Waypoints& path);
 
 void plotStateErrors();
 
