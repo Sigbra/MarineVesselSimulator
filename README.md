@@ -1,13 +1,13 @@
 # Marine Vessel Simulator
 
-This repository contains c++ code for simulation of a catamaran model called ran().
+This repository contains c++ code for simulation of a USV, named RAN.
 
-The "Handbook of Marine Craft Hydrodynamics and Motion Control" by Thor I. Fossen was used actively for theoretical background material, as well as papers mentioned in "placeholder.pdf" in the literature folder. 
+The "Handbook of Marine Craft Hydrodynamics and Motion Control" by Thor I. Fossen was used actively for theoretical background material, as well as papers mentioned in "Optimal_Constrained_Control_Allocation_for_catamarans_with_dual_azimuth_thrusters.pdf" under the literature folder. 
 
 The repository is implemented using c++ for fast computations and open-source purposes. 
 
 #### Models;
-- ran(), a marine reserch vessel with a catamaran hull. It has one azimuth pod placed under each pontoon almost at the back. 
+- ran(), a marine reserch vessel with a catamaran hull, with one azimuth pod placed aft underneeth each hull
 
 #### Path generation algorithms;
 - Straight line path. (For path following)
@@ -24,8 +24,10 @@ The repository is implemented using c++ for fast computations and open-source pu
 - Heading PID based on Nomoto model. 
 
 #### Control Allocation
-- Nonlinear constrained optimization using Casadi's opti solver
-- MPC nonlinear constrained optimization using Casadi's opti solver
+- Pseudo-iverse-based 
+- Nonlinear constrained optimization - based
+- MPC Thrust model - based
+- MPC Full model - based
 
 
 ## Showcase of capabilities;
