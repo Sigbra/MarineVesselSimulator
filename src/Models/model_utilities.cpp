@@ -53,12 +53,54 @@ Eigen::Matrix3d Tzyx(double phi, double theta) {
     return T;
 }
 
-//-------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Helper function: m2c (added-mass to Coriolis matrix)
-// Stub, return a 6x6 zero matrix.
-//-------------------------------------------------------------------
-Eigen::MatrixXd m2c(const Eigen::MatrixXd &MA, const Eigen::VectorXd & /*nu_r*/) {
-    return Eigen::MatrixXd::Zero(6,6);
+//   M  : 6×6 or 3×3 inertia (rigid‐body MRB or added‐mass MA) matrix
+//   nu : 6×1 [u v w p q r]^T or 3×1 [u v r]^T velocity vector
+// returns
+//   C  : Coriolis‐centripetal matrix (6×6 or 3×3)
+//------------------------------------------------------------------------------
+Eigen::MatrixXd m2c(const Eigen::MatrixXd& M_in,
+    const Eigen::VectorXd& nu)
+{
+    // 1) Symmetrize M
+    Eigen::MatrixXd M = 0.5 * (M_in + M_in.transpose());
+
+    // 2) 6-DOF branch
+    if (nu.size() == 6) {
+        assert(M.rows() == 6 && M.cols() == 6);
+
+        Eigen::Matrix3d M11 = M.block<3,3>(0,0);
+        Eigen::Matrix3d M12 = M.block<3,3>(0,3);
+        Eigen::Matrix3d M21 = M12.transpose();
+        Eigen::Matrix3d M22 = M.block<3,3>(3,3);
+
+        Eigen::Vector3d nu1 = nu.segment<3>(0);
+        Eigen::Vector3d nu2 = nu.segment<3>(3);
+
+        Eigen::Vector3d nu1_dot = M11*nu1 + M12*nu2;
+        Eigen::Vector3d nu2_dot = M21*nu1 + M22*nu2;
+
+        Eigen::MatrixXd C = Eigen::MatrixXd::Zero(6,6);
+        C.block<3,3>(0,3) = -Smtrx(nu1_dot);
+        C.block<3,3>(3,0) = -Smtrx(nu1_dot);
+        C.block<3,3>(3,3) = -Smtrx(nu2_dot);
+        return C;
+    }
+    // 3) 3-DOF branch (surge, sway, yaw)
+    else {
+        assert(nu.size() == 3);
+        assert(M.rows() == 3 && M.cols() == 3);
+
+        double u = nu(0), v = nu(1), r = nu(2);
+        Eigen::Matrix3d C = Eigen::Matrix3d::Zero();
+
+        C(0,2) = - ( M(1,1)*v + M(1,2)*r );
+        C(1,2) =   ( M(0,0)*u );
+        C(2,0) =   ( M(1,1)*v + M(1,2)*r );
+        C(2,1) = - ( M(0,0)*u );
+        return C;
+    }
 }
 
 //-------------------------------------------------------------------
@@ -260,8 +302,8 @@ Eigen::Vector3d CO_Offset(double U) {
 std::vector<double> nReal(std::vector<double> n_relative) {
     //n_relative: 0 to 1
     //n_real:   100 to -100
-    double n1_real = 200 * n_relative[0] - 100; 
-    double n2_real = 200 * n_relative[1] - 100; 
+    double n1_real = 200*9.81 * n_relative[0] - 100; 
+    double n2_real = 200*9.81 * n_relative[1] - 100; 
     return {n1_real, n2_real};
 }
 
@@ -284,8 +326,8 @@ std::vector<double> nReal(std::vector<double> n_relative) {
 //   Assuming max positive and max negative propellar revs are the same.
 Eigen::VectorXd ThrustsFromRealativeN(Eigen::VectorXd n_r) {
     double g = 9.81;
-    double k_pos = 200;
-    double k_neg = 200; 
+    double k_pos = 880;
+    double k_neg = 880; 
 
     int n_r_size = n_r.size();
 

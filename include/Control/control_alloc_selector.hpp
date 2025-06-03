@@ -14,9 +14,10 @@ class ControlAllocationMethod {
     
     private:
         std::vector<std::string> methods = {
-            "Non-linear optimization control allocation",
-            "MPC control allocation",
-            "MPC for motion control and allocation (DP)"
+            "Pseudo-inverse allocation with azimuthg angle constraints",
+            "Non-linear constrained optimization control allocation",
+            "MPC control allocation (simmilar to above, but with rate constraints)",
+            "MPC control system (DP)"
         };
     };
 

@@ -20,18 +20,19 @@ RAN::RAN() {
     R55 = 0.25 * L;                    
     R66 = 0.25 * L;   
 
-    T_sway = 1.0;                      
-    T_yaw  = 1.0;     
+    T_surge = 5;
+    T_sway = 6;                      
+    T_yaw  = 5;     
 
-    Umax   = 10;      
+    Umax   = 8;      
 
     Beam_pont = 0.70;                 
     y_pont    = 1.1;                    
     Cw_pont   = 1;                       
     Cb_pont   = 0.5;
 
-    k_pos = 200;        
-    k_neg = 200;       
+    k_pos = 880;        
+    k_neg = 880;       
     n_max =  1;           
     n_min = -1;           
     alpha_max = M_PI/2;   
@@ -40,18 +41,18 @@ RAN::RAN() {
     T_n = 0.5;
     T_alpha = 0.5;
 
-    n = Eigen::VectorXd::Zero(2);
-    alpha = Eigen::VectorXd::Zero(2);
-
     M = Eigen::MatrixXd::Zero(6, 6);
     B = Eigen::MatrixXd::Zero(3, 2);
     xdot = Eigen::VectorXd::Zero(12);
 
     propagate = true;
+
+    n1_fail = false;
+    n2_fail = false;
 }
 
 void RAN::update(const Eigen::VectorXd x, double mp, double V_c, double beta_c,
-              double h, Eigen::VectorXd n_c, Eigen::VectorXd alpha_c)
+              double h, Eigen::Vector2d n, Eigen::Vector2d alpha)
 {
     // Check dimensions
     if (x.size() != 12) {
@@ -76,13 +77,17 @@ void RAN::update(const Eigen::VectorXd x, double mp, double V_c, double beta_c,
     // - Assuming CO = (0, 0, 0) means center of the boat.
     //----------------------------
     // - Coordinate origin (CO) offset update (Speed dependant)
-    Eigen::Vector3d CO_offset = CO_Offset(U);
-    // - CO to center of gravity for hull only.
-    Eigen::Vector3d rg_hull = Eigen::Vector3d( -0.5, 0.0, -0.2) - CO_offset;
-    // - CO to payload location (front cabin).
-    Eigen::Vector3d rp      = Eigen::Vector3d( 0.75, 0.0, -0.2) - CO_offset;
-    // - CO to longditudinal center of flotation (LCF).
-    Eigen::Vector3d LCF_vec = Eigen::Vector3d( -0.2, 0.0,  0.0) - CO_offset;
+    // Eigen::Vector3d CO_offset = CO_Offset(U);
+    // // - CO to center of gravity for hull only.
+    // Eigen::Vector3d rg_hull = Eigen::Vector3d( -0.5, 0.0, -0.2) - CO_offset;
+    // // - CO to payload location (front cabin).
+    // Eigen::Vector3d rp      = Eigen::Vector3d( 0.75, 0.0, -0.2) - CO_offset;
+    // // - CO to longditudinal center of flotation (LCF).
+    // Eigen::Vector3d LCF_vec = Eigen::Vector3d( -0.2, 0.0,  0.0) - CO_offset;
+
+    Eigen::Vector3d rg_hull = Eigen::Vector3d( -0.5, 0.0, -0.2);
+    Eigen::Vector3d rp      = Eigen::Vector3d( 0.75, 0.0, -0.2);
+    Eigen::Vector3d LCF_vec = Eigen::Vector3d( -0.2, 0.0,  0.0);
     
     // ---------------------------
     // Ocean current and relative velocity
@@ -132,11 +137,15 @@ void RAN::update(const Eigen::VectorXd x, double mp, double V_c, double beta_c,
     // Azimuth pods / Pontoon data and control forces
     // ---------------------------
     // left pod lever arm (m)
-    double ly1 = y_pont - CO_offset(1);         
-    // right pod lever arm (m)
-    double ly2 = -y_pont + CO_offset(1);        
-    // forward displacement of pods (m)
-    double lx  = -1.1 + CO_offset(0);   
+    // double ly1 = y_pont - CO_offset(1);         
+    // // right pod lever arm (m)
+    // double ly2 = -y_pont + CO_offset(1);        
+    // // forward displacement of pods (m)
+    // double lx  = -1.1 + CO_offset(0); 
+      
+    double ly1 = y_pont;         
+    double ly2 = -y_pont;        
+    double lx  = -1.1;
 
     // ---------------------------
     // Rigid-body (MRB) and Coriolis (CRB) matrices at the CG
@@ -225,18 +234,20 @@ void RAN::update(const Eigen::VectorXd x, double mp, double V_c, double beta_c,
     // ---------------------------
     // Linear damping terms                        
     // ---------------------------
-    double Xu = - 200 / Umax;
-    double Yv = -M_sys(1,1) / T_sway;
+    double Xu = - M_sys(0,0) / T_surge;
+    double Yv = - M_sys(1,1) / T_sway;
     double Zw = -2 * 0.3 * w3 * M_sys(2,2);
     double Kp_damp = -2 * 0.2 * w4 * M_sys(3,3);
     double Mq_damp = -2 * 0.4 * w5 * M_sys(4,4);
     double Nr = -M_sys(5,5) / T_yaw;
     
 
-    // Compute propeller speeds and angles
-    if (propagate){
-        update_n(n_c, h);
-        update_alpha(alpha_c, h);
+    // Check fail state:
+    if (n1_fail) {
+        n(0) = 0;
+    }
+    if (n2_fail) {
+        n(1) = 0;
     }
 
     // Thrusts from podded propellars
@@ -337,37 +348,43 @@ void RAN::update(const Eigen::VectorXd x, double mp, double V_c, double beta_c,
         // Input matrix B (3x2). 
         // (Fossen Chapter 9.4 and 11.2)
         //----------------------------
-        Eigen::MatrixXd B_ = Eigen::MatrixXd::Zero(3,2);
-        double F1 = 0;
-        double F2 = 0;
+        // Eigen::MatrixXd B_ = Eigen::MatrixXd::Zero(3,4);
+        // double F1 = 0;
+        // double F2 = 0;
 
-        if (n(0) >= 0) {
-            F1 = k_pos;
-        } else if (n(0) < 0) {
-            F1 = k_neg;
-        }
+        // if (n(0) >= 0) {
+        //     F1 = k_pos;
+        // } else if (n(0) < 0) {
+        //     F1 = k_neg;
+        // }
 
-        if (n(1) >= 0) {
-            F2 = k_pos;
-        } else if (n(1) < 0) {
-            F2 = k_neg;
-        }
+        // if (n(1) >= 0) {
+        //     F2 = k_pos;
+        // } else if (n(1) < 0) {
+        //     F2 = k_neg;
+        // }
 
-        // First row: contribution to surge (X)
-        B_(0,0) = F1*cos(alpha(0));
-        B_(0,1) = F2*cos(alpha(1));
+        // // First row: contribution to surge (X)
+        // B_(0,0) = F1*cos(alpha(0));
+        // B_(0,1) = F2*cos(alpha(1));
 
-        // Second row: contribution to sway (Y)
-        B_(1,0) = F1*sin(alpha(0));
-        B_(1,1) = F2*sin(alpha(1));
+        // // Second row: contribution to sway (Y)
+        // B_(1,0) = F1*sin(alpha(0));
+        // B_(1,1) = F2*sin(alpha(1));
 
-        // Third row: contribution to yaw moment (N)
-        B_(2,0) =  F1*(lx*sin(alpha(0) - ly1*cos(alpha(0))));
-        B_(2,1) =  F2*(lx*sin(alpha(1) - ly2*cos(alpha(1))));
+        // // Third row: contribution to yaw moment (N)
+        // B_(2,0) =  F1*(lx*sin(alpha(0) - ly1*cos(alpha(0))));
+        // B_(2,1) =  F2*(lx*sin(alpha(1) - ly2*cos(alpha(1))));
 
-        //std::cout << "B : \n" << B_ << std::endl;
-        B = B_;
+        // //std::cout << "B : \n" << B_ << std::endl;
+        // B = B_;
 
+        Eigen::Matrix<double,3,4> B_e;
+        B_e <<  1,    0,    1,    0,
+              0,    1,    0,    1,
+             -ly1*cos(alpha[0]), lx*sin(alpha[0]), -ly2*cos(alpha[1]), lx*sin(alpha[1]);
+
+        B = B_e;
     }
     else {
         xdot_rk4.resize(12);
@@ -375,48 +392,62 @@ void RAN::update(const Eigen::VectorXd x, double mp, double V_c, double beta_c,
     }
 }
 
-void RAN::update_n(Eigen::VectorXd n_c, double h){
+void RAN::update_n(Eigen::Vector2d& n, Eigen::Vector2d n_c, double h){
 
-    Eigen::VectorXd n_new = n + h/T_n * (n_c - n);
+    Eigen::Vector2d n_new = n + h/T_n * (n_c - n);
 
     for (int j = 0; j < n.size(); ++j) {
         if (n_new(j) > n_max) n_new(j) = n_max;
         else if (n_new(j) < n_min) n_new(j) = n_min;
     }
 
+    if (n1_fail) {
+        n_new(0) = 0; 
+    }
+    if (n2_fail) {
+        n_new(1) = 0; 
+    }
+
     n = n_new;
 }
 
-void RAN::update_alpha(Eigen::VectorXd alpha_c, double h){
+void RAN::update_alpha(Eigen::Vector2d& alpha, Eigen::Vector2d alpha_c, double h){
     
-    Eigen::VectorXd alpha_new = alpha + h/T_alpha * (alpha_c - alpha);
+    Eigen::Vector2d alpha_new = alpha + h/T_alpha * (alpha_c - alpha);
 
     for (int j = 0; j < alpha.size(); ++j) {
         if (alpha_new(j) > alpha_max) alpha_new(j) = alpha_max;
         else if (alpha_new(j) < alpha_min) alpha_new(j) = alpha_min;
     }
 
+    if (n1_fail) {
+        alpha_new(0) = 0; 
+    }
+    if (n2_fail) {
+        alpha_new(1) = 0; 
+    }
+
     alpha = alpha_new;
 }
 
-void RAN::rk4(Eigen::VectorXd& x, double mp, double V_c, double beta_c, double h, Eigen::VectorXd n_c, Eigen::VectorXd alpha_c)
+void RAN::rk4(Eigen::VectorXd& x, double mp, double V_c, double beta_c, double h, Eigen::Vector2d n, Eigen::Vector2d alpha)
 {
    propagate = false;
    
    // Compute k1
-   update(x, mp, V_c, beta_c, h, n_c, alpha_c);
+   update(x, mp, V_c, beta_c, h, n, alpha);
    Eigen::VectorXd k1 = h * xdot_rk4;
 
    // Compute k2
-   update(x + 0.5 * k1, mp, V_c, beta_c, h, n_c, alpha_c);
+   update(x + 0.5 * k1, mp, V_c, beta_c, h, n, alpha);
    Eigen::VectorXd k2 = h * xdot_rk4;
 
    // Compute k3
-   update(x + 0.5 * k2, mp, V_c, beta_c, h, n_c, alpha_c);
+   update(x + 0.5 * k2, mp, V_c, beta_c, h, n, alpha);
    Eigen::VectorXd k3 = h * xdot_rk4;
 
    // Compute k4
-   update(x + k3, mp, V_c, beta_c, h, n_c, alpha_c);
+   update(x + k3, mp, V_c, beta_c, h, n, alpha);
    Eigen::VectorXd k4 = h * xdot_rk4;
 
    // Update state vector x
@@ -424,4 +455,39 @@ void RAN::rk4(Eigen::VectorXd& x, double mp, double V_c, double beta_c, double h
 
    propagate = true;
 
+}
+
+std::vector<bool> RAN::check_failstate() {
+    std::vector<bool> failstate;
+    failstate.push_back(n1_fail);
+    failstate.push_back(n2_fail);
+    return failstate;
+}
+
+void RAN::select_failure_mode() {
+    std::string input;
+
+    while (true) {
+        std::cout << "\nSelect operating mode:\n";
+        std::cout << "1 - Fully operational\n";
+        std::cout << "2 - Pod 1 failure\n";
+        std::cout << "3 - Pod 2 failure\n";
+        std::cout << "Enter your choice (1/2/3): ";
+        std::cin >> input;
+
+        if (input == "1") {
+            std::cout << "\n";
+            break; 
+        } else if (input == "2") {
+            fail_state_n1();
+            std::cout << "\n";
+            break; 
+        } else if (input == "3") {
+            fail_state_n2();
+            std::cout << "\n";
+            break; 
+        } else {
+            std::cout << "Invalid choice. Please try again.\n";
+        }
+    }
 }

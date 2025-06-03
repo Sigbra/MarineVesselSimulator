@@ -15,8 +15,13 @@ class MIMOPIDController {
         // Compute P gain matrix
         // Compute D gain matrix
         // Compute I gain matrix
-        std::vector<double> update(double h, double xn_d, double yn_d, double psi_d,
-                            Eigen::MatrixXd M, Eigen::VectorXd eta, Eigen::VectorXd nu);
+        std::vector<double> update(
+            double h,
+            double xn_d, double yn_d, double psi_d,
+            const Eigen::MatrixXd& M,
+            const Eigen::VectorXd& eta,
+            const Eigen::VectorXd& nu,
+            double V_c, double beta_c);
     
         void reset();
     
@@ -36,6 +41,8 @@ class MIMOPIDController {
         Eigen::VectorXd nu_der;
         //Integral state;
         Eigen::VectorXd nu_z;
+        // Outer-loop Intergral state;
+        Eigen::Vector2d pos_z;
 
         
     };

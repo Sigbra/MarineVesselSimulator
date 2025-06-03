@@ -85,15 +85,15 @@ set(SOURCES
     src/main.cpp
 
     src/Control/control_alloc_selector.cpp
+    src/Control/pseudo_inverse_allocation.cpp
     src/Control/MPC_control_alloc.cpp
     src/Control/non_lin_constrained_control_alloc.cpp
     src/Control/PID_heading_motion_control.cpp
     src/Control/PID_MIMO_motion_control.cpp
-    src/Control/MPC_motion_control.cpp
+    src/Control/MPC_control_system.cpp
 
     src/Guidance/LOS.cpp
     src/Guidance/ALOS.cpp
-    src/Guidance/MPC_guidance.cpp
     src/Guidance/LOS_observer.cpp
     src/Guidance/dynamic_positioning.cpp
     src/Guidance/guidance_selector.cpp

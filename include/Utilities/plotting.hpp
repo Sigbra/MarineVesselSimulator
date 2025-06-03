@@ -9,17 +9,29 @@ std::string getRepositoryPath();
 
 void storeSimulationData(const Eigen::MatrixXd& simdata, std::string filename);
 
-void plotPath(const Waypoints &path);
+void storeWaypointChangeTimes(const std::vector<double>& times, const std::string& filename);
 
-void plotTrajectory();
+void plotPath(const Waypoints& wpt, const Waypoints &path);
+
+void plotTrajectory(const Waypoints& wpt, const Waypoints& path);
 
 void plotStateErrors();
 
 void plotAngles();
 
+void plotPropellerSpeeds();
+
+void plotAlphas();
+
+void plotTau();
+
 void plot_points(const std::vector<Vector2D>& vessels, const std::vector<Vector2D>& projections);
 
 void plotClosestPointErrors();
+
+std::vector<double> loadWaypointChangeTimes();
+
+//void addWaypointChangeLines(const std::vector<double>& change_times);
 
 class RealTimePlotter {
     public:
@@ -45,4 +57,4 @@ class RealTimePlotter {
         std::vector<double> m_path_y;
     };
 
-#endif // UTILITIES_HPP
+#endif // PLOTTING_UTILITIES_HPP

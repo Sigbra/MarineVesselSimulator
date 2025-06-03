@@ -9,16 +9,16 @@
 #include <thread>
 
 #include "Control/control_alloc_selector.hpp"
+#include "Control/pseudo_inverse_allocation.hpp"
 #include "Control/PID_MIMO_motion_control.hpp"
 #include "Control/PID_heading_motion_control.hpp"
-#include "Control/MPC_motion_control.hpp"
+#include "Control/MPC_control_system.hpp"
 #include "Control/MPC_control_alloc.hpp"
 #include "Control/non_lin_constrained_control_alloc.hpp"
 
 #include "Guidance/guidance_selector.hpp"
 #include "Guidance/LOS.hpp"
 #include "Guidance/ALOS.hpp"
-#include "Guidance/MPC_guidance.hpp"
 #include "Guidance/LOS_observer.hpp"
 #include "Guidance/dynamic_positioning.hpp"
 
@@ -38,6 +38,13 @@ int main() {
     srand(time(0)); 
     YAML::Node config = YAML::LoadFile("../config.yaml");
 
+    std::random_device rd;
+    std::mt19937 gen(rd());
+
+    // Distributions for each o (std dev)
+    std::normal_distribution<double> noise_nu(0.0, 0.01);  
+    std::normal_distribution<double> noise_eta(0.0, 0.001);
+
     // Simulation parameters
     double h = config["simulation"]["h"].as<double>();
     double T_final = config["simulation"]["T_final"].as<double>();
@@ -46,7 +53,7 @@ int main() {
     double mp = config["load_condition"]["mp"].as<double>(); 
     
     // Ocean current
-    double V_c = config["ocean_current"]["V_c"].as<double>();   
+    double V_c = config["ocean_current"]["V_c"].as<double>(); 
     double beta_c = deg2rad(config["ocean_current"]["beta_c"].as<double>());
 
     // Load original waypoints from config
@@ -107,34 +114,35 @@ int main() {
     Eigen::MatrixXd M = ran_model.get_M();
     Eigen::MatrixXd B = ran_model.get_B();
     double U = ran_model.get_U();
-    Eigen::VectorXd xdot = ran_model.get_xdot();
 
     double T_n = ran_model.getT_n();          // Propeller time constant (s)
     double T_alpha = ran_model.getT_alpha();  // Azimuth angle time constant (s)
 
-    Eigen::Vector2d n = ran_model.get_n();           
-    Eigen::Vector2d alpha = ran_model.get_alpha();
+    ran_model.select_failure_mode();
+    std::vector<bool> failstate = ran_model.check_failstate();
+
+    Eigen::Vector2d n = Eigen::Vector2d::Zero(); // Propeller speeds (rad/s)      
+    Eigen::Vector2d alpha = Eigen::Vector2d::Zero(); // Azimuth angles (rad)
 
     // Create the straight line path.
     StraightLinePath straightLinePath;
     straightLinePath.updateWaypoints(wpt);
     Waypoints pathLine = straightLinePath.samplePath(0.05);
     std::cout << "Path size: " << pathLine.size() << std::endl;
-    plotPath(pathLine);
+    plotPath(wpt, pathLine);
 
     // Create the Fermat spiral path.
     // - Set the curvature constraint (k_max in rad/m).
-    double kappa_max = 0.2; 
+    double kappa_max = 0.10; 
     FermatSpiralPath spiral(kappa_max);
     spiral.updateWaypoints(wpt);
     Waypoints pathFS = spiral.samplePath(0.05);
     std::cout << "Path size: " << pathFS.size() << std::endl;
-    plotPath(pathFS);
+    plotPath(wpt, pathFS);
 
     // Initialize guidance methods and LOS observer 
     ALOS ALOS(Delta_h, gamma_h, 0.1);
-    LOSObserver losObserver(h, K_f);
-    MPCGuidance mpc_guidance(0.8, 0.5);
+    LOSObserver losObserver(h, K_f, x(11));
 
     // Choose path type
     int pathType = selectPathType();
@@ -161,9 +169,9 @@ int main() {
     int ControlAllocFlag = controlAlloc.selectMethod();
 
     // Initial desired states
-    double xn_d  = 0.0;        
-    double yn_d  = 0.0;        
-    double psi_d = 0.0; 
+    double xn_d  = x(6);        
+    double yn_d  = x(7);        
+    double psi_d = x(11); 
     double U_d   = 0.0;
 
     // ALOS variables
@@ -175,7 +183,7 @@ int main() {
     // Motion control classes
     MIMOPIDController MIMO_PID;
     HeadingPIDController headPID;
-    MPC_Motion_Control mpc_control(40, h*4); 
+    MPC_Control_System mpc_control(30, 0.4); 
 
     // Desired rate of turn and acceleration
     double r_d = 0.0; 
@@ -201,46 +209,46 @@ int main() {
     }
 
     bool break_flag = false;
-
-    
+    std::vector<double> wpt_change_times;        
 
     // Main simulation loop
     for (int i = 0; i < num_steps; ++i) {
 
         t[i] = i * h;
         
-        // Navigation (Fake measurements using noise)
-        double random = ((double)rand() / RAND_MAX - 0.5);
+        // ------------------------------ Navigation System ------------------------------
+        // (Fake measurements using noise)
+        double random_nu = noise_nu(gen);
+        double random_eta = noise_eta(gen);
   
-        double u     = x(0)  +  0.01 * random; // Surge velocity (BODY frame)
-        double v     = x(1)  +  0.01 * random; // Sway velocity  (BODY frame)
-        double w     = x(2)  +  0.01 * random; // Heave velocity (BODY frame)
-        double p     = x(3)  + 0.001 * random; // Roll rate      (BODY frame)
-        double q     = x(4)  + 0.001 * random; // Pitch rate     (BODY frame)
-        double r     = x(5)  + 0.001 * random; // Yaw rate       (BODY frame)
+        double u     = x(0)  + random_nu; // Surge velocity (BODY frame)
+        double v     = x(1)  + random_nu; // Sway velocity  (BODY frame)
+        double w     = x(2)  + random_nu; // Heave velocity (BODY frame)
+        double p     = x(3)  + random_nu; // Roll rate      (BODY frame)
+        double q     = x(4)  + random_nu; // Pitch rate     (BODY frame)
+        double r     = x(5)  + random_nu; // Yaw rate       (BODY frame)
     
-        double xn    = x(6)  +  0.01 * random; // North position  (NED frame)
-        double yn    = x(7)  +  0.01 * random; // East position   (NED frame)
-        double zn    = x(8)  +  0.01 * random; // Down position   (NED frame)
-        double phi   = x(9)  + 0.001 * random; // Roll angle      (NED frame)
-        double theta = x(10) + 0.001 * random; // Pitch angle     (NED frame)
-        double psi   = x(11) + 0.001 * random; // Heading angle   (NED frame)
+        double xn    = x(6)  + random_eta; // North position  (NED frame)
+        double yn    = x(7)  + random_eta; // East position   (NED frame)
+        double zn    = x(8)  + random_eta; // Down position   (NED frame)
+        double phi   = x(9)  + random_eta; // Roll angle      (NED frame)
+        double theta = x(10) + random_eta; // Pitch angle     (NED frame)
+        double psi   = x(11) + random_eta; // Heading angle   (NED frame)
 
         if (std::isnan(psi)) {
             std::cerr << "NaN detected for psi at iteration " << i << ", time: " << t[i] << "s\n";
             break; 
         }
 
-        // Update model dynamics
-        ran_model.update(x, mp, V_c, beta_c, h, n_c, alpha_c);
-        M = ran_model.get_M();
-        U = ran_model.get_U();
-        n = ran_model.get_n();
-        alpha = ran_model.get_alpha();
+        // ------------------------------ Update model dynamics ------------------------------
+        ran_model.update(x, mp, V_c, beta_c, h, n, alpha);
+        M = ran_model.get_M(); // Const?
+        U = ran_model.get_U(); // Dependent on x
+        B = ran_model.get_B(); // Dependent on alpha
 
-        // Guidance
+        // ------------------------------ Mode switch ------------------------------
 
-        // - Switch criteria for DP mode. 
+        // - Switch criteria for path following to DP mode. 
         // if (GuidanceFlag != 1) {
         //     if (R_switch > std::sqrt(std::pow(xn - wpt[wpt.size()-1].x, 2) + std::pow(yn - wpt[wpt.size()-1].y, 2))) {
         //         if (pathType)
@@ -255,13 +263,15 @@ int main() {
         //     }
         // }
 
-        // - Type of path
+        // ------------------------------ Path planning: connecting waypoints ------------------------------
         switch (pathType) {
             case 1: { // Dynamic Positioning.
                 if (R_switch > std::sqrt(std::pow(xn - wpt[wpt_index].x, 2) + std::pow(yn - wpt[wpt_index].y, 2))){
-                    if (std::abs(ssa(psi_d-psi)) < deg2rad(1) && U < 0.01) {
+                    if (std::abs(ssa(psi_d-psi)) < deg2rad(3) && U < 0.01) {
                         if (wpt_index < wpt.size()-1) {
                             wpt_index += 1;
+                            MIMO_PID.reset();
+                            wpt_change_times.push_back(t[i]);
                         }
                         else {
                             std::cout << "Reached the last waypoint." << std::endl;
@@ -303,10 +313,9 @@ int main() {
             }
         }
 
-        // - Guidance laws
+        // ------------------------------ Guidance laws ------------------------------
         switch (GuidanceFlag) {
             case 1: { // Dynamic Positioning wpt path
-                // Temporary: Simple DP using wpt directly to generate ref x, y and psi. 
                 if (angles.empty()) {
                     auto [xn_ref, yn_ref, psi_ref] = DP(xn, yn, wpt[wpt_index].x, wpt[wpt_index].y, wpt[wpt_index-1].x, wpt[wpt_index-1].y);
                     xn_d = xn_ref;
@@ -321,25 +330,7 @@ int main() {
                 }
                 break;
             }
-            case 2: { 
-                //MPC guidance (Not good)
-                if (angles.empty()) {
-                    auto [chi_ref, U_ref, xn_ref, yn_ref] = mpc_guidance.update(h, xn, yn, psi, U, wpt[wpt_index-1], wpt[wpt_index]);              
-                    xn_d  = xn_ref;
-                    yn_d  = yn_ref;
-                    psi_d = chi_ref; //+beta_c ? 
-                    U_d   = U_ref; 
-                }
-                else {
-                    auto [chi_ref, U_ref, xn_ref, yn_ref] = mpc_guidance.update(h, xn, yn, psi, U, wpt[wpt_index-1], wpt[wpt_index]);              
-                    xn_d  = xn_ref;
-                    yn_d  = yn_ref;
-                    psi_d = chi_ref; //+beta_c ? 
-                    U_d   = U_ref; 
-                }
-                break;
-            }
-            case 3: { // LOS heading autopilot
+            case 2: { // LOS heading autopilot
                 auto [psi_ref, _ ] = LOS(xn, yn, Delta_h, path_x, path_y, path_x_dot, path_y_dot, y_e);
 
                 losObserver.update(psi_ref);
@@ -347,7 +338,7 @@ int main() {
                 r_d = losObserver.getLOSRate();
                 break;
             }
-            case 4: { // ALOS heading autopilot
+            case 3: { // ALOS heading autopilot
                 auto [psi_ref, _ ] = ALOS.update(xn, yn, path_x, path_y, path_x_dot, path_y_dot, y_e);
 
                 losObserver.update(psi_ref);
@@ -357,64 +348,76 @@ int main() {
             }
         }
 
-        // Motion Control
-        // - Dynamic positioning 
-        if (GuidanceFlag==1 && ControlAllocFlag != 3){
-            eta << u, v, w, p, q, r;
-            nu  << xn, yn, zn, phi, theta, psi;
-            tau_XYN = MIMO_PID.update(h, xn_d, yn_d, psi_d, M, eta, nu);
+        // ------------------------------ Control System ------------------------------
+
+        // - Motion Control: Dynamic positioning
+        if (GuidanceFlag==1 && ControlAllocFlag != 4){
+            nu << u, v, w, p, q, r;
+            eta  << xn, yn, zn, phi, theta, psi;
+            tau_XYN = MIMO_PID.update(h, xn_d, yn_d, psi_d, M, eta, nu, V_c, beta_c);
         } 
-        // - Path following
-        else if (GuidanceFlag==3 || GuidanceFlag==4) { 
-            tau_XYN[0] = 3;
+        // - Motion Control: Path following: 
+        else if (GuidanceFlag==2 || GuidanceFlag==3) { 
+            tau_XYN[0] = 80;
             tau_XYN[1] = 0;
             tau_XYN[2] = headPID.update(h, M, psi, psi_d, r, r_d, a_d);
         }              
 
-        // Control allocation
-        if (ControlAllocFlag==1) {
-
-            control_allocation = NLOptControlAlloc(tau_XYN[0], tau_XYN[1], tau_XYN[2], U, n, alpha);
-            n_c     = {control_allocation[0], control_allocation[2]};
-            alpha_c = {control_allocation[1], control_allocation[3]};
-
+        // - Control allocation
+        switch (ControlAllocFlag) {
+            case 1: { // Pseudo-inverse control allocation
+                control_allocation = pseudo_inverse_allocation(tau_XYN, B, 880, 880);
+                n_c     = {control_allocation[0], control_allocation[2]};
+                alpha_c = {control_allocation[1], control_allocation[3]};
+                break;
+            }
+            case 2: { // Nonlinear optimization with constraints
+                control_allocation = NLOptControlAlloc(tau_XYN[0], tau_XYN[1], tau_XYN[2], U, n, alpha, failstate);
+                n_c     = {control_allocation[0], control_allocation[2]};
+                alpha_c = {control_allocation[1], control_allocation[3]};
+                break;
+            }
+            case 3: { // Nonlinear optimization with constraints over a horizon taking rate constriants into account
+                control_allocation = MPC_control_alloc(tau_XYN[0], tau_XYN[1], tau_XYN[2], U, T_n, T_alpha, n, alpha, failstate);
+                n_c     = {control_allocation[0], control_allocation[2]};
+                alpha_c = {control_allocation[1], control_allocation[3]};
+                break;
+            }
+            case 4: { // Model Predictive Control System (Motion control and control allocation using vessel model)
+                std::vector<double> x0 = {xn, yn, psi, u, v, r}; 
+                mpc_control.solve(x0, wpt[wpt_index-1].x, wpt[wpt_index-1].y, xn_d, yn_d, psi_d, V_c, beta_c, n, alpha, failstate);
+                n_c = mpc_control.get_n_opt();
+                alpha_c = mpc_control.get_alpha_opt();
+                break;
+            }
+            default: {
+                std::cerr << "Invalid control allocation method selected." << std::endl;
+                break_flag = true;
+                break;
+            }
         }
-        else if (ControlAllocFlag==2){
 
-            control_allocation = MPC_control_alloc(tau_XYN[0], tau_XYN[1], tau_XYN[2], U, T_n, T_alpha, n, alpha);
-            n_c     = {control_allocation[0], control_allocation[2]};
-            alpha_c = {control_allocation[1], control_allocation[3]};
+        // ------------------------------ State updates ------------------------------
 
-        }
-        else if (ControlAllocFlag==3){
+        // Marine Craft Model, update states: x
+        ran_model.rk4(x, mp, V_c, beta_c, h, n, alpha);
+        x(11) = ssa(x(11)); //makes plotting look bad       
+        
+        // Pod model, update states: n and alpha
+        ran_model.update_n(n, n_c, h);
+        ran_model.update_alpha(alpha, alpha_c, h);
 
-            std::vector<double> x0 = {xn, yn, psi, u, v, r};
-            mpc_control.solve(x0, wpt[wpt_index-1].x, wpt[wpt_index-1].y, xn_d, yn_d, psi_d, n, alpha);
-            n_c = mpc_control.get_n_opt();
-            alpha_c = mpc_control.get_alpha_opt();
-        }
-        else {
-            std::cerr << "Invalid control allocation method selected." << std::endl;
-            break_flag = true;
-        }
+        // ------------------------------ Plotting and Info ------------------------------
 
-        // Marine Craft Model
-        ran_model.rk4(x, mp, V_c, beta_c, h, n_c, alpha_c);
-        //x(11) = ssa(x(11)); //makes plotting look bad              
-
-        // Show SIM progress once per second
-        if (i % 10 == 0) {
+        // Show SIM progress once in a while
+        if (i % 5 == 0) {
             std::vector<double> GuidanceVectorX;
             std::vector<double> GuidanceVectorY;
             if (GuidanceFlag == 1){
                 GuidanceVectorX = {wpt[wpt_index].x};
                 GuidanceVectorY = {wpt[wpt_index].y};
             }
-            else if (GuidanceFlag == 2){
-                GuidanceVectorX = mpc_guidance.get_X_d();
-                GuidanceVectorY = mpc_guidance.get_Y_d();
-            }
-            else if (GuidanceFlag == 3 || GuidanceFlag == 4){
+            else if (GuidanceFlag == 2 || GuidanceFlag == 3){
                 GuidanceVectorX = {path_x};
                 GuidanceVectorY = {path_y};
             }
@@ -427,24 +430,22 @@ int main() {
             << "------------------------------------------------" << std::endl
             << "Path type: " << pathType << ", Guidance flag: " << GuidanceFlag << ", Control flag: " << ControlAllocFlag << std::endl
             << "wpt index: " << wpt_index
-            << std::fixed << std::setprecision(0)
             << ", current wpt: (" << wpt[wpt_index].x << ", " << wpt[wpt_index].y << ")" << std::endl
+            << "Failstate: [" << failstate[0] << ", " << failstate[1]
+            << std::fixed << std::setprecision(4)
+            << "], V_c: " << V_c << ", beta_c: " << beta_c << std::endl
+            << std::fixed << std::setprecision(1)
             << "------------------------------------------------" << std::endl
             << "closest point: " << closest.point.pos.x << ", " << closest.point.pos.y << std::endl
-            << std::fixed << std::setprecision(1)
             << "x_e: " << x_e << ", y_e: " << y_e << std::endl
             << "------------------------------------------------" << std::endl;
             if (GuidanceFlag == 1){
                 std::cout << std::fixed << std::setprecision(2)
                 << "x_d: " << xn_d << "m, y_d: " << yn_d << "m, psi_d: " << rad2deg(psi_d) << "deg" << std::endl;
             }
-            else if (GuidanceFlag == 2){
-                std::cout << std::fixed << std::setprecision(2)
-                << "x_d: " << xn_d << "m, y_d: " << yn_d << "m, psi_d: " << rad2deg(psi_d) << "deg" << ", U_d: " << U_d << std::endl;
-            }
-            else if (GuidanceFlag == 3 || GuidanceFlag == 4) {
+            else if (GuidanceFlag == 2 || GuidanceFlag == 3) {
                 std::cout << std::fixed << std::setprecision(3)
-                << "psi_d: " << psi_d << ", r_d: " << r_d << std::endl;
+                << "psi_d: " << rad2deg(psi_d) << ", r_d: " << rad2deg(r_d) << std::endl;
             }
             std::cout << "x:   " << xn << "m, y:   " << yn << "m, psi:   " << rad2deg(psi) << "deg" << ", U: " << U << std::endl
             << "------------------------------------------------" << std::endl
@@ -454,7 +455,7 @@ int main() {
             << "n_c(0), n_c(1):         " << n_c(0) << ", " << n_c(1) << std::endl
             << "n(0),   n(1):           " << n(0) << ", " << n(1) << std::endl
             << "------------------------------------------------" << std::endl
-            << std::fixed << std::setprecision(0)
+            << std::fixed << std::setprecision(2)
             << "alpha_c(0), alpha_c(1): " << rad2deg(alpha_c(0)) << ", " << rad2deg(alpha_c(1)) << std::endl
             << "alpha(0), alpha(1):     " << rad2deg(alpha(0)) << ", " << rad2deg(alpha(1)) << std::endl
             << "------------------------------------------------" << std::endl
@@ -497,10 +498,18 @@ int main() {
 
     std::cout << "Simulation completed" << std::endl;
     storeSimulationData(simdata, "simdata.csv");
+    storeWaypointChangeTimes(wpt_change_times, "wpt_change_times.csv");
 
     plotter.finalizePlot();
 
-    plotTrajectory();
+    plotPropellerSpeeds();
+    plotAlphas();
+    plotTau();
+    if (pathType == 1 || pathType == 2) {
+        plotTrajectory(wpt, pathLine);
+    } else if (pathType == 3) {
+        plotTrajectory(wpt, pathFS);
+    }
     plotClosestPointErrors();
     plotStateErrors();
     plotAngles();

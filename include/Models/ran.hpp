@@ -27,32 +27,36 @@ class RAN {
         RAN();
         // Function to compute dynamics (ran)
         void update(const Eigen::VectorXd x, double mp, double V_c, double beta_c, 
-                double h, Eigen::VectorXd n_c, Eigen::VectorXd alpha_c);
+                double h, Eigen::Vector2d n, Eigen::Vector2d alpha);
 
         // Specialized RK4 integrator for the RAN model
-        void rk4(Eigen::VectorXd& x, double mp, double V_c, double beta_c, double h, Eigen::VectorXd n_c, Eigen::VectorXd alpha_c);
+        void rk4(Eigen::VectorXd& x, double mp, double V_c, double beta_c, double h, Eigen::Vector2d n, Eigen::Vector2d alpha);
+
+        void update_n(Eigen::Vector2d& n, Eigen::Vector2d n_c, double h);
+        void update_alpha(Eigen::Vector2d& alpha, Eigen::Vector2d alpha_c, double h);
         
         Eigen::VectorXd get_xdot() const { return xdot; }
         Eigen::MatrixXd get_M() const { return M; }
         Eigen::MatrixXd get_B() const { return B; }
         double get_U() const { return U; }
 
-        Eigen::VectorXd get_n() const { return n; }
-        Eigen::VectorXd get_alpha() const { return alpha; } 
-
         double getT_n() const { return T_n; }
         double getT_alpha() const { return T_alpha; }
 
+        void fail_state_n1() { n1_fail = true; }
+        void fail_state_n2() { n2_fail = true; }
+        void recover_n1() { n1_fail = false; }
+        void recover_n2() { n2_fail = false; }
+        
+        void select_failure_mode();
+        std::vector<bool> check_failstate();
+
     private:
-        void update_n(Eigen::VectorXd n_c, double h);
-        void update_alpha(Eigen::VectorXd alpha_c, double h);
 
         bool propagate;
 
         double T_n;
         double T_alpha;
-        Eigen::VectorXd n;
-        Eigen::VectorXd alpha;
 
         double U;
         Eigen::MatrixXd M;
@@ -79,6 +83,8 @@ class RAN {
         // - in yaw
         double R66;        
 
+        // - surge time constant (s)
+        double T_surge;
         // - sway time constant (s)
         double T_sway;                      
         // - yaw time constant (s)
@@ -109,6 +115,10 @@ class RAN {
         double alpha_max;   
         // minimum azimuth angle (rad)
         double alpha_min; 
+
+        // Failure state flags (true => proppeller speed 0)
+        bool n1_fail;
+        bool n2_fail;
 };
                 
 #endif // RAN_HPP

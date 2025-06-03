@@ -8,21 +8,24 @@ using namespace casadi;
 
 std::vector<double> MPC_control_alloc(double tau_X, double tau_Y, double tau_N,
     double U, double T_n, double T_alpha,
-    Eigen::Vector2d n_input, Eigen::Vector2d alpha_input) 
+    Eigen::Vector2d n_input, Eigen::Vector2d alpha_input, std::vector<bool> failstate) 
 {
-    double horizon = 5.0;
-    double delta   = 0.5;
+    double horizon = 8.0;
+    double delta   = 0.4;
     int N = static_cast<int>(horizon/delta); 
 
-    Eigen::Vector3d CO_offset = CO_Offset(U);
-    double ly1 =  1.1 - CO_offset(1);    // Left pod lever arm
-    double ly2 = -1.1 + CO_offset(1);    // Right pod lever arm
-    double lx  = -1.1 - CO_offset(0);    // Pod locations in x
+    //Eigen::Vector3d CO_offset = CO_Offset(U);
+    //double ly1 =  1.1 - CO_offset(1);    // Left pod lever arm
+    //double ly2 = -1.1 + CO_offset(1);    // Right pod lever arm
+    //double lx  = -1.1 - CO_offset(0);    // Pod locations in x
+    double ly1 =  1.1;    // Left pod lever arm
+    double ly2 = -1.1;    // Right pod lever arm
+    double lx  = -1.1;    // Pod locations in x
 
     // Constants from ran()
     double g = 9.81;
-    double k_pos = 200;         // Positive Bollard
-    double k_neg = 200;         // Negative Bollard
+    double k_pos = 880;         // Positive Bollard
+    double k_neg = 880;         // Negative Bollard
     double n_max =  1;            // Relative propellar speed max (representing max positive revs)
     double n_min = -1;            // Relative propellar speed min (representing max negative revs)
     double alpha_max = M_PI/2; 
@@ -40,7 +43,7 @@ std::vector<double> MPC_control_alloc(double tau_X, double tau_Y, double tau_N,
     // opti.set_initial(n_vars, repmat(DM::vertcat({n_input(0), n_input(1)}), 1, N+1));
     // opti.set_initial(alpha_vars, repmat(DM::vertcat({alpha_input(0), alpha_input(1)}), 1, N+1));
 
-    double rand_small = ((double)rand() / RAND_MAX - 0.5) * 0.01; 
+    double rand_small = ((double)rand() / RAND_MAX - 0.5) * 0.001; 
 
     opti.set_initial(n_cmd, repmat(DM::vertcat({n_input(0) + rand_small, n_input(1) + rand_small}), 1, N));
     opti.set_initial(alpha_cmd, repmat(DM::vertcat({alpha_input(0), alpha_input(1)}), 1, N));
@@ -61,24 +64,49 @@ std::vector<double> MPC_control_alloc(double tau_X, double tau_Y, double tau_N,
     }
 
     // Constraints on maximum and minimum values
+    // for (int k = 0; k <= N-1; ++k) {
+    //     // Control bounds
+    //     opti.subject_to( n_cmd(Slice(), k) <= DM({n_max, n_max}) );
+    //     opti.subject_to( n_cmd(Slice(), k) >= DM({n_min, n_min}) );
+    //     opti.subject_to( alpha_cmd(Slice(), k) <= DM({alpha_max, alpha_max}) );
+    //     opti.subject_to( alpha_cmd(Slice(), k) >= DM({alpha_min, alpha_min}) );
+    // }
+    // for (int k = 1; k <= N; ++k) {
+    //     // State bounds
+    //     opti.subject_to( n_vars(Slice(), k) <= DM({n_max, n_max}) );
+    //     opti.subject_to( n_vars(Slice(), k) >= DM({n_min, n_min}) );
+    //     opti.subject_to( alpha_vars(Slice(), k) <= DM({alpha_max, alpha_max}) );
+    //     opti.subject_to( alpha_vars(Slice(), k) >= DM({alpha_min, alpha_min}) );
+    // }
     for (int k = 0; k <= N-1; ++k) {
-        // Control bounds
-        opti.subject_to( n_cmd(Slice(), k) <= DM({n_max, n_max}) );
-        opti.subject_to( n_cmd(Slice(), k) >= DM({n_min, n_min}) );
-        opti.subject_to( alpha_cmd(Slice(), k) <= DM({alpha_max, alpha_max}) );
-        opti.subject_to( alpha_cmd(Slice(), k) >= DM({alpha_min, alpha_min}) );
+        for (int i = 0; i < 2; ++i) {
+            if (failstate[i]) {
+                opti.subject_to(n_cmd(i, k) == 0);
+                opti.subject_to(alpha_cmd(i, k) == alpha_input(i));  // Use appropriate reference
+            } else {
+                opti.subject_to(n_cmd(i, k) <= n_max);
+                opti.subject_to(n_cmd(i, k) >= n_min);
+                opti.subject_to(alpha_cmd(i, k) <= alpha_max);
+                opti.subject_to(alpha_cmd(i, k) >= alpha_min);
+            }
+        }
     }
+    
     for (int k = 1; k <= N; ++k) {
-        // State bounds
-        opti.subject_to( n_vars(Slice(), k) <= DM({n_max, n_max}) );
-        opti.subject_to( n_vars(Slice(), k) >= DM({n_min, n_min}) );
-        opti.subject_to( alpha_vars(Slice(), k) <= DM({alpha_max, alpha_max}) );
-        opti.subject_to( alpha_vars(Slice(), k) >= DM({alpha_min, alpha_min}) );
+        for (int i = 0; i < 2; ++i) {
+            if (failstate[i]) {
+                opti.subject_to(n_vars(i, k) == 0);
+                opti.subject_to(alpha_vars(i, k) == alpha_input(i));  // Keep alpha fixed
+            } else {
+                opti.subject_to(n_vars(i, k) <= n_max);
+                opti.subject_to(n_vars(i, k) >= n_min);
+                opti.subject_to(alpha_vars(i, k) <= alpha_max);
+                opti.subject_to(alpha_vars(i, k) >= alpha_min);
+            }
+        }
     }
 
     MX J = 0;
-    double tau_weight = 10.0;  
-
     for (int k = 0; k < N; ++k) {
         MX n1 = n_vars(0, k);
         MX n2 = n_vars(1, k);
@@ -96,9 +124,9 @@ std::vector<double> MPC_control_alloc(double tau_X, double tau_Y, double tau_N,
                          -(ly1*Thrust1*cos(alpha1) + ly2*Thrust2*cos(alpha2));
 
         // Error cost
-        J = J + tau_weight * (pow(tau_X - tau_X_model, 2) + 
-                              pow(tau_Y - tau_Y_model, 2) + 
-                              pow(tau_N - tau_N_model, 2));
+        J += 0.5 * (pow(tau_X - tau_X_model, 2) + 
+                    pow(tau_Y - tau_Y_model, 2) + 
+                    pow(tau_N - tau_N_model, 2));
 
         // - Penalty for both pods forward, leading to loss of sway control.
         // MX a1 = exp( -pow( abs(vars(1)), 2 ) / 0.1 ); 
@@ -119,6 +147,14 @@ std::vector<double> MPC_control_alloc(double tau_X, double tau_Y, double tau_N,
         MX d1 = exp( -pow(abs(alpha1) - M_PI/2, 2) / 0.1 );
         MX d2 = exp( -pow(abs(alpha2) - M_PI/2, 2) / 0.1 );
         J += 10 * d1 * d2;
+
+        // Penalty for large changes in propeller speed and azimuth angle
+        MX d_n1 = n_cmd(0, k) - n_vars(0, k);
+        MX d_n2 = n_cmd(1, k) - n_vars(1, k);
+        MX d_alpha1 = alpha_cmd(0, k) - alpha_vars(0, k);
+        MX d_alpha2 = alpha_cmd(1, k) - alpha_vars(1, k);
+        J += 60*(dot(d_n1,d_n1) + dot(d_n2,d_n2)) 
+            + 20*(dot(d_alpha1,d_alpha1) + dot(d_alpha2,d_alpha2));
     }
 
     // Optimization:

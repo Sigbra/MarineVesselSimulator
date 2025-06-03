@@ -4,7 +4,7 @@
 class LOSObserver {
     public:
         // Constructor
-        LOSObserver(double h, double K_f);
+        LOSObserver(double h, double K_f, double LOSAngle);
     
         // Update function for the LOS observer
         void update(double LOScommand);
