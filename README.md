@@ -50,12 +50,12 @@ It's a nice-to-have tool, made using matplotlibcpp, for experimentation, debuggi
 
   <tr>
     <td>
-      <img src="data/live-plotting/Live-StraightPath-LOS-MPC_NLOpt.png" width="400"/>
-      <div align="center">Live, Straight path, LOS, POD Model MPC Control allocation</div>
+      <img src="data/live-plotting/Live-StraightPath-LOS-NLOpt.png" width="400"/>
+      <div align="center">Live, Straight path, LOS, POD Model Control allocation</div>
     </td>
     <td>
-      <img src="data/live-plotting/Live-CurvedPath-LOS-MPC_NLOpt.png" width="400"/>
-      <div align="center">Live, Curved path, LOS, POD Model MPC Control allocation</div>
+      <img src="data/live-plotting/Live-CurvedPath-LOS-NLOpt.png" width="400"/>
+      <div align="center">Live, Curved path, LOS, POD Model Control allocation</div>
     </td>
   </tr>
 </table>
