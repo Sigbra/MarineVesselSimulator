@@ -116,9 +116,16 @@ class RAN {
         // minimum azimuth angle (rad)
         double alpha_min; 
 
+        // Azimuth pod placement from CO / lever arms (m)
+        double ly1;         
+        double ly2;        
+        double lx;
+
         // Failure state flags (true => proppeller speed 0)
         bool n1_fail;
         bool n2_fail;
+
+        Eigen::VectorXd thrust_coeffs;
 };
                 
 #endif // RAN_HPP

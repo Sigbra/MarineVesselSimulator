@@ -7,6 +7,7 @@
 #include <vector>
 #include <utility>
 #include <stdexcept>
+#include <fstream>
 
 //-------------------------------------------------------------------
 // Helper function: Skew-symmetric matrix (Smtrx)
@@ -297,58 +298,111 @@ Eigen::Vector3d CO_Offset(double U) {
     return Eigen::Vector3d(x, y, z);
 }
 
-// Calculates real propeller revs
-// Assuming positive and negative Bollard and propeller revs are the same.
+// Calculates real propeller revs based on relative propellar revs (n)
 std::vector<double> nReal(std::vector<double> n_relative) {
-    //n_relative: 0 to 1
-    //n_real:   100 to -100
-    double n1_real = 200*9.81 * n_relative[0] - 100; 
-    double n2_real = 200*9.81 * n_relative[1] - 100; 
+    // Stub: returns zeros
+    double n1_real = 0 * n_relative[0]; 
+    double n2_real = 0 * n_relative[1]; 
     return {n1_real, n2_real};
 }
 
-// Calculating thrusts based on relative propellar revs (n). Obs, wrong comments
-//
-//   Expecting n_r is scaled between [0, 1].
-//   Thrust_pos = k_pos * (n*|n| - 0.5²) / (1-0.25), k_pos = Positive bollard pull = 200,
-//   Thrust_neg = k_neg * (n*|n| - 0.5²) / (1-0.75), k_neg = Negative bollard pull = 200,
-//
-//   Same as direct Thrusts calculation;
-//   Thrust_pos = k_pos * n_real*|n_real|, 
-//   Thrust_neg = k_neg * n_real*|n_real|,
-//   where 
-//   n_real = nReal(n),
-//   k_pos = Bollard_pull_pos / n_real_max, n_real_max = +100 revs,
-//   k_neg = Bollard_pull_neg / n_real_min, n_real_min = -100 revs,
-//
-//   This formulation, as opposed to the direct one avoids nlpsol's solver issue at n = {0, 0}.
-//
-//   Assuming max positive and max negative propellar revs are the same.
-Eigen::VectorXd ThrustsFromRealativeN(Eigen::VectorXd n_r) {
-    double g = 9.81;
-    double k_pos = 880;
-    double k_neg = 880; 
+// Calculating thrusts based on relative propellar revs (n)
+Eigen::VectorXd ThrustsFromRealativeN(Eigen::Vector2d n_r, Eigen::VectorXd coeffs) {
+    double g = 9.81;  // gravity to convert kg to Newtons
 
     int n_r_size = n_r.size();
-
+    int degree = coeffs.size();  // polynomial degree (no constant term)
     Eigen::VectorXd Thrusts(n_r_size);
     Thrusts.setZero();
 
     for (int i = 0; i < n_r_size; ++i) {
         double n_i = n_r(i);
-        if (n_i >= 0 && n_i <= 1) {
-            Thrusts(i) = k_pos * n_i * fabs(n_i);
-        }
-        else if (n_i >= -1 && n_i < 0) {
-            Thrusts(i) = k_neg * n_i * fabs(n_i);
-        }
-        else {
-            std::cout << "Warning: n_r[" << i << "] outside expected interval [0, 1] with value: " << n_r(i) << std::endl;
+
+        if (n_i < -1.0 || n_i > 1.0) {
+            std::cout << "Warning: n_r[" << i << "] outside expected interval [-1, 1] with value: " << n_i << std::endl;
             std::cout << "Returning 0 value for Thrust" << std::endl;
             Thrusts.setZero();
             return Thrusts;
         }
+
+        // Clamp n_i to the range [-0.75, 0.75] because the polynomial
+        // approximation is only valid in this range.
+        n_i = std::min(std::max(n_i, -0.75), 0.75);
+
+        double thrust_kg = 0.0;
+        for (int power = degree; power >= 1; --power) {
+            // coeff index: 0 corresponds to x^degree, 1 to x^(degree-1), ...
+            thrust_kg += coeffs(degree - power) * std::pow(n_i, power);
+        }
+
+        // Discount because thrust was measured with both propellers at the same time,
+        // not one at a time, in the bollard pull test.
+        // Assuming no thruster interaction effects up to 75% of thrust signal.
+        double discountFactor = 0.5; //1 / (2*(1-0.363));  
+
+        //Thrust force in Newton
+        Thrusts(i) = discountFactor * (g * thrust_kg);
     }
 
     return Thrusts;
+}
+
+Eigen::VectorXd NOrderApprox(const std::string& csv_file, int order) {
+    std::ifstream file(csv_file);
+    if (!file.is_open()) {
+        throw std::runtime_error("Unable to open file: " + csv_file);
+    }
+
+    std::vector<double> thrust;
+    std::vector<double> kg;
+
+    std::string line;
+    bool first_line = true;
+
+    while (std::getline(file, line)) {
+        if (first_line) { // skip header
+            first_line = false;
+            continue;
+        }
+
+        // Find comma location
+        size_t comma_pos = line.find(',');
+        if (comma_pos == std::string::npos) {
+            throw std::runtime_error("Malformed CSV line (no comma): " + line);
+        }
+
+        // Extract substrings for thrust and kg
+        std::string t_str = line.substr(0, comma_pos);
+        std::string k_str = line.substr(comma_pos + 1);
+
+        // Convert strings to double
+        double t = std::stod(t_str);
+        double k = std::stod(k_str);
+
+        thrust.push_back(t);
+        kg.push_back(k);
+    }
+    file.close();
+
+    int n = thrust.size();
+    if (n == 0) {
+        throw std::runtime_error("No data found in CSV file");
+    }
+
+    // Design matrix for polynomial: columns are x^N, x^(N-1), ..., x^1 (no constant term)
+    Eigen::MatrixXd X(n, order);
+    Eigen::VectorXd Y(n);
+
+    for (int i = 0; i < n; ++i) {
+        double x = thrust[i];
+        for (int power = order; power >= 1; --power) {
+            X(i, order - power) = std::pow(x, power);
+        }
+        Y(i) = kg[i];
+    }
+
+    // Solve least squares: (XᵀX)^-1 Xᵀ Y
+    Eigen::VectorXd coeffs = (X.transpose() * X).ldlt().solve(X.transpose() * Y);
+
+    return coeffs;  // N coefficients for x^N down to x^1
 }

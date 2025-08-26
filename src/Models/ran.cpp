@@ -12,34 +12,39 @@
 RAN::RAN() {
     g    = 9.81;                        
     rho  = 1025.0;                     
-    L    = 5.0;                         
-    Beam = 3;                           
-    m    = 800.0;  
+    L    = 5.46;                         
+    Beam = 2.14;                           
+    m    = 850.0;  
 
     R44 = 0.4  * Beam;                  
     R55 = 0.25 * L;                    
     R66 = 0.25 * L;   
 
-    T_surge = 5;
-    T_sway = 6;                      
-    T_yaw  = 5;     
+    T_surge = 1.5; //Specifics unknown
+    T_sway = 2;    //Specifics unknown                  
+    T_yaw  = 1.5;  //Specifics unknown  
 
     Umax   = 8;      
 
-    Beam_pont = 0.70;                 
-    y_pont    = 1.1;                    
-    Cw_pont   = 1;                       
-    Cb_pont   = 0.5;
+    Beam_pont = 0.50;                 
+    y_pont    = 0.56;                    
+    Cw_pont   = 0.80; //Specifics unknown                     
+    Cb_pont   = 0.50; //Specifics unknown
+     
+    // Relative propeller speed interval [-1, 1] limited to [-0.75, 0.75]
+    // due to battery power limitation during bollard pull tests.
+    n_max =  0.75;           
+    n_min = -0.75; 
 
-    k_pos = 880;        
-    k_neg = 880;       
-    n_max =  1;           
-    n_min = -1;           
     alpha_max = M_PI/2;   
     alpha_min = -M_PI/2; 
 
-    T_n = 0.5;
-    T_alpha = 0.5;
+    T_n = 0.4;     //Specifics unknown
+    T_alpha = 0.8;
+
+    ly1 = 0.79;         
+    ly2 = -ly1;        
+    lx  = -1.17;
 
     M = Eigen::MatrixXd::Zero(6, 6);
     B = Eigen::MatrixXd::Zero(3, 2);
@@ -49,6 +54,9 @@ RAN::RAN() {
 
     n1_fail = false;
     n2_fail = false;
+
+    double bollard_order = 5;
+    thrust_coeffs = NOrderApprox("../data/bollard_pull_data.csv", bollard_order);
 }
 
 void RAN::update(const Eigen::VectorXd x, double mp, double V_c, double beta_c,
@@ -137,15 +145,11 @@ void RAN::update(const Eigen::VectorXd x, double mp, double V_c, double beta_c,
     // Azimuth pods / Pontoon data and control forces
     // ---------------------------
     // left pod lever arm (m)
-    // double ly1 = y_pont - CO_offset(1);         
+    // ly1 = ly1 - CO_offset(1);         
     // // right pod lever arm (m)
-    // double ly2 = -y_pont + CO_offset(1);        
+    // ly2 = l2y + CO_offset(1);        
     // // forward displacement of pods (m)
-    // double lx  = -1.1 + CO_offset(0); 
-      
-    double ly1 = y_pont;         
-    double ly2 = -y_pont;        
-    double lx  = -1.1;
+    // lx  = lx + CO_offset(0); 
 
     // ---------------------------
     // Rigid-body (MRB) and Coriolis (CRB) matrices at the CG
@@ -251,7 +255,7 @@ void RAN::update(const Eigen::VectorXd x, double mp, double V_c, double beta_c,
     }
 
     // Thrusts from podded propellars
-    Eigen::VectorXd Thrusts = ThrustsFromRealativeN(n);
+    Eigen::VectorXd Thrusts = ThrustsFromRealativeN(n, thrust_coeffs);
 
     // Control forces and moments. 
     Eigen::VectorXd tau = Eigen::VectorXd::Zero(6);
