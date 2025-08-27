@@ -96,15 +96,14 @@ MX MPC_Control_System::f(const MX& X, const MX& tau, const MX& V_c, const MX& be
     return MX::vertcat({dx, dy, dpsi, du, dv, dr});
 }
 
-MX control_allocation(const MX& n, const MX& alpha, double lx, double ly1, double ly2, 
-    double k_pos, double k_neg) {
+MX control_allocation(const MX& n, const MX& alpha, double lx, double ly1, double ly2) {
     // n, alpha are 2x1 vectors, for left and right pods.
     MX n1 = n(0), n2 = n(1);
     MX alpha1 = alpha(0), alpha2 = alpha(1);
 
     // Thrust calculation with a sign-dependent gain:
-    MX Thrust1 = if_else(n1 >= 0, k_pos * n1 * fabs(n1), k_neg * n1 * fabs(n1));
-    MX Thrust2 = if_else(n2 >= 0, k_pos * n2 * fabs(n2), k_neg * n2 * fabs(n2));
+    MX Thrust1 = ThrustFromRelativeN_MX(n1);
+    MX Thrust2 = ThrustFromRelativeN_MX(n2);
 
     // Mapping to forces and moment
     MX tau_X_model = Thrust1*cos(alpha1) + Thrust2*cos(alpha2);
@@ -142,20 +141,19 @@ Function MPC_Control_System::oneStepDynamicsFunction() {
 bool MPC_Control_System::solve(const std::vector<double>& x0, double x_s, double y_s, double x_d, double y_d, double psi_d, double Vc, double betac, Eigen::VectorXd n_init, Eigen::VectorXd alpha_init, std::vector<bool> failstate) {
     
     double U = std::sqrt(x0[3]*x0[3] + x0[4]*x0[4]); // Current speed from state x0
-    //Eigen::Vector3d CO_offset = CO_Offset(U); 
-    // double ly1 =  1.1 - CO_offset(0);    // left pod lever arm
-    // double ly2 = -1.1 + CO_offset(1);    // right pod lever arm
-    // double lx  = -1.1 - CO_offset(2);    // longitudinal pod location
-    double ly1 =  1.1;    // left pod lever arm
-    double ly2 = -1.1;    // right pod lever arm
-    double lx  = -1.1;    // longitudinal pod location
-    
-    // Constants from the RAN model parameters
-    double g = 9.81; // gravitational acceleration (m/s^2)
-    double k_pos = 880;
-    double k_neg = 880;
-    double n_max =  1, n_min = -1;
-    double alpha_max = M_PI/2, alpha_min = -M_PI/2;
+    //Eigen::Vector3d CO_offset = CO_Offset(U);
+    //double ly1 =  0.79 - CO_offset(1);    // Left pod lever arm
+    //double ly2 = -0.79 + CO_offset(1);    // Right pod lever arm
+    //double lx  = -1.17 - CO_offset(0);    // Pod locations in x
+    double ly1 =  0.79;    
+    double ly2 = -0.79;    
+    double lx  = -1.17;  
+
+    // Constants from ran()    
+    double n_max =  0.75;           
+    double n_min = -0.75;            
+    double alpha_max = M_PI/2; 
+    double alpha_min = -M_PI/2; 
     double T_n = 0.5, T_alpha = 0.5;
     
     // Create a fresh Opti object inside the solve function
@@ -280,8 +278,7 @@ bool MPC_Control_System::solve(const std::vector<double>& x0, double x_s, double
 
     MX cost = 0;
     for(int i = 0; i < N; ++i) {
-        MX tau = control_allocation(n_vars(Slice(), i), alpha_vars(Slice(), i),
-                                    lx, ly1, ly2, k_pos, k_neg);
+        MX tau = control_allocation(n_vars(Slice(), i), alpha_vars(Slice(), i), lx, ly1, ly2);
 
         MX X_next = oneStepFunc({X(Slice(), i), tau, V_c, beta_c})[0];
         opti.subject_to(X(Slice(), i + 1) == X_next);

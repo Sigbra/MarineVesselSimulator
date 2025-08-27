@@ -10,26 +10,23 @@ std::vector<double> MPC_control_alloc(double tau_X, double tau_Y, double tau_N,
     double U, double T_n, double T_alpha,
     Eigen::Vector2d n_input, Eigen::Vector2d alpha_input, std::vector<bool> failstate) 
 {
-    double horizon = 8.0;
-    double delta   = 0.4;
+    double horizon = 4.0;
+    double delta   = 0.2;
     int N = static_cast<int>(horizon/delta); 
 
     //Eigen::Vector3d CO_offset = CO_Offset(U);
-    //double ly1 =  1.1 - CO_offset(1);    // Left pod lever arm
-    //double ly2 = -1.1 + CO_offset(1);    // Right pod lever arm
-    //double lx  = -1.1 - CO_offset(0);    // Pod locations in x
-    double ly1 =  1.1;    // Left pod lever arm
-    double ly2 = -1.1;    // Right pod lever arm
-    double lx  = -1.1;    // Pod locations in x
+    //double ly1 =  0.79 - CO_offset(1);    // Left pod lever arm
+    //double ly2 = -0.79 + CO_offset(1);    // Right pod lever arm
+    //double lx  = -1.17 - CO_offset(0);    // Pod locations in x
+    double ly1 =  0.79;    
+    double ly2 = -0.79;    
+    double lx  = -1.17;  
 
-    // Constants from ran()
-    double g = 9.81;
-    double k_pos = 880;         // Positive Bollard
-    double k_neg = 880;         // Negative Bollard
-    double n_max =  1;            // Relative propellar speed max (representing max positive revs)
-    double n_min = -1;            // Relative propellar speed min (representing max negative revs)
+    // Constants from ran()    
+    double n_max =  0.75;           
+    double n_min = -0.75;            
     double alpha_max = M_PI/2; 
-    double alpha_min = -M_PI/2;
+    double alpha_min = -M_PI/2; 
 
     Opti opti;
 
@@ -114,8 +111,8 @@ std::vector<double> MPC_control_alloc(double tau_X, double tau_Y, double tau_N,
         MX alpha2 = alpha_vars(1, k);
 
         // Calculate thrusts
-        MX Thrust1 = if_else(n1 >= 0, k_pos * n1 * fabs(n1), k_neg * n1 * fabs(n1));
-        MX Thrust2 = if_else(n2 >= 0, k_pos * n2 * fabs(n2), k_neg * n2 * fabs(n2));
+        MX Thrust1 = ThrustFromRelativeN_MX(n1);
+        MX Thrust2 = ThrustFromRelativeN_MX(n2);
 
         // Mapping to forces and moments (From ran())
         MX tau_X_model = Thrust1 * cos(alpha1) + Thrust2 * cos(alpha2);
@@ -153,8 +150,8 @@ std::vector<double> MPC_control_alloc(double tau_X, double tau_Y, double tau_N,
         MX d_n2 = n_cmd(1, k) - n_vars(1, k);
         MX d_alpha1 = alpha_cmd(0, k) - alpha_vars(0, k);
         MX d_alpha2 = alpha_cmd(1, k) - alpha_vars(1, k);
-        J += 60*(dot(d_n1,d_n1) + dot(d_n2,d_n2)) 
-            + 20*(dot(d_alpha1,d_alpha1) + dot(d_alpha2,d_alpha2));
+        J += 5*(dot(d_n1,d_n1) + dot(d_n2,d_n2)) 
+            +5*(dot(d_alpha1,d_alpha1) + dot(d_alpha2,d_alpha2));
     }
 
     // Optimization:

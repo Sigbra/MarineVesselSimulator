@@ -8,6 +8,7 @@
 #include <utility>
 #include <stdexcept>
 #include <fstream>
+#include <casadi/casadi.hpp>
 
 //-------------------------------------------------------------------
 // Helper function: Skew-symmetric matrix (Smtrx)
@@ -345,6 +346,24 @@ Eigen::VectorXd ThrustsFromRealativeN(Eigen::Vector2d n_r, Eigen::VectorXd coeff
     }
 
     return Thrusts;
+}
+
+casadi::MX ThrustFromRelativeN_MX(casadi::MX n_i) {
+   
+    double g = 9.81;
+    double discountFactor = 0.5; 
+    n_i = fmin(fmax(n_i, -0.75), 0.75);
+
+    Eigen::VectorXd coeffs = NOrderApprox("../data/bollard_pull_data.csv", 5);
+
+    casadi::MX thrust_kg = coeffs(0)*pow(n_i,5) +
+                           coeffs(1)*pow(n_i,4) +
+                           coeffs(2)*pow(n_i,3) +
+                           coeffs(3)*pow(n_i,2) +
+                           coeffs(4)*n_i;
+
+    // Convert to Newtons and apply discount
+    return discountFactor * g * thrust_kg;
 }
 
 Eigen::VectorXd NOrderApprox(const std::string& csv_file, int order) {
