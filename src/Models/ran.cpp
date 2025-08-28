@@ -42,9 +42,10 @@ RAN::RAN() {
     T_n = 0.4;     //Specifics unknown
     T_alpha = 0.8;
 
-    ly1 = 0.79;         
-    ly2 = -ly1;        
-    lx  = -1.17;
+    ly1_o = 0.79;
+    ly2_o = -0.79;
+    lx_o = -1.17;
+    pod_radius = 0.2;
 
     M = Eigen::MatrixXd::Zero(6, 6);
     B = Eigen::MatrixXd::Zero(3, 2);
@@ -93,9 +94,9 @@ void RAN::update(const Eigen::VectorXd x, double mp, double V_c, double beta_c,
     // // - CO to longditudinal center of flotation (LCF).
     // Eigen::Vector3d LCF_vec = Eigen::Vector3d( -0.2, 0.0,  0.0) - CO_offset;
 
-    Eigen::Vector3d rg_hull = Eigen::Vector3d( -0.5, 0.0, -0.2);
-    Eigen::Vector3d rp      = Eigen::Vector3d( 0.75, 0.0, -0.2);
-    Eigen::Vector3d LCF_vec = Eigen::Vector3d( -0.2, 0.0,  0.0);
+    Eigen::Vector3d rg_hull = Eigen::Vector3d( -0.75, 0.0, -0.2);
+    Eigen::Vector3d rp      = Eigen::Vector3d( 0.75, 0.0,  -0.2);
+    Eigen::Vector3d LCF_vec = Eigen::Vector3d( -0.15, 0.0,  0.1);
     
     // ---------------------------
     // Ocean current and relative velocity
@@ -254,15 +255,23 @@ void RAN::update(const Eigen::VectorXd x, double mp, double V_c, double beta_c,
         n(1) = 0;
     }
 
+    // Lever arms considering pod radius
+    double ly1 = ly1_o + pod_radius*cos(alpha(0));         
+    double ly2 = ly2_o + pod_radius*cos(alpha(1));        
+    double lx1 = lx_o - pod_radius*sin(alpha(0));
+    double lx2 = lx_o - pod_radius*sin(alpha(1));
+
     // Thrusts from podded propellars
+    // TODO: Reduce thrust if slipstream from one propellar hits the other.
+    // (Need to take lever arms and hydrodynamic interaction into account)
     Eigen::VectorXd Thrusts = ThrustsFromRealativeN(n, thrust_coeffs);
 
     // Control forces and moments. 
     Eigen::VectorXd tau = Eigen::VectorXd::Zero(6);
-    tau(0) = Thrusts(0) * cos(alpha(0)) + Thrusts(1) * cos(alpha(1)); //X: Surge 
-    tau(1) = Thrusts(0) * sin(alpha(0)) + Thrusts(1) * sin(alpha(1)); //Y: Sway 
-    tau(5) = lx * (Thrusts(0) * sin(alpha(0)) + Thrusts(1) * sin(alpha(1)))
-          - (ly1 * Thrusts(0) * cos(alpha(0)) + ly2 * Thrusts(1) * cos(alpha(1))); //N: Yaw
+    tau(0) = Thrusts(0) * cos(alpha(0)) + Thrusts(1) * cos(alpha(1)); //X: Combined Surge 
+    tau(1) = Thrusts(0) * sin(alpha(0)) + Thrusts(1) * sin(alpha(1)); //Y: Combined Sway 
+    tau(5) = lx1 * Thrusts(0) * sin(alpha(0)) - ly1 * Thrusts(0) * cos(alpha(0))  //N: Yaw pod 1
+           + lx2 * Thrusts(1) * sin(alpha(1)) - ly2 * Thrusts(1) * cos(alpha(1)); //N: Yaw pod 2
 
     //Linear damping using relative velocities + nonlinear yaw dampning
     double Xh = Xu * nu_r(0);
@@ -386,7 +395,7 @@ void RAN::update(const Eigen::VectorXd x, double mp, double V_c, double beta_c,
         Eigen::Matrix<double,3,4> B_e;
         B_e <<  1,    0,    1,    0,
               0,    1,    0,    1,
-             -ly1*cos(alpha[0]), lx*sin(alpha[0]), -ly2*cos(alpha[1]), lx*sin(alpha[1]);
+             -ly1*cos(alpha[0]), lx1*sin(alpha[0]), -ly2*cos(alpha[1]), lx2*sin(alpha[1]);
 
         B = B_e;
     }

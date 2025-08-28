@@ -14,13 +14,15 @@ std::vector<double> MPC_control_alloc(double tau_X, double tau_Y, double tau_N,
     double delta   = 0.2;
     int N = static_cast<int>(horizon/delta); 
 
-    //Eigen::Vector3d CO_offset = CO_Offset(U);
-    //double ly1 =  0.79 - CO_offset(1);    // Left pod lever arm
-    //double ly2 = -0.79 + CO_offset(1);    // Right pod lever arm
-    //double lx  = -1.17 - CO_offset(0);    // Pod locations in x
-    double ly1 =  0.79;    
-    double ly2 = -0.79;    
-    double lx  = -1.17;  
+    // Lever arms from ran()
+    double ly1_o = 0.79;
+    double ly2_o = -0.79;
+    double lx_o = -1.17;
+    // Eigen::Vector3d CO_offset = CO_Offset(U);
+    // ly1_o -= CO_offset(1);    
+    // ly2_o += CO_offset(1);    
+    // lx_o  -= CO_offset(0);
+    double pod_radius = 0.2;    
 
     // Constants from ran()    
     double n_max =  0.75;           
@@ -110,16 +112,19 @@ std::vector<double> MPC_control_alloc(double tau_X, double tau_Y, double tau_N,
         MX alpha1 = alpha_vars(0, k);
         MX alpha2 = alpha_vars(1, k);
 
-        // Calculate thrusts
+        MX ly1 = ly1_o + pod_radius * cos(alpha1);
+        MX ly2 = ly2_o + pod_radius * cos(alpha2);
+        MX lx1  = lx_o - pod_radius * sin(alpha1);
+        MX lx2  = lx_o - pod_radius * sin(alpha2);
+
         MX Thrust1 = ThrustFromRelativeN_MX(n1);
         MX Thrust2 = ThrustFromRelativeN_MX(n2);
 
-        // Mapping to forces and moments (From ran())
         MX tau_X_model = Thrust1 * cos(alpha1) + Thrust2 * cos(alpha2);
         MX tau_Y_model = Thrust1 * sin(alpha1) + Thrust2 * sin(alpha2);
-        MX tau_N_model = lx * (Thrust1*sin(alpha1) + Thrust2*sin(alpha2))
-                         -(ly1*Thrust1*cos(alpha1) + ly2*Thrust2*cos(alpha2));
-
+        MX tau_N_model = lx1 * Thrust1 * sin(alpha1) - ly1 * Thrust1 * cos(alpha1)
+                       + lx2 * Thrust2 * sin(alpha2) - ly2 * Thrust2 * cos(alpha2);
+        
         // Error cost
         J += 0.5 * (pow(tau_X - tau_X_model, 2) + 
                     pow(tau_Y - tau_Y_model, 2) + 
@@ -150,8 +155,8 @@ std::vector<double> MPC_control_alloc(double tau_X, double tau_Y, double tau_N,
         MX d_n2 = n_cmd(1, k) - n_vars(1, k);
         MX d_alpha1 = alpha_cmd(0, k) - alpha_vars(0, k);
         MX d_alpha2 = alpha_cmd(1, k) - alpha_vars(1, k);
-        J += 5*(dot(d_n1,d_n1) + dot(d_n2,d_n2)) 
-            +5*(dot(d_alpha1,d_alpha1) + dot(d_alpha2,d_alpha2));
+        J += 5 * (dot(d_n1,d_n1) + dot(d_n2,d_n2)) 
+           + 5 * (dot(d_alpha1,d_alpha1) + dot(d_alpha2,d_alpha2));
     }
 
     // Optimization:

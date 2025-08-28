@@ -117,9 +117,10 @@ class RAN {
         double alpha_min; 
 
         // Azimuth pod placement from CO / lever arms (m)
-        double ly1;         
-        double ly2;        
-        double lx;
+        double ly1_o;         
+        double ly2_o;        
+        double lx_o;
+        double pod_radius;
 
         // Failure state flags (true => proppeller speed 0)
         bool n1_fail;
