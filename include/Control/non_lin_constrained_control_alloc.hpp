@@ -4,8 +4,6 @@
 #include <vector>
 #include <Eigen/Dense>
 
-casadi::MX ThrustFromRelativeN_MX(casadi::MX n_i);
-
 std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N, double U, Eigen::Vector2d n, Eigen::Vector2d alpha, std::vector<bool> failstate);
 
 #endif
