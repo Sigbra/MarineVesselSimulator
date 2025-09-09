@@ -36,6 +36,3 @@ external/
 
 #build
 build/
-
-#Simdata files
-*.csv

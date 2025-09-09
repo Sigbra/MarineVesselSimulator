@@ -53,11 +53,11 @@ MX MPC_Control_System::f(const MX& X, const MX& tau, const MX& V_c, const MX& be
     //
     // The values below are constants based on the full model’s parameters.
     const double m_eff_surge   = 880.0;    // 880  effective surge mass (kg)
-    const double m_eff_sway    = 1200.0;    // 1200 effective sway mass (kg) //1200
-    const double Izz_eff       = 1250.0;    // 1250 effective yaw moment of inertia (kg·m²)
-    const double T_surge = 5;        // maximum surge speed (m/s)
-    const double T_sway  = 6;        // sway time constant (s)
-    const double T_yaw   = 5;        // yaw time constant (s)
+    const double m_eff_sway    = 1200.0;   // 1200 effective sway mass (kg) //1200
+    const double Izz_eff       = 1250.0;   // 1250 effective yaw moment of inertia (kg·m²)
+    const double T_surge = 1.5;        // maximum surge speed (m/s)
+    const double T_sway  = 2;          // sway time constant (s)
+    const double T_yaw   = 1.5;        // yaw time constant (s)
     
     // Damping coefficients (derived from expressions in the full model)
     double Xu = m_eff_surge / T_surge;                                           //                <--
@@ -96,21 +96,23 @@ MX MPC_Control_System::f(const MX& X, const MX& tau, const MX& V_c, const MX& be
     return MX::vertcat({dx, dy, dpsi, du, dv, dr});
 }
 
-MX control_allocation(const MX& n, const MX& alpha, double lx, double ly1, double ly2, 
-    double k_pos, double k_neg) {
+MX control_allocation(const MX& n, const MX& alpha, double lx_o, double ly1_o, double ly2_o, double pod_radius) {
     // n, alpha are 2x1 vectors, for left and right pods.
     MX n1 = n(0), n2 = n(1);
     MX alpha1 = alpha(0), alpha2 = alpha(1);
 
-    // Thrust calculation with a sign-dependent gain:
-    MX Thrust1 = if_else(n1 >= 0, k_pos * n1 * fabs(n1), k_neg * n1 * fabs(n1));
-    MX Thrust2 = if_else(n2 >= 0, k_pos * n2 * fabs(n2), k_neg * n2 * fabs(n2));
+    MX ly1 = ly1_o + pod_radius * cos(alpha1);
+    MX ly2 = ly2_o + pod_radius * cos(alpha2);
+    MX lx1  = lx_o - pod_radius * sin(alpha1);
+    MX lx2  = lx_o - pod_radius * sin(alpha2);
 
-    // Mapping to forces and moment
-    MX tau_X_model = Thrust1*cos(alpha1) + Thrust2*cos(alpha2);
-    MX tau_Y_model = Thrust1*sin(alpha1) + Thrust2*sin(alpha2);
-    MX tau_N_model = lx * (Thrust1*sin(alpha1) + Thrust2*sin(alpha2))
-                    - (ly1*Thrust1*cos(alpha1) + ly2*Thrust2*cos(alpha2));
+    MX Thrust1 = ThrustFromRelativeN_MX(n1);
+    MX Thrust2 = ThrustFromRelativeN_MX(n2);
+
+    MX tau_X_model = Thrust1 * cos(alpha1) + Thrust2 * cos(alpha2);
+    MX tau_Y_model = Thrust1 * sin(alpha1) + Thrust2 * sin(alpha2);
+    MX tau_N_model = lx1 * Thrust1 * sin(alpha1) - ly1 * Thrust1 * cos(alpha1)
+                   + lx2 * Thrust2 * sin(alpha2) - ly2 * Thrust2 * cos(alpha2);
 
     return MX::vertcat({tau_X_model, tau_Y_model, tau_N_model});
 }
@@ -142,20 +144,22 @@ Function MPC_Control_System::oneStepDynamicsFunction() {
 bool MPC_Control_System::solve(const std::vector<double>& x0, double x_s, double y_s, double x_d, double y_d, double psi_d, double Vc, double betac, Eigen::VectorXd n_init, Eigen::VectorXd alpha_init, std::vector<bool> failstate) {
     
     double U = std::sqrt(x0[3]*x0[3] + x0[4]*x0[4]); // Current speed from state x0
-    //Eigen::Vector3d CO_offset = CO_Offset(U); 
-    // double ly1 =  1.1 - CO_offset(0);    // left pod lever arm
-    // double ly2 = -1.1 + CO_offset(1);    // right pod lever arm
-    // double lx  = -1.1 - CO_offset(2);    // longitudinal pod location
-    double ly1 =  1.1;    // left pod lever arm
-    double ly2 = -1.1;    // right pod lever arm
-    double lx  = -1.1;    // longitudinal pod location
     
-    // Constants from the RAN model parameters
-    double g = 9.81; // gravitational acceleration (m/s^2)
-    double k_pos = 880;
-    double k_neg = 880;
-    double n_max =  1, n_min = -1;
-    double alpha_max = M_PI/2, alpha_min = -M_PI/2;
+    // Lever arms from ran()
+    double ly1_o = 0.79;
+    double ly2_o = -0.79;
+    double lx_o = -1.17;
+    // Eigen::Vector3d CO_offset = CO_Offset(U);
+    // ly1_o -= CO_offset(1);    
+    // ly2_o += CO_offset(1);    
+    // lx_o  -= CO_offset(0);
+    double pod_radius = 0.2;  
+
+    // Constants from ran()    
+    double n_max =  0.75;           
+    double n_min = -0.75;            
+    double alpha_max = M_PI/2; 
+    double alpha_min = -M_PI/2; 
     double T_n = 0.5, T_alpha = 0.5;
     
     // Create a fresh Opti object inside the solve function
@@ -280,8 +284,7 @@ bool MPC_Control_System::solve(const std::vector<double>& x0, double x_s, double
 
     MX cost = 0;
     for(int i = 0; i < N; ++i) {
-        MX tau = control_allocation(n_vars(Slice(), i), alpha_vars(Slice(), i),
-                                    lx, ly1, ly2, k_pos, k_neg);
+        MX tau = control_allocation(n_vars(Slice(), i), alpha_vars(Slice(), i), lx_o, ly1_o, ly2_o, pod_radius);
 
         MX X_next = oneStepFunc({X(Slice(), i), tau, V_c, beta_c})[0];
         opti.subject_to(X(Slice(), i + 1) == X_next);
@@ -308,20 +311,20 @@ bool MPC_Control_System::solve(const std::vector<double>& x0, double x_s, double
             cost +=  11.5 * heading_error_sq;  
         } 
         else { // Penalties in normal operation
-            cost +=  9 * crosstrack_error_sq; //9
-            cost += 12 * position_error_sq;  //12
-            cost += 18 * heading_error_sq;  //18
+            cost += 10 * crosstrack_error_sq; //9
+            cost += 30 * position_error_sq;   //12
+            cost += 12 * heading_error_sq;    //18
         }
 
        
         MX d_n = n_cmd(Slice(), i) - n_vars(Slice(), i);
         MX d_alpha = alpha_cmd(Slice(), i) - alpha_vars(Slice(), i);
-        cost += 10*dot(d_n, d_n) + 2*dot(d_alpha, d_alpha); // 5 and 1
+        cost += 20*dot(d_n, d_n) + 10*dot(d_alpha, d_alpha); // 5 and 1
 
         // Penalize large speed resulting in large discretization steps that the MPC can't handle
         MX U_i = sqrt(X(3,i)*X(3,i) + X(4,i)*X(4,i) + 1e-4);
-        cost+= exp((U_i-0.8)/0.1); 
-    
+        cost+= exp((U_i-0.5)/0.1); 
+
     } 
     
     opti.minimize(cost);

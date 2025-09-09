@@ -3,6 +3,7 @@
 #define MODELUTILITIES_HPP
 
 #include <Eigen/Dense>
+#include <casadi/casadi.hpp>
 
 // Skew-symmetric matrix (Smtrx)
 Eigen::Matrix3d Smtrx(const Eigen::Vector3d &v);
@@ -32,6 +33,10 @@ Eigen::Vector3d CO_Offset(double U);
 std::vector<double> nReal(std::vector<double> n_relative);
 
 // Calculating thrusts based on relative propellar revs (n).
-Eigen::VectorXd ThrustsFromRealativeN(Eigen::VectorXd n_r);
+Eigen::VectorXd ThrustsFromRealativeN(Eigen::Vector2d n_r, Eigen::VectorXd coeffs);
+
+casadi::MX ThrustFromRelativeN_MX(casadi::MX n_i);
+
+Eigen::VectorXd NOrderApprox(const std::string& csv_file, int order);
 
 #endif

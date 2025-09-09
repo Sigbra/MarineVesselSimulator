@@ -15,22 +15,20 @@ using namespace casadi;
 std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N, double U, Eigen::Vector2d n, Eigen::Vector2d alpha, std::vector<bool> failstate) {
 
     // Lever arms from ran()
+    double ly1_o = 0.79;
+    double ly2_o = -0.79;
+    double lx_o = -1.17;
     // Eigen::Vector3d CO_offset = CO_Offset(U);
-    // double ly1 =  1.1 - CO_offset(1);    
-    // double ly2 = -1.1 + CO_offset(1);    
-    // double lx  = -1.1 - CO_offset(0);   
-    double ly1 =  1.1;    
-    double ly2 = -1.1;    
-    double lx  = -1.1;  
+    // ly1_o -= CO_offset(1);    
+    // ly2_o += CO_offset(1);    
+    // lx_o  -= CO_offset(0);
+    double pod_radius = 0.2;     
 
-    // Constants from ran()
-    double g = 9.81;
-    double k_pos = 880;         
-    double k_neg = 880;         
-    double n_max =  1;           
-    double n_min = -1;            
+    // Constants from ran()     
+    double n_max =  0.75;           
+    double n_min = -0.75;            
     double alpha_max = M_PI/2; 
-    double alpha_min = -M_PI/2;
+    double alpha_min = -M_PI/2;   
 
     Opti opti;
 
@@ -67,14 +65,21 @@ std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N, 
         opti.subject_to(vars(3) <= alpha_max);
     }
 
+    MX alpha1 = vars(1);
+    MX alpha2 = vars(3);
+    
+    MX ly1 = ly1_o + pod_radius * cos(alpha1);
+    MX ly2 = ly2_o + pod_radius * cos(alpha2);
+    MX lx1  = lx_o - pod_radius * sin(alpha1);
+    MX lx2  = lx_o - pod_radius * sin(alpha2);
 
-    MX Thrust1 = if_else(vars(0) >= 0, k_pos * vars(0) * abs(vars(0)), k_neg * vars(0) * abs(vars(0)));
-    MX Thrust2 = if_else(vars(2) >= 0, k_pos * vars(2) * abs(vars(2)), k_neg * vars(2) * abs(vars(2)));
+    MX Thrust1 = ThrustFromRelativeN_MX(vars(0));
+    MX Thrust2 = ThrustFromRelativeN_MX(vars(2));
 
     MX tau_X_model = Thrust1 * cos(vars(1)) + Thrust2 * cos(vars(3));
     MX tau_Y_model = Thrust1 * sin(vars(1)) + Thrust2 * sin(vars(3));
-    MX tau_N_model = lx * (Thrust1*sin(vars(1)) + Thrust2*sin(vars(3)))
-                    -(ly1*Thrust1*cos(vars(1)) + ly2*Thrust2*cos(vars(3)));
+    MX tau_N_model = lx1 * Thrust1 * sin(vars(1)) - ly1 * Thrust1 * cos(vars(1))
+                   + lx2 * Thrust2 * sin(vars(3)) - ly2 * Thrust2 * cos(vars(3));
     
     J = 0.5 * (pow(tau_X - tau_X_model, 2) +
                pow(tau_Y - tau_Y_model, 2) +
@@ -105,8 +110,11 @@ std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N, 
     MX d_n2 = vars(2) - n(1);
     MX d_alpha1 = vars(1) - alpha(0);
     MX d_alpha2 = vars(3) - alpha(1);
-    J += 60*(dot(d_n1,d_n1) + dot(d_n1,d_n1)) 
-         + 20*(dot(d_alpha1,d_alpha1) + dot(d_alpha2,d_alpha2)); 
+    J += 5*(dot(d_n1,d_n1) + dot(d_n1,d_n1)) 
+         + 5*(dot(d_alpha1,d_alpha1) + dot(d_alpha2,d_alpha2)); 
+
+    // Prefer azimuths centered around 0
+    J += 0.5*(dot(vars(1),vars(1)) + dot(vars(3), vars(3)));
 
     opti.minimize(J);
 

@@ -24,7 +24,7 @@ MIMOPIDController::MIMOPIDController(){
 
     Z = Eigen::MatrixXd::Zero(3, 3);
     Z(0, 0) = 0.8; 
-    Z(1, 1) = 0.7; //ideal:0.7
+    Z(1, 1) = 0.7; // ideal:0.7
     Z(2, 2) = 1.1; // ideal: 1.2
 
     // Natural Frequencies

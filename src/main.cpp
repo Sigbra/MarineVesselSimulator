@@ -183,7 +183,7 @@ int main() {
     // Motion control classes
     MIMOPIDController MIMO_PID;
     HeadingPIDController headPID;
-    MPC_Control_System mpc_control(30, 0.4); 
+    MPC_Control_System mpc_control(40, 0.8); 
 
     // Desired rate of turn and acceleration
     double r_d = 0.0; 
@@ -358,7 +358,7 @@ int main() {
         } 
         // - Motion Control: Path following: 
         else if (GuidanceFlag==2 || GuidanceFlag==3) { 
-            tau_XYN[0] = 80;
+            tau_XYN[0] = 150;
             tau_XYN[1] = 0;
             tau_XYN[2] = headPID.update(h, M, psi, psi_d, r, r_d, a_d);
         }              
@@ -401,7 +401,7 @@ int main() {
 
         // Marine Craft Model, update states: x
         ran_model.rk4(x, mp, V_c, beta_c, h, n, alpha);
-        x(11) = ssa(x(11)); //makes plotting look bad       
+        //x(11) = ssa(x(11)); //makes plotting look bad       
         
         // Pod model, update states: n and alpha
         ran_model.update_n(n, n_c, h);

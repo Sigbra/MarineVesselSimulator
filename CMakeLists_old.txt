@@ -1,72 +1,82 @@
 cmake_minimum_required(VERSION 3.10)
 project(MarineVesselSimulator)
 
-# -----------------------------------
-# C++ standard
-# -----------------------------------
+# Set C++ standard to C++17
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# -----------------------------------
-# Use Conda environment prefix if available
-# -----------------------------------
+# Set CMAKE_PREFIX_PATH to conda environment directory if available
 if(DEFINED ENV{CONDA_PREFIX})
-    set(CONDA_PREFIX $ENV{CONDA_PREFIX})
-    message(STATUS "Using conda environment at: ${CONDA_PREFIX}")
+    set(CMAKE_PREFIX_PATH $ENV{CONDA_PREFIX})
+    message(STATUS "Using conda environment at: $ENV{CONDA_PREFIX}")
 endif()
 
 # -----------------------------------
-# Include project headers
+# Directories
 # -----------------------------------
 include_directories(${CMAKE_SOURCE_DIR}/include)
+include_directories(/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3)
 include_directories(${CMAKE_SOURCE_DIR}/external/matplotlib-cpp)
 
 # -----------------------------------
 # External Dependencies
 # -----------------------------------
 
-# 1. Eigen3 (header-only, use target)
+# 1. Find Eigen3
 find_package(Eigen3 REQUIRED NO_DEFAULT_PATH 
-    PATHS ${CONDA_PREFIX}/share/eigen3/cmake
-)
+    PATHS /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/share/eigen3/cmake)
 if(TARGET Eigen3::Eigen)
     message(STATUS "Eigen3 found successfully!")
 else()
     message(FATAL_ERROR "Eigen3 not found!")
 endif()
 
-# 2. FFTW (link directory)
-link_directories(${CONDA_PREFIX}/lib)
+# 2. FFTW (adjust library name if necessary)
+link_directories(/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib)
 
 # 3. Gnuplot
-find_program(GNUPLOT_EXECUTABLE gnuplot PATHS ${CONDA_PREFIX}/bin)
+set(GNUPlot_EXECUTABLE "/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/bin/gnuplot")
+include(FindGnuplot)
 if(GNUPLOT_EXECUTABLE)
     message(STATUS "Found Gnuplot at ${GNUPLOT_EXECUTABLE}")
 else()
     message(FATAL_ERROR "Gnuplot not found!")
 endif()
 
-# 4. Python + NumPy
+# 4. Python and NumPy for matplotlib-cpp
 find_package(Python3 COMPONENTS Development NumPy REQUIRED)
 message(STATUS "Python3 include dirs: ${Python3_INCLUDE_DIRS}")
 message(STATUS "Python3 NumPy include dirs: ${Python3_NumPy_INCLUDE_DIRS}")
 
-# 5. yaml-cpp
+# 5. yaml-cpp setup
 find_package(yaml-cpp REQUIRED)
 
-# 6. GSL
+# 6. GSL Setup
 find_package(GSL REQUIRED)
 message(STATUS "GSL found: ${GSL_INCLUDE_DIRS}")
 
-# 7. CasADi
-find_path(CASADI_INCLUDE_DIR casadi/casadi.hpp HINTS ${CONDA_PREFIX}/include)
-find_library(CASADI_LIBRARY casadi HINTS ${CONDA_PREFIX}/lib)
-if(NOT CASADI_INCLUDE_DIR OR NOT CASADI_LIBRARY)
-    message(FATAL_ERROR "CasADi include/library not found!")
+# 7. CasADi Setup (Manually Finding CasADi)
+find_path(CASADI_INCLUDE_DIR casadi/casadi.hpp
+    HINTS /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include
+)
+if(NOT CASADI_INCLUDE_DIR)
+    message(FATAL_ERROR "CasADi include directory not found!")
 else()
-    message(STATUS "CasADi include: ${CASADI_INCLUDE_DIR}")
+    message(STATUS "CasADi include directory: ${CASADI_INCLUDE_DIR}")
+endif()
+
+find_library(CASADI_LIBRARY casadi
+    HINTS /home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib
+)
+if(NOT CASADI_LIBRARY)
+    message(FATAL_ERROR "CasADi library not found!")
+else()
     message(STATUS "CasADi library: ${CASADI_LIBRARY}")
 endif()
+
+# Add CasADi include directory and library path
+include_directories(${CASADI_INCLUDE_DIR})
+link_directories(/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib)
 
 # -----------------------------------
 # Source Files
@@ -106,16 +116,12 @@ set(SOURCES
 add_executable(${PROJECT_NAME} ${SOURCES})
 
 # -----------------------------------
-# Link Libraries and Include Directories
+# Link Libraries
 # -----------------------------------
-
-# Eigen (header-only target)
-target_link_libraries(${PROJECT_NAME} PRIVATE Eigen3::Eigen)
-
 # FFTW
-target_link_libraries(${PROJECT_NAME} PRIVATE fftw3)
+target_link_libraries(${PROJECT_NAME} PUBLIC fftw3)
 
-# Python + NumPy
+# Python and NumPy (for matplotlib-cpp)
 target_include_directories(${PROJECT_NAME} PRIVATE 
     ${Python3_INCLUDE_DIRS}
     ${Python3_NumPy_INCLUDE_DIRS}
@@ -123,18 +129,22 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 target_link_libraries(${PROJECT_NAME} PRIVATE ${Python3_LIBRARIES})
 
 # CasADi
-target_include_directories(${PROJECT_NAME} PRIVATE ${CASADI_INCLUDE_DIR})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${CASADI_LIBRARY})
+
+# Ensure CasADi is in the runtime path
 set_target_properties(${PROJECT_NAME} PROPERTIES
-    BUILD_RPATH "${CONDA_PREFIX}/lib"
+    BUILD_RPATH "/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/lib"
 )
 
 # yaml-cpp
-target_link_libraries(${PROJECT_NAME} PRIVATE yaml-cpp)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${YAML_CPP_LIBRARIES})
 
-# GSL
+# GSL (add its include directory and link the libraries along with the math library)
 target_include_directories(${PROJECT_NAME} PRIVATE ${GSL_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${GSL_LIBRARIES} m)
 
-# matplotlib-cpp
-target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/external/matplotlib-cpp)
+# Target the external matplotlib-cpp
+
+target_include_directories(MarineVesselSimulator PRIVATE
+    ${CMAKE_SOURCE_DIR}/external/matplotlib-cpp
+)
