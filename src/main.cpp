@@ -30,6 +30,9 @@
 #include "Planning/straight_line_planning.hpp"
 #include "Planning/fermat_spiral_planning.hpp"
 
+#include "Sensors/GNSS.hpp"
+#include "Sensors/IMU.hpp"
+
 #include "Utilities/calculations.hpp"
 #include "Utilities/plotting.hpp"
 
@@ -101,6 +104,19 @@ int main() {
     x(6) = wpt[0].x; // North position (NED frame)
     x(7) = wpt[0].y; // East position (NED frame)
     x(11) = std::atan2(wpt[1].y - wpt[0].y, wpt[1].x - wpt[0].x);
+
+    // Sensor Measurements
+    Eigen::Vector3d lever_arm_port_body( -2,  1, -1.5 ); //Measure!
+    Eigen::Vector3d lever_arm_stbd_body( -2, -1, -1.5 ); //Measure!
+
+    Eigen::Vector3d ant1_meas = raw_GNSS(x, lever_arm_port_body, gen, 0.05);
+    Eigen::Vector3d ant2_meas = raw_GNSS(x, lever_arm_stbd_body, gen, 0.05);
+    double psi_gnss = gnss_heading_from_two_antennas(ant1_meas, ant2_meas);
+
+    Eigen::Vector3d ba(0.0, 0.0, 0.0);      // Initial Accelerometer bias
+    Eigen::Vector3d bgyro(0.0, 0.0, 0.0);   // Initial Gyroscope bias
+
+    IMUData imu = raw_IMU(x, gen, ba, bgyro);
 
     // Control system variables
     std::vector<double> tau_XYN = {0.0, 0.0, 0.0};
@@ -217,28 +233,44 @@ int main() {
         t[i] = i * h;
         
         // ------------------------------ Navigation System ------------------------------
-        // (Fake measurements using noise)
-        double random_nu = noise_nu(gen);
-        double random_eta = noise_eta(gen);
   
-        double u     = x(0)  + random_nu; // Surge velocity (BODY frame)
-        double v     = x(1)  + random_nu; // Sway velocity  (BODY frame)
-        double w     = x(2)  + random_nu; // Heave velocity (BODY frame)
-        double p     = x(3)  + random_nu; // Roll rate      (BODY frame)
-        double q     = x(4)  + random_nu; // Pitch rate     (BODY frame)
-        double r     = x(5)  + random_nu; // Yaw rate       (BODY frame)
+        double u     = x(0);  // Surge velocity (BODY frame)
+        double v     = x(1);  // Sway velocity  (BODY frame)
+        double w     = x(2);  // Heave velocity (BODY frame)
+        double p     = x(3);  // Roll rate      (BODY frame)
+        double q     = x(4);  // Pitch rate     (BODY frame)
+        double r     = x(5);  // Yaw rate       (BODY frame)
     
-        double xn    = x(6)  + random_eta; // North position  (NED frame)
-        double yn    = x(7)  + random_eta; // East position   (NED frame)
-        double zn    = x(8)  + random_eta; // Down position   (NED frame)
-        double phi   = x(9)  + random_eta; // Roll angle      (NED frame)
-        double theta = x(10) + random_eta; // Pitch angle     (NED frame)
-        double psi   = x(11) + random_eta; // Heading angle   (NED frame)
+        double xn    = x(6);  // North position  (NED frame)
+        double yn    = x(7);  // East position   (NED frame)
+        double zn    = x(8);  // Down position   (NED frame)
+        double phi   = x(9);  // Roll angle      (NED frame)
+        double theta = x(10); // Pitch angle     (NED frame)
+        double psi   = x(11); // Heading angle   (NED frame)
 
-        if (std::isnan(psi)) {
-            std::cerr << "NaN detected for psi at iteration " << i << ", time: " << t[i] << "s\n";
+        // ------------------------------
+
+        // Simulate raw GNSS measurements for both antennas
+        ant1_meas = raw_GNSS(x, lever_arm_port_body, gen, 0.02);
+        ant2_meas = raw_GNSS(x, lever_arm_stbd_body, gen, 0.02);
+
+        // Transform raw_GNSS position to origin position.
+        Eigen::Vector3d nav_pos_1 = origin_from_raw_GNSS(x, ant1_meas, lever_arm_port_body);
+        Eigen::Vector3d nav_pos_2 = origin_from_raw_GNSS(x, ant2_meas, lever_arm_stbd_body);
+
+        // Compute heading from the two GNSS measurements
+        psi_gnss = gnss_heading_from_two_antennas(ant1_meas, ant2_meas);
+
+        if (std::isnan(psi_gnss)) {
+            std::cerr << "NaN detected for psi_gnss at iteration " << i << ", time: " << t[i] << "s\n";
             break; 
         }
+
+        imu = raw_IMU(x, gen, ba, bgyro);
+
+        
+        // ------------------------------ State Estimation; Observer ------------------------------
+
 
         // ------------------------------ Update model dynamics ------------------------------
         ran_model.update(x, mp, V_c, beta_c, h, n, alpha);
@@ -460,6 +492,15 @@ int main() {
             << "alpha(0), alpha(1):     " << rad2deg(alpha(0)) << ", " << rad2deg(alpha(1)) << std::endl
             << "------------------------------------------------" << std::endl
             << "tauX, tauY, tauN: " << tau_XYN[0] << ", " << tau_XYN[1] << ", " << tau_XYN[2] << std::endl
+            << "------------------------------------------------" << std::endl
+            << "Nav data GNSS; " << std::endl
+            << "Pos 1 (x,y,z): " << nav_pos_1(0) << ", " << nav_pos_1(1) << ", " << nav_pos_1(2) << std::endl
+            << "Pos 2 (x,y,z): " << nav_pos_2(0) << ", " << nav_pos_2(1) << ", " << nav_pos_2(2) << std::endl
+            << "HDG   (deg)  : " << rad2deg(psi_gnss)    << std::endl
+            << "------------------------------------------------" << std::endl
+            << "Nav data IMU : "  << std::endl
+            << "Accelerometer (body frame): " << imu.accel.transpose() << " m/s^2" << std::endl
+            << "Gyroscope (body frame)    : " << imu.gyro.transpose() << " rad/s" << std::endl
             << "" << std::endl
             << std::defaultfloat;
         }
