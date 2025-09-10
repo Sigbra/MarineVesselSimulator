@@ -26,6 +26,8 @@
 #include "Models/ref_model.hpp"
 #include "Models/model_utilities.hpp"
 
+#include "Observers/kalmanObserver.hpp"
+
 #include "Planning/plan_selector.hpp"
 #include "Planning/straight_line_planning.hpp"
 #include "Planning/fermat_spiral_planning.hpp"
@@ -111,12 +113,19 @@ int main() {
 
     Eigen::Vector3d ant1_meas = raw_GNSS(x, lever_arm_port_body, gen, 0.05);
     Eigen::Vector3d ant2_meas = raw_GNSS(x, lever_arm_stbd_body, gen, 0.05);
+    Eigen::Vector3d nav_pos_1 = origin_from_raw_GNSS(x, ant1_meas, lever_arm_port_body);
+    Eigen::Vector3d nav_pos_2 = origin_from_raw_GNSS(x, ant2_meas, lever_arm_stbd_body);
     double psi_gnss = gnss_heading_from_two_antennas(ant1_meas, ant2_meas);
 
     Eigen::Vector3d ba(0.0, 0.0, 0.0);      // Initial Accelerometer bias
     Eigen::Vector3d bgyro(0.0, 0.0, 0.0);   // Initial Gyroscope bias
 
     IMUData imu = raw_IMU(x, gen, ba, bgyro);
+    imu.accel = GravityCompensation(imu.accel, x(9), x(10), x(11));
+
+    // Observers
+    KalmanFilter12 kf(h);
+    Eigen::VectorXd x_est = kf.Observer(nav_pos_1, nav_pos_2, psi_gnss, imu.accel, imu.gyro);
 
     // Control system variables
     std::vector<double> tau_XYN = {0.0, 0.0, 0.0};
@@ -233,30 +242,14 @@ int main() {
         t[i] = i * h;
         
         // ------------------------------ Navigation System ------------------------------
-  
-        double u     = x(0);  // Surge velocity (BODY frame)
-        double v     = x(1);  // Sway velocity  (BODY frame)
-        double w     = x(2);  // Heave velocity (BODY frame)
-        double p     = x(3);  // Roll rate      (BODY frame)
-        double q     = x(4);  // Pitch rate     (BODY frame)
-        double r     = x(5);  // Yaw rate       (BODY frame)
-    
-        double xn    = x(6);  // North position  (NED frame)
-        double yn    = x(7);  // East position   (NED frame)
-        double zn    = x(8);  // Down position   (NED frame)
-        double phi   = x(9);  // Roll angle      (NED frame)
-        double theta = x(10); // Pitch angle     (NED frame)
-        double psi   = x(11); // Heading angle   (NED frame)
-
-        // ------------------------------
 
         // Simulate raw GNSS measurements for both antennas
         ant1_meas = raw_GNSS(x, lever_arm_port_body, gen, 0.02);
         ant2_meas = raw_GNSS(x, lever_arm_stbd_body, gen, 0.02);
 
         // Transform raw_GNSS position to origin position.
-        Eigen::Vector3d nav_pos_1 = origin_from_raw_GNSS(x, ant1_meas, lever_arm_port_body);
-        Eigen::Vector3d nav_pos_2 = origin_from_raw_GNSS(x, ant2_meas, lever_arm_stbd_body);
+        nav_pos_1 = origin_from_raw_GNSS(x, ant1_meas, lever_arm_port_body);
+        nav_pos_2 = origin_from_raw_GNSS(x, ant2_meas, lever_arm_stbd_body);
 
         // Compute heading from the two GNSS measurements
         psi_gnss = gnss_heading_from_two_antennas(ant1_meas, ant2_meas);
@@ -267,15 +260,32 @@ int main() {
         }
 
         imu = raw_IMU(x, gen, ba, bgyro);
+        imu.accel = GravityCompensation(imu.accel, x_est(9), x_est(10), x_est(11));
 
-        
         // ------------------------------ State Estimation; Observer ------------------------------
 
+        x_est = kf.Observer(nav_pos_1, nav_pos_2, psi_gnss, imu.accel, imu.gyro);
+
+        double u     = x_est(0);  // Surge velocity (BODY frame)
+        double v     = x_est(1);  // Sway velocity  (BODY frame)
+        double w     = x_est(2);  // Heave velocity (BODY frame)
+        double p     = x_est(3);  // Roll rate      (BODY frame)
+        double q     = x_est(4);  // Pitch rate     (BODY frame)
+        double r     = x_est(5);  // Yaw rate       (BODY frame)
+    
+        double xn    = x_est(6);  // North position  (NED frame)
+        double yn    = x_est(7);  // East position   (NED frame)
+        double zn    = x_est(8);  // Down position   (NED frame)
+        double phi   = x_est(9);  // Roll angle      (NED frame)
+        double theta = x_est(10); // Pitch angle     (NED frame)
+        double psi   = x_est(11); // Heading angle   (NED frame)
+
+        U = std::sqrt(u*u + v*v);
 
         // ------------------------------ Update model dynamics ------------------------------
         ran_model.update(x, mp, V_c, beta_c, h, n, alpha);
         M = ran_model.get_M(); // Const?
-        U = ran_model.get_U(); // Dependent on x
+        //U = ran_model.get_U(); // Dependent on x
         B = ran_model.get_B(); // Dependent on alpha
 
         // ------------------------------ Mode switch ------------------------------

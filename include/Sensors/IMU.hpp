@@ -36,4 +36,7 @@ IMUData raw_IMU(const Eigen::VectorXd &x,
                 double sigma_acc = 0.01,
                 double sigma_gyro = 0.001);
 
+Eigen::Vector3d GravityCompensation(const Eigen::Vector3d &accel_raw,
+                                    double phi, double theta, double psi);
+
 #endif // IMU_HPP

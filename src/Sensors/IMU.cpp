@@ -46,3 +46,21 @@ IMUData raw_IMU(const Eigen::VectorXd &x,
 
     return imu;
 }
+
+Eigen::Vector3d GravityCompensation(const Eigen::Vector3d &accel_raw,
+                                    double phi, double theta, double psi)
+{
+    // Gravity vector in NED
+    Eigen::Vector3d g_NED(0.0, 0.0, 9.81);
+
+    // Rotation body -> NED
+    Eigen::Matrix3d Rnb = Rzyx(phi, theta, psi);
+
+    // Gravity in body frame
+    Eigen::Vector3d g_body = Rnb.transpose() * g_NED;
+
+    // Subtract gravity
+    Eigen::Vector3d accel_no_gravity = accel_raw - g_body;
+
+    return accel_no_gravity;
+}
