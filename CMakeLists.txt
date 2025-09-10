@@ -96,6 +96,9 @@ set(SOURCES
     src/Planning/straight_line_planning.cpp
     src/Planning/plan_selector.cpp
 
+    src/Sensors/GNSS.cpp
+    src/Sensors/IMU.cpp
+
     src/Utilities/calculations.cpp
     src/Utilities/plotting.cpp
 )
