@@ -124,8 +124,9 @@ int main() {
     imu.accel = GravityCompensation(imu.accel, x(9), x(10), x(11));
 
     // Observers
-    KalmanFilter12 kf(h);
-    Eigen::VectorXd x_est = kf.Observer(nav_pos_1, nav_pos_2, psi_gnss, imu.accel, imu.gyro);
+    KalmanFilter15 kf(h);
+    Eigen::VectorXd kf_est = kf.Observer(nav_pos_1, nav_pos_2, psi_gnss, imu.accel, imu.gyro);
+    Eigen::VectorXd x_est = kf_est.head(12);
 
     // Control system variables
     std::vector<double> tau_XYN = {0.0, 0.0, 0.0};
@@ -136,9 +137,6 @@ int main() {
     // Model;   
     RAN ran_model;
     ran_model.update(x, mp, V_c, beta_c, h, n_c, alpha_c);
-    Eigen::MatrixXd M = ran_model.get_M();
-    Eigen::MatrixXd B = ran_model.get_B();
-    double U = ran_model.get_U();
 
     double T_n = ran_model.getT_n();          // Propeller time constant (s)
     double T_alpha = ran_model.getT_alpha();  // Azimuth angle time constant (s)
@@ -148,6 +146,20 @@ int main() {
 
     Eigen::Vector2d n = Eigen::Vector2d::Zero(); // Propeller speeds (rad/s)      
     Eigen::Vector2d alpha = Eigen::Vector2d::Zero(); // Azimuth angles (rad)
+
+    // Model est
+    RAN ran_model_est;
+
+    if (failstate[0] == true){ran_model_est.fail_state_n1();} 
+    else {ran_model_est.recover_n1();}
+
+    if (failstate[1] == true){ran_model_est.fail_state_n2();} 
+    else {ran_model_est.recover_n2();}
+
+    ran_model_est.update(x_est, mp, V_c, beta_c, h, n_c, alpha_c);
+    Eigen::MatrixXd M_est = ran_model.get_M();
+    Eigen::MatrixXd B_est = ran_model.get_B();
+    double U_est = ran_model.get_U();
 
     // Create the straight line path.
     StraightLinePath straightLinePath;
@@ -223,7 +235,7 @@ int main() {
     std::vector<double> t(num_steps);    
 
     // SIM data storage
-    Eigen::MatrixXd simdata(num_steps, 31);         
+    Eigen::MatrixXd simdata(num_steps, 43);         
     
     RealTimePlotter plotter;
     if (pathType == 1 || pathType == 2) {
@@ -264,7 +276,8 @@ int main() {
 
         // ------------------------------ State Estimation; Observer ------------------------------
 
-        x_est = kf.Observer(nav_pos_1, nav_pos_2, psi_gnss, imu.accel, imu.gyro);
+        kf_est = kf.Observer(nav_pos_1, nav_pos_2, psi_gnss, imu.accel, imu.gyro);
+        x_est = kf_est.head(12);
 
         double u     = x_est(0);  // Surge velocity (BODY frame)
         double v     = x_est(1);  // Sway velocity  (BODY frame)
@@ -280,13 +293,13 @@ int main() {
         double theta = x_est(10); // Pitch angle     (NED frame)
         double psi   = x_est(11); // Heading angle   (NED frame)
 
-        U = std::sqrt(u*u + v*v);
-
-        // ------------------------------ Update model dynamics ------------------------------
+        // ------------------------------ Update model real dynamics and estimates ------------------------------
         ran_model.update(x, mp, V_c, beta_c, h, n, alpha);
-        M = ran_model.get_M(); // Const?
-        //U = ran_model.get_U(); // Dependent on x
-        B = ran_model.get_B(); // Dependent on alpha
+
+        ran_model_est.update(x_est, mp, V_c, beta_c, h, n, alpha);
+        M_est = ran_model_est.get_M(); // Const?
+        U_est = ran_model_est.get_U(); // Dependent on x.
+        B_est = ran_model_est.get_B(); // Dependent on alpha
 
         // ------------------------------ Mode switch ------------------------------
 
@@ -309,7 +322,7 @@ int main() {
         switch (pathType) {
             case 1: { // Dynamic Positioning.
                 if (R_switch > std::sqrt(std::pow(xn - wpt[wpt_index].x, 2) + std::pow(yn - wpt[wpt_index].y, 2))){
-                    if (std::abs(ssa(psi_d-psi)) < deg2rad(3) && U < 0.01) {
+                    if (std::abs(ssa(psi_d-psi)) < deg2rad(3) && U_est < 0.01) {
                         if (wpt_index < wpt.size()-1) {
                             wpt_index += 1;
                             MIMO_PID.reset();
@@ -396,31 +409,31 @@ int main() {
         if (GuidanceFlag==1 && ControlAllocFlag != 4){
             nu << u, v, w, p, q, r;
             eta  << xn, yn, zn, phi, theta, psi;
-            tau_XYN = MIMO_PID.update(h, xn_d, yn_d, psi_d, M, eta, nu, V_c, beta_c);
+            tau_XYN = MIMO_PID.update(h, xn_d, yn_d, psi_d, M_est, eta, nu, V_c, beta_c);
         } 
         // - Motion Control: Path following: 
         else if (GuidanceFlag==2 || GuidanceFlag==3) { 
             tau_XYN[0] = 150;
             tau_XYN[1] = 0;
-            tau_XYN[2] = headPID.update(h, M, psi, psi_d, r, r_d, a_d);
+            tau_XYN[2] = headPID.update(h, M_est, psi, psi_d, r, r_d, a_d);
         }              
 
         // - Control allocation
         switch (ControlAllocFlag) {
             case 1: { // Pseudo-inverse control allocation
-                control_allocation = pseudo_inverse_allocation(tau_XYN, B, 880, 880);
+                control_allocation = pseudo_inverse_allocation(tau_XYN, B_est, 880, 880);
                 n_c     = {control_allocation[0], control_allocation[2]};
                 alpha_c = {control_allocation[1], control_allocation[3]};
                 break;
             }
             case 2: { // Nonlinear optimization with constraints
-                control_allocation = NLOptControlAlloc(tau_XYN[0], tau_XYN[1], tau_XYN[2], U, n, alpha, failstate);
+                control_allocation = NLOptControlAlloc(tau_XYN[0], tau_XYN[1], tau_XYN[2], U_est, n, alpha, failstate);
                 n_c     = {control_allocation[0], control_allocation[2]};
                 alpha_c = {control_allocation[1], control_allocation[3]};
                 break;
             }
             case 3: { // Nonlinear optimization with constraints over a horizon taking rate constriants into account
-                control_allocation = MPC_control_alloc(tau_XYN[0], tau_XYN[1], tau_XYN[2], U, T_n, T_alpha, n, alpha, failstate);
+                control_allocation = MPC_control_alloc(tau_XYN[0], tau_XYN[1], tau_XYN[2], U_est, T_n, T_alpha, n, alpha, failstate);
                 n_c     = {control_allocation[0], control_allocation[2]};
                 alpha_c = {control_allocation[1], control_allocation[3]};
                 break;
@@ -464,7 +477,7 @@ int main() {
                 GuidanceVectorY = {path_y};
             }
 
-            plotter.updatePlot(xn, yn, psi, 0.2, GuidanceVectorX, GuidanceVectorY);
+            plotter.updatePlot(x(6), x(7), x(11), 0.2, GuidanceVectorX, GuidanceVectorY);
 
             std::cout << std::fixed << std::setprecision(0)
             << "################################################" << std::endl
@@ -489,10 +502,10 @@ int main() {
                 std::cout << std::fixed << std::setprecision(3)
                 << "psi_d: " << rad2deg(psi_d) << ", r_d: " << rad2deg(r_d) << std::endl;
             }
-            std::cout << "x:   " << xn << "m, y:   " << yn << "m, psi:   " << rad2deg(psi) << "deg" << ", U: " << U << std::endl
+            std::cout << "xn_est:   " << xn << "m, yn_est:   " << yn << "m, psi_est:   " << rad2deg(psi) << "deg" << ", U_est: " << U_est << std::endl
             << "------------------------------------------------" << std::endl
-            << "CO offset (x, y, z): " << CO_Offset(U).transpose() << std::endl
-            << "------------------------------------------------" << std::endl
+            //<< "CO offset (x, y, z): " << CO_Offset(U).transpose() << std::endl
+            //<< "------------------------------------------------" << std::endl
             << std::fixed << std::setprecision(4)
             << "n_c(0), n_c(1):         " << n_c(0) << ", " << n_c(1) << std::endl
             << "n(0),   n(1):           " << n(0) << ", " << n(1) << std::endl
@@ -536,6 +549,7 @@ int main() {
         simdata(i, 28) = closest.point.pos.y;
         simdata(i, 29) = closest.x_e;
         simdata(i, 30) = closest.y_e;
+        simdata(i, Eigen::seq(31, 42)) = x_est.transpose();  
 
         if (break_flag == true) {
             for (int j = i; j < num_steps; ++j) {

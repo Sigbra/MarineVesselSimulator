@@ -489,6 +489,8 @@ void RAN::select_failure_mode() {
         std::cin >> input;
 
         if (input == "1") {
+            recover_n1();
+            recover_n2();
             std::cout << "\n";
             break; 
         } else if (input == "2") {

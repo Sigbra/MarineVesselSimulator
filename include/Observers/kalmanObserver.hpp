@@ -1,43 +1,46 @@
-#ifndef KALMANFILTER12_HPP
-#define KALMANFILTER12_HPP
+#ifndef KALMANFILTER15_HPP
+#define KALMANFILTER15_HPP
 
 #include <Eigen/Dense>
 #include <iostream>
 
-struct KFState {
-    Eigen::VectorXd x;   // state estimate (12x1)
-    Eigen::MatrixXd P;   // state covariance (12x12)
+struct KFState15 {
+    Eigen::VectorXd x;   // 15x1 state estimate
+    Eigen::MatrixXd P;   // 15x15 covariance
 };
 
-class KalmanFilter12 {
+class KalmanFilter15 {
 public:
-    KalmanFilter12(double dt);
+    KalmanFilter15(double dt);
 
-    // ----------------- Existing methods -----------------
+    // Predict using IMU (accelerometer + gyro)
     void predict(const Eigen::Vector3d &imu_accel,
                  const Eigen::Vector3d &imu_gyro);
 
+    // Update using GNSS position and heading
     void update(const Eigen::Vector3d &gnss_pos,
                 double gnss_heading);
 
-    KFState getState() const { return {x_, P_}; }
+    KFState15 getState() const { return {x_, P_}; }
 
-    // ----------------- New combined method -----------------
-Eigen::VectorXd Observer(const Eigen::Vector3d &gnss_pos1,
-                         const Eigen::Vector3d &gnss_pos2,
-                         double gnss_heading,
-                         const Eigen::Vector3d &imu_accel,
-                         const Eigen::Vector3d &imu_gyro);
+    Eigen::VectorXd Observer(const Eigen::Vector3d &gnss_pos1,
+                                        const Eigen::Vector3d &gnss_pos2,
+                                        double gnss_heading,
+                                        const Eigen::Vector3d &imu_accel,
+                                        const Eigen::Vector3d &imu_gyro);
 
 private:
     double dt_;
-    Eigen::VectorXd x_;    // 12x1 state vector
-    Eigen::MatrixXd P_;    // 12x12 covariance
-    Eigen::MatrixXd F_;    // 12x12 state transition
-    Eigen::MatrixXd Q_;    // 12x12 process noise
+    Eigen::VectorXd x_;    // 15x1 state vector
+    Eigen::MatrixXd P_;    // 15x15 covariance
+    Eigen::MatrixXd F_;    // 15x15 state transition
+    Eigen::MatrixXd Q_;    // 15x15 process noise
     Eigen::MatrixXd H_;    // measurement matrix
     Eigen::MatrixXd R_;    // measurement noise
+
+    // Helper to convert body rates to Euler rates
+    Eigen::Vector3d eulerRateFromBodyRates(const Eigen::Vector3d &bodyRates,
+                                           const Eigen::Vector3d &angles);
 };
 
-#endif // KALMANFILTER12_HPP
-
+#endif // KALMANFILTER15_HPP
