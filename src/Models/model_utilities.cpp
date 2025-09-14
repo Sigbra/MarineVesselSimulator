@@ -244,23 +244,35 @@ Eigen::MatrixXd eulerang(double phi, double theta, double psi) {
 
 //-------------------------------------------------------------------
 // Helper function: Rzyx
-// Returns the rotation matrix (3x3) from the body-fixed frame to the
-// inertial frame using the ZYX Euler angle convention.
+// Returns the rotation matrix (3x3) from the body-fixed frame
+// to the inertial frame with axes ordered as:
+//   X = LON (East), Y = LAT (North), Z = Down
+// Body frame is x fwd, y starboard, z down.
+// ZYX Euler angles: roll φ (x), pitch θ (y), yaw ψ (z).
 //-------------------------------------------------------------------
 Eigen::Matrix3d Rzyx(double phi, double theta, double psi) {
-    // Compute trigonometric values
-    double cphi = std::cos(phi);
-    double sphi = std::sin(phi);
-    double cth  = std::cos(theta);
-    double sth  = std::sin(theta);
-    double cpsi = std::cos(psi);
-    double spsi = std::sin(psi);
+    const double cphi = std::cos(phi);
+    const double sphi = std::sin(phi);
+    const double cth  = std::cos(theta);
+    const double sth  = std::sin(theta);
+    const double cpsi = std::cos(psi);
+    const double spsi = std::sin(psi);
 
-    // Define rotation matrix R
     Eigen::Matrix3d R;
-    R <<  cpsi * cth,  -spsi * cphi + cpsi * sth * sphi,  spsi * sphi + cpsi * cphi * sth,
-          spsi * cth,   cpsi * cphi + sphi * sth * spsi,  -cpsi * sphi + sth * spsi * cphi,
-          -sth,         cth * sphi,                       cth * cphi;
+    // Row 1: East (LON)
+    R(0,0) =  spsi * cth;
+    R(0,1) =  cpsi * cphi + sphi * sth * spsi;
+    R(0,2) = -cpsi * sphi + sth * spsi * cphi;
+
+    // Row 2: North (LAT)
+    R(1,0) =  cpsi * cth;
+    R(1,1) = -spsi * cphi + cpsi * sth * sphi;
+    R(1,2) =  spsi * sphi + cpsi * cphi * sth;
+
+    // Row 3: Down
+    R(2,0) = -sth;
+    R(2,1) =  cth * sphi;
+    R(2,2) =  cth * cphi;
 
     return R;
 }

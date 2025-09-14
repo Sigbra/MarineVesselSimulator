@@ -12,19 +12,23 @@ void StraightLinePath::updateWaypoints(const Waypoints& waypoints) {
     waypoints_ = waypoints;
 }
 
+// Along-track error (East, North), lambda = atan2(E', N') => 0=N, +CW
 double StraightLinePath::alongTrackError(Vector2D vessel, PathPoint path_point) {
-    double lamda = std::atan2(path_point.dpos.y, path_point.dpos.x);
-    double x_e = (vessel.x - path_point.pos.x)*std::cos(lamda) 
-                +(vessel.y - path_point.pos.y)*std::sin(lamda);
+    double lambda = std::atan2(path_point.dpos.x, path_point.dpos.y); // atan2(E', N')
+    double dE = vessel.x - path_point.pos.x; // East
+    double dN = vessel.y - path_point.pos.y; // North
+    double x_e = dE * std::sin(lambda) + dN * std::cos(lambda);
     return x_e;
 }
  
+// Cross-track error (positive to LEFT of path in [E,N])
 double StraightLinePath::crossTrackError(Vector2D vessel, PathPoint path_point) {
-    double lamda = std::atan2(path_point.dpos.y, path_point.dpos.x);
-    double y_e = -(vessel.x - path_point.pos.x)*std::sin(lamda) 
-                 +(vessel.y - path_point.pos.y)*std::cos(lamda);
+    double lambda = std::atan2(path_point.dpos.x, path_point.dpos.y); // atan2(E', N')
+    double dE = vessel.x - path_point.pos.x; // East
+    double dN = vessel.y - path_point.pos.y; // North
+    double y_e = -(dE) * std::cos(lambda) + (dN) * std::sin(lambda);
     return y_e;
-}      
+}  
 
 PathTrackingInfo StraightLinePath::getClosestPoint(const Vector2D vessel_position, int &wpt_index) {
     

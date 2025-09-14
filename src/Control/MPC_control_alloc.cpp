@@ -15,12 +15,12 @@ std::vector<double> MPC_control_alloc(double tau_X, double tau_Y, double tau_N,
     int N = static_cast<int>(horizon/delta); 
 
     // Lever arms from ran()
-    double ly1_o = 0.79;
-    double ly2_o = -0.79;
-    double lx_o = -1.17;
+    double ly1_o = -0.79;
+    double ly2_o =  0.79;
+    double lx_o  = -1.17;
     // Eigen::Vector3d CO_offset = CO_Offset(U);
-    // ly1_o -= CO_offset(1);    
-    // ly2_o += CO_offset(1);    
+    // ly1_o += CO_offset(1);    
+    // ly2_o -= CO_offset(1);    
     // lx_o  -= CO_offset(0);
     double pod_radius = 0.2;    
 
@@ -112,10 +112,10 @@ std::vector<double> MPC_control_alloc(double tau_X, double tau_Y, double tau_N,
         MX alpha1 = alpha_vars(0, k);
         MX alpha2 = alpha_vars(1, k);
 
-        MX ly1 = ly1_o + pod_radius * cos(alpha1);
-        MX ly2 = ly2_o + pod_radius * cos(alpha2);
-        MX lx1  = lx_o - pod_radius * sin(alpha1);
-        MX lx2  = lx_o - pod_radius * sin(alpha2);
+        MX ly1 = ly1_o - pod_radius * sin(alpha1);
+        MX ly2 = ly2_o - pod_radius * sin(alpha2);
+        MX lx1  = lx_o - pod_radius * cos(alpha1);
+        MX lx2  = lx_o - pod_radius * cos(alpha2);
 
         MX Thrust1 = ThrustFromRelativeN_MX(n1);
         MX Thrust2 = ThrustFromRelativeN_MX(n2);

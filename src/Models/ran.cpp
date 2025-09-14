@@ -42,8 +42,8 @@ RAN::RAN() {
     T_n = 0.4;     //Specifics unknown
     T_alpha = 0.8;
 
-    ly1_o = 0.79;
-    ly2_o = -0.79;
+    ly1_o = -0.79;
+    ly2_o = 0.79;
     lx_o = -1.17;
     pod_radius = 0.2;
 
@@ -256,10 +256,10 @@ void RAN::update(const Eigen::VectorXd x, double mp, double V_c, double beta_c,
     }
 
     // Lever arms considering pod radius
-    double ly1 = ly1_o + pod_radius*cos(alpha(0));         
-    double ly2 = ly2_o + pod_radius*cos(alpha(1));        
-    double lx1 = lx_o - pod_radius*sin(alpha(0));
-    double lx2 = lx_o - pod_radius*sin(alpha(1));
+    double ly1 = ly1_o - pod_radius*sin(alpha(0));         
+    double ly2 = ly2_o - pod_radius*sin(alpha(1));        
+    double lx1 = lx_o  - pod_radius*cos(alpha(0));
+    double lx2 = lx_o  - pod_radius*cos(alpha(1));
 
     // Thrusts from podded propellars
     // TODO: Reduce thrust if slipstream from one propellar hits the other.

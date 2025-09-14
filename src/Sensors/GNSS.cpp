@@ -10,12 +10,12 @@ Eigen::Vector3d raw_GNSS(const Eigen::VectorXd &x,
                          std::mt19937 &gen,
                          double sigma_pos = 0.05 /* m, default 5cm */)
 {
-    double xn = x(6); 
-    double yn = x(7); 
-    double zn = x(8); 
-    double phi = x(9);
+    double xn    = x(6);  // East (LON)
+    double yn    = x(7);  // North (LAT)
+    double zn    = x(8); 
+    double phi   = x(9);
     double theta = x(10);
-    double psi = x(11);
+    double psi   = x(11);
 
     // vehicle body-origin in NED
     Eigen::Vector3d p_body_origin_ned(xn, yn, zn); 
@@ -61,8 +61,8 @@ double gnss_heading_from_two_antennas(const Eigen::Vector3d &ant_port_ned,
     // Baseline: starboard - port  (this makes +y = port, -y = starboard consistent)
     Eigen::Vector3d b = ant_stbd_ned - ant_port_ned;
 
-    double bN = b(0); // North component
-    double bE = b(1); // East component
+    double bE = b(0); // North component
+    double bN = b(1); // East component
 
     double psi_meas = std::atan2(bE, bN) + M_PI/2;
 

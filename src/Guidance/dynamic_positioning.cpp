@@ -15,7 +15,7 @@ double psi_d;
 if (psi_d_input) {
     psi_d = psi_d_input.value();
 } else {
-    psi_d = std::atan2(path_y - prev_path_y, path_x - prev_path_x);
+    psi_d = std::atan2(path_x - prev_path_x, path_y - prev_path_y);
 }
 
 return std::make_tuple(xn_d, yn_d, psi_d);
