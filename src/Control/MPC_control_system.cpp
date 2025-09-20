@@ -16,7 +16,7 @@ MPC_Control_System::MPC_Control_System(int N, double dt)
 }
 
 MX MPC_Control_System::f(const MX& X, const MX& tau, const MX& V_c, const MX& beta_c) {
-    // States: [x, y, psi, u, v, r]
+    // States: [x(East), y(North), psi(0=N,+CW), u, v, r]
     MX x    = X(0);
     MX y    = X(1);
     MX psi  = X(2);
@@ -28,8 +28,8 @@ MX MPC_Control_System::f(const MX& X, const MX& tau, const MX& V_c, const MX& be
     // Kinematics
     // ---------------------------
     // x and y velocities are given in the global frame:
-    MX dx   = u * cos(psi) - v * sin(psi);
-    MX dy   = u * sin(psi) + v * cos(psi);
+    MX dx   = u * sin(psi) + v * cos(psi);
+    MX dy   = u * cos(psi) - v * sin(psi);
     MX dpsi = r;
 
     // ---------------------------
@@ -37,8 +37,8 @@ MX MPC_Control_System::f(const MX& X, const MX& tau, const MX& V_c, const MX& be
     // ---------------------------
     MX Vcn = V_c * cos(beta_c);     // current north
     MX Vce = V_c * sin(beta_c);     // current east
-    MX u_c =  Vcn * cos(psi) + Vce * sin(psi);
-    MX v_c = -Vcn * sin(psi) + Vce * cos(psi);
+    MX u_c =  Vce * sin(psi) + Vcn * cos(psi);
+    MX v_c =  Vce * cos(psi) - Vcn * sin(psi);
 
     // ---------------------------
     // Dynamics (Lumped Model)
@@ -101,10 +101,10 @@ MX control_allocation(const MX& n, const MX& alpha, double lx_o, double ly1_o, d
     MX n1 = n(0), n2 = n(1);
     MX alpha1 = alpha(0), alpha2 = alpha(1);
 
-    MX ly1 = ly1_o + pod_radius * cos(alpha1);
-    MX ly2 = ly2_o + pod_radius * cos(alpha2);
-    MX lx1  = lx_o - pod_radius * sin(alpha1);
-    MX lx2  = lx_o - pod_radius * sin(alpha2);
+    MX ly1 = ly1_o - pod_radius * sin(alpha1);
+    MX ly2 = ly2_o - pod_radius * sin(alpha2);
+    MX lx1  = lx_o - pod_radius * cos(alpha1);
+    MX lx2  = lx_o - pod_radius * cos(alpha2);
 
     MX Thrust1 = ThrustFromRelativeN_MX(n1);
     MX Thrust2 = ThrustFromRelativeN_MX(n2);
@@ -146,12 +146,12 @@ bool MPC_Control_System::solve(const std::vector<double>& x0, double x_s, double
     double U = std::sqrt(x0[3]*x0[3] + x0[4]*x0[4]); // Current speed from state x0
     
     // Lever arms from ran()
-    double ly1_o = 0.79;
-    double ly2_o = -0.79;
-    double lx_o = -1.17;
+    double ly1_o = -0.79;
+    double ly2_o =  0.79;
+    double lx_o  = -1.17;
     // Eigen::Vector3d CO_offset = CO_Offset(U);
-    // ly1_o -= CO_offset(1);    
-    // ly2_o += CO_offset(1);    
+    // ly1_o += CO_offset(1);    
+    // ly2_o -= CO_offset(1);    
     // lx_o  -= CO_offset(0);
     double pod_radius = 0.2;  
 

@@ -15,9 +15,9 @@ using namespace casadi;
 std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N, double U, Eigen::Vector2d n, Eigen::Vector2d alpha, std::vector<bool> failstate) {
 
     // Lever arms from ran()
-    double ly1_o = 0.79;
-    double ly2_o = -0.79;
-    double lx_o = -1.17;
+    double ly1_o = -0.79;
+    double ly2_o =  0.79;
+    double lx_o  = -1.17;
     // Eigen::Vector3d CO_offset = CO_Offset(U);
     // ly1_o -= CO_offset(1);    
     // ly2_o += CO_offset(1);    
@@ -68,18 +68,18 @@ std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N, 
     MX alpha1 = vars(1);
     MX alpha2 = vars(3);
     
-    MX ly1 = ly1_o + pod_radius * cos(alpha1);
-    MX ly2 = ly2_o + pod_radius * cos(alpha2);
-    MX lx1  = lx_o - pod_radius * sin(alpha1);
-    MX lx2  = lx_o - pod_radius * sin(alpha2);
+    MX ly1 = ly1_o - pod_radius * sin(alpha1);
+    MX ly2 = ly2_o - pod_radius * sin(alpha2);
+    MX lx1  = lx_o - pod_radius * cos(alpha1);
+    MX lx2  = lx_o - pod_radius * cos(alpha2);
 
     MX Thrust1 = ThrustFromRelativeN_MX(vars(0));
     MX Thrust2 = ThrustFromRelativeN_MX(vars(2));
 
-    MX tau_X_model = Thrust1 * cos(vars(1)) + Thrust2 * cos(vars(3));
-    MX tau_Y_model = Thrust1 * sin(vars(1)) + Thrust2 * sin(vars(3));
-    MX tau_N_model = lx1 * Thrust1 * sin(vars(1)) - ly1 * Thrust1 * cos(vars(1))
-                   + lx2 * Thrust2 * sin(vars(3)) - ly2 * Thrust2 * cos(vars(3));
+    MX tau_X_model = Thrust1 * cos(alpha1) + Thrust2 * cos(alpha2);
+    MX tau_Y_model = Thrust1 * sin(alpha1) + Thrust2 * sin(alpha2);
+    MX tau_N_model = lx1 * Thrust1 * sin(alpha1) - ly1 * Thrust1 * cos(alpha1)
+                   + lx2 * Thrust2 * sin(alpha2) - ly2 * Thrust2 * cos(alpha2);
     
     J = 0.5 * (pow(tau_X - tau_X_model, 2) +
                pow(tau_Y - tau_Y_model, 2) +

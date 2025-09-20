@@ -62,8 +62,8 @@ std::vector<double> MIMOPIDController::update(
 
     // Rotate position error into BODY frame
     double c = std::cos(psi), s = std::sin(psi);
-    double ex =  c*ex_N + s*ey_N;
-    double ey = -s*ex_N + c*ey_N;
+    double ex = s*ex_N + c*ey_N;
+    double ey = c*ex_N - s*ey_N;
 
     //—— 4) Compute desired body‐frame velocities (simple P)
     const double Kpx    = 1;   // [1/s]
@@ -78,8 +78,8 @@ std::vector<double> MIMOPIDController::update(
     Eigen::Vector2d Vc_NED(V_c*std::cos(beta_c),
                            V_c*std::sin(beta_c));
     Eigen::Matrix2d Rbn;  // body ← NED
-    Rbn <<  c,  s,
-          - s,  c;
+    Rbn <<  s,  c,
+            c, -s;
     Eigen::Vector2d Vc_body = Rbn * Vc_NED;
 
     //—— 6) Extract measured body velocities & form relative vel.

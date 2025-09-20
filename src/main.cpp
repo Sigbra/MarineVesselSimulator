@@ -101,13 +101,13 @@ int main() {
 
     // x = [u v w p q r xn yn zn phi theta psi]'
     Eigen::VectorXd x = Eigen::VectorXd::Zero(12); 
-    x(6) = wpt[0].x; // North position (NED frame)
-    x(7) = wpt[0].y; // East position (NED frame)
-    x(11) = std::atan2(wpt[1].y - wpt[0].y, wpt[1].x - wpt[0].x);
+    x(6) = wpt[0].x; // Xn (LON/East)
+    x(7) = wpt[0].y; // Yn (LAT/North)
+    x(11) = std::atan2(wpt[1].x - wpt[0].x, wpt[1].y - wpt[0].y);
 
     // Sensor Measurements
-    Eigen::Vector3d lever_arm_port_body( -2,  1, -1.5 ); //Measure!
-    Eigen::Vector3d lever_arm_stbd_body( -2, -1, -1.5 ); //Measure!
+    Eigen::Vector3d lever_arm_port_body( -2, -1, -1.5 ); //Measure!
+    Eigen::Vector3d lever_arm_stbd_body( -2,  1, -1.5 ); //Measure!
 
     Eigen::Vector3d ant1_meas = raw_GNSS(x, lever_arm_port_body, gen, 0.05);
     Eigen::Vector3d ant2_meas = raw_GNSS(x, lever_arm_stbd_body, gen, 0.05);
@@ -234,19 +234,19 @@ int main() {
         
         // ------------------------------ Navigation System ------------------------------
   
-        double u     = x(0);  // Surge velocity (BODY frame)
-        double v     = x(1);  // Sway velocity  (BODY frame)
-        double w     = x(2);  // Heave velocity (BODY frame)
+        double u     = x(0);  // Surge velocity (BODY frame: x forward +)
+        double v     = x(1);  // Sway velocity  (BODY frame: y starboard +)
+        double w     = x(2);  // Heave velocity (BODY frame: z down +)
         double p     = x(3);  // Roll rate      (BODY frame)
         double q     = x(4);  // Pitch rate     (BODY frame)
         double r     = x(5);  // Yaw rate       (BODY frame)
     
-        double xn    = x(6);  // North position  (NED frame)
-        double yn    = x(7);  // East position   (NED frame)
+        double xn    = x(6);  // East position   (NED frame)
+        double yn    = x(7);  // North position  (NED frame)
         double zn    = x(8);  // Down position   (NED frame)
         double phi   = x(9);  // Roll angle      (NED frame)
         double theta = x(10); // Pitch angle     (NED frame)
-        double psi   = x(11); // Heading angle   (NED frame)
+        double psi   = x(11); // Heading angle   (NED frame: HDG 0=North)
 
         // ------------------------------
 

@@ -11,9 +11,9 @@ IMUData raw_IMU(const Eigen::VectorXd &x,
     IMUData imu;
 
     // --- Extract states ---
-    double u = x(0), v = x(1), w = x(2);
-    double p = x(3), q = x(4), r = x(5);
-    double phi   = x(9), theta = x(10), psi = x(11);
+    double u   = x(0), v = x(1), w = x(2);
+    double p   = x(3), q = x(4), r = x(5);
+    double phi = x(9), theta = x(10), psi = x(11);
 
     // --- Rotation matrix: world (NED) -> body ---
     Eigen::Matrix3d Rnb = Rzyx(phi, theta, psi);
