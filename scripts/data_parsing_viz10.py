@@ -12,6 +12,8 @@ Live parser & rullende plot (siste 5 s) – bruker KUN hver 10. rad fra CSV.
 - Gyro: rad/s -> deg/s, og deretter skaleres også med 20*|g|.
 - Plott viser alltid siste 5 sekunder (justerbart).
 - CSV nedprøves: behandler kun hver `--stride`-te rad, med startforskyvning `--stride-offset`.
+
+eksempel; python3 data_parsing_viz10.py --csv ../../TestData2/imu_xxxxxx_xxxxxx.csv
 """
 
 import argparse
