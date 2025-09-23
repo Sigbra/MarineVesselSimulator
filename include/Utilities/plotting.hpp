@@ -36,25 +36,34 @@ std::vector<double> loadWaypointChangeTimes();
 class RealTimePlotter {
     public:
         RealTimePlotter();
-        
         ~RealTimePlotter();
 
         void setSampledPath(const Waypoints& path);
 
-        void draw_vessel(double x, double y, double theta);
-
-        void updatePlot(double x, double y, double psi_value, double arrowLength, 
+        // existing
+        void updatePlot(double x, double y, double psi_value, double arrowLength,
                         std::vector<double> guidance_x, std::vector<double> guidance_y);
 
-        void finalizePlot(const std::string& filename = "");
-    
-    private:
-        std::vector<double> m_x;
-        std::vector<double> m_y;
-        std::vector<double> m_psi;
+        // NEW: real + estimated in one plot
+        void updatePlot(double x, double y, double psi_value,
+                        double x_est, double y_est, double psi_est,
+                        double arrowLength,
+                        const std::vector<double>& guidance_x,
+                        const std::vector<double>& guidance_y);
 
-        std::vector<double> m_path_x;
-        std::vector<double> m_path_y;
-    };
+        void finalizePlot(const std::string& filename = "");
+
+    private:
+        // let the drawer accept a style/color
+        void draw_vessel(double x, double y, double theta, const std::string& style = "r-");
+
+        // existing buffers
+        std::vector<double> m_x, m_y, m_psi;
+        std::vector<double> m_path_x, m_path_y;
+
+        // NEW: estimated buffers
+        std::vector<double> m_x_est, m_y_est, m_psi_est;
+};
+
 
 #endif // PLOTTING_UTILITIES_HPP

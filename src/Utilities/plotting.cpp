@@ -711,7 +711,7 @@ void RealTimePlotter::setSampledPath(const Waypoints& path) {
     }
 }
 
-void RealTimePlotter::draw_vessel(double x, double y, double theta) {
+void RealTimePlotter::draw_vessel(double x, double y, double theta, const std::string& style /* = "r-" */) {
     double L = 5.0;  // Hull length
     double W = 1;  // Half the width of each hull
     double gap = 1; // Space between hulls
@@ -726,63 +726,80 @@ void RealTimePlotter::draw_vessel(double x, double y, double theta) {
         -W - gap/2, -W - gap/2, -gap/2, -gap/2, gap/2, gap/2, W + gap/2, W + gap/2, gap/2, gap/2, -gap/2, -gap/2, -W - gap/2
     };
 
-    // Apply rotation and translation
     std::vector<double> x_rotated, y_rotated;
+    x_rotated.reserve(x_shape.size());
+    y_rotated.reserve(y_shape.size());
     for (size_t i = 0; i < x_shape.size(); ++i) {
-        double x_new = x + x_shape[i] * cos(theta) - y_shape[i] * sin(theta);
-        double y_new = y + x_shape[i] * sin(theta) + y_shape[i] * cos(theta);
+        double x_new = x + x_shape[i] * std::cos(theta) - y_shape[i] * std::sin(theta);
+        double y_new = y + x_shape[i] * std::sin(theta) + y_shape[i] * std::cos(theta);
         x_rotated.push_back(x_new);
         y_rotated.push_back(y_new);
     }
 
-    // Plot the single connected shape
-    plt::plot(x_rotated, y_rotated, "r-");
+    plt::plot(x_rotated, y_rotated, style);
 }
 
-void RealTimePlotter::updatePlot(double x, double y, double psi_value, double arrowLength,
-                                 std::vector<double> guidance_x, std::vector<double> guidance_y)
+void RealTimePlotter::updatePlot(double x, double y, double psi, double arrowLength,
+                                 std::vector<double> gx, std::vector<double> gy)
 {
-    m_x.push_back(x);
-    m_y.push_back(y);
-    m_psi.push_back(psi_value);
+    // Reuse new overload; "estimate" == "real" to preserve old behavior
+    updatePlot(x, y, psi, x, y, psi, arrowLength, gx, gy);
+}
 
+void RealTimePlotter::updatePlot(double x, double y, double psi_value,
+                                 double x_est, double y_est, double psi_est,
+                                 double arrowLength,
+                                 const std::vector<double>& guidance_x,
+                                 const std::vector<double>& guidance_y)
+{
+    // store histories
+    m_x.push_back(x);           m_y.push_back(y);           m_psi.push_back(psi_value);
+    m_x_est.push_back(x_est);   m_y_est.push_back(y_est);   m_psi_est.push_back(psi_est);
+
+    // clear and redraw
     plt::cla();
 
-    draw_vessel(x, y, psi_value);
+    // vessels (distinct styles)
+    draw_vessel(x,     y,     psi_value, "r-"); // real: red
+    draw_vessel(x_est, y_est, psi_est,   "c-"); // est:  cyan
 
+    // path
     if (!m_path_x.empty() && !m_path_y.empty()) {
-    plt::plot(m_path_x, m_path_y, "k-");  
+        plt::plot(m_path_x, m_path_y, "k-");
     }
 
-    plt::plot(m_x, m_y, "b-");
+    // trails (distinct styles)
+    // You can use named_plot if available; plain plot is safest across matplotlib-cpp variants.
+    plt::plot(m_x,     m_y,     "b-");  // real trail: blue
+    plt::plot(m_x_est, m_y_est, "m--"); // est trail:  magenta dashed
 
-    // double u_val = arrowLength * cos(psi_value);
-    // double v_val = arrowLength * sin(psi_value);
-    // std::vector<double> arrowX = { x };
-    // std::vector<double> arrowY = { y };
-    // std::vector<double> u_vec  = { u_val };
-    // std::vector<double> v_vec  = { v_val };
-    // plt::quiver(arrowX, arrowY, u_vec, v_vec);
-
-    if (guidance_x.size() == 1){
-        plt::plot(guidance_x, guidance_y, "go");
-    } else {
-        plt::plot(guidance_x, guidance_y, "g-"); 
+    // guidance target(s)
+    if (!guidance_x.empty()) {
+        if (guidance_x.size() == 1) {
+            plt::plot(guidance_x, guidance_y, "go"); // point
+        } else {
+            plt::plot(guidance_x, guidance_y, "g-"); // curve
+        }
     }
 
-    std::vector<double> curPosX = { x };
-    std::vector<double> curPosY = { y };
-    plt::plot(curPosX, curPosY, "ro");
+    // current positions
+    plt::plot(std::vector<double>{x},     std::vector<double>{y},     "ro"); // real pos
+    plt::plot(std::vector<double>{x_est}, std::vector<double>{y_est}, "co"); // est  pos
 
     plt::xlabel("x(t) [m]");
     plt::ylabel("y(t) [m]");
-    plt::title("Live Plot: Current Vessel Status");
+    plt::title("Live Plot: Current Vessel Status (real vs estimated)");
     plt::axis("equal");
     plt::grid(true);
+
+    // If your matplotlib-cpp supports legend labels, you can replace the trail plots with named_plot and add:
+    // plt::legend();
 
     plt::draw();
     plt::pause(0.01);
 }
+
+
 
 void RealTimePlotter::finalizePlot(const std::string& filename) {
     if (!filename.empty()) {

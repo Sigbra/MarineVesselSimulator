@@ -120,7 +120,7 @@ int main() {
     Eigen::Vector3d ba(0.0, 0.0, 0.0);      // Initial Accelerometer bias
     Eigen::Vector3d bgyro(0.0, 0.0, 0.0);   // Initial Gyroscope bias
 
-    IMUData imu = raw_IMU(x, gen, ba, bgyro);
+    IMUData imu = raw_IMU(x, gen, ba, bgyro, h);
     imu.accel = GravityCompensation(imu.accel, x(9), x(10), x(11));
 
     // Observers
@@ -157,9 +157,9 @@ int main() {
     else {ran_model_est.recover_n2();}
 
     ran_model_est.update(x_est, mp, V_c, beta_c, h, n_c, alpha_c);
-    Eigen::MatrixXd M_est = ran_model.get_M();
-    Eigen::MatrixXd B_est = ran_model.get_B();
-    double U_est = ran_model.get_U();
+    Eigen::MatrixXd M_est = ran_model_est.get_M();
+    Eigen::MatrixXd B_est = ran_model_est.get_B();
+    double U_est = ran_model_est.get_U();
 
     // Create the straight line path.
     StraightLinePath straightLinePath;
@@ -179,7 +179,7 @@ int main() {
 
     // Initialize guidance methods and LOS observer 
     ALOS ALOS(Delta_h, gamma_h, 0.1);
-    LOSObserver losObserver(h, K_f, x(11));
+    LOSObserver losObserver(h, K_f, x_est(11));
 
     // Choose path type
     int pathType = selectPathType();
@@ -254,30 +254,36 @@ int main() {
         t[i] = i * h;
         
         // ------------------------------ Navigation System ------------------------------
-
-        // Simulate raw GNSS measurements for both antennas
-        ant1_meas = raw_GNSS(x, lever_arm_port_body, gen, 0.02);
-        ant2_meas = raw_GNSS(x, lever_arm_stbd_body, gen, 0.02);
-
-        // Transform raw_GNSS position to origin position.
-        nav_pos_1 = origin_from_raw_GNSS(x, ant1_meas, lever_arm_port_body);
-        nav_pos_2 = origin_from_raw_GNSS(x, ant2_meas, lever_arm_stbd_body);
-
-        // Compute heading from the two GNSS measurements
-        psi_gnss = gnss_heading_from_two_antennas(ant1_meas, ant2_meas);
-
-        if (std::isnan(psi_gnss)) {
-            std::cerr << "NaN detected for psi_gnss at iteration " << i << ", time: " << t[i] << "s\n";
-            break; 
-        }
-
-        imu = raw_IMU(x, gen, ba, bgyro);
+        imu = raw_IMU(x, gen, ba, bgyro, h);
         imu.accel = GravityCompensation(imu.accel, x_est(9), x_est(10), x_est(11));
+
+        kf.predict(imu.accel, imu.gyro);
+
+        if (std::fmod(t[i], 0.5) < 1e-9) {
+            // Simulate raw GNSS measurements for both antennas
+            ant1_meas = raw_GNSS(x, lever_arm_port_body, gen, 0.02);
+            ant2_meas = raw_GNSS(x, lever_arm_stbd_body, gen, 0.02);
+
+            // Transform raw_GNSS position to origin position.
+            nav_pos_1 = origin_from_raw_GNSS(x, ant1_meas, lever_arm_port_body);
+            nav_pos_2 = origin_from_raw_GNSS(x, ant2_meas, lever_arm_stbd_body);
+
+            // Compute heading from the two GNSS measurements
+            psi_gnss = gnss_heading_from_two_antennas(ant1_meas, ant2_meas);
+
+            if (std::isnan(psi_gnss)) {
+                std::cerr << "NaN detected for psi_gnss at iteration " << i << ", time: " << t[i] << "s\n";
+                break; 
+            }
+
+            kf.update(nav_pos_1, psi_gnss);   // pos+heading from antenna 1
+            kf.update_pos_only(nav_pos_2);  // pos+heading from antenna 2 (optionally drop heading here)
+        }
 
         // ------------------------------ State Estimation; Observer ------------------------------
 
-        kf_est = kf.Observer(nav_pos_1, nav_pos_2, psi_gnss, imu.accel, imu.gyro);
-        x_est = kf_est.head(12);
+        kf_est = kf.getState().x;
+        x_est  = kf_est.head(12);
 
         double u     = x_est(0);  // Surge velocity (BODY frame)
         double v     = x_est(1);  // Sway velocity  (BODY frame)
@@ -477,7 +483,7 @@ int main() {
                 GuidanceVectorY = {path_y};
             }
 
-            plotter.updatePlot(x(6), x(7), x(11), 0.2, GuidanceVectorX, GuidanceVectorY);
+            plotter.updatePlot(x(6), x(7), x(11), x_est(6), x_est(7), x_est(11), 0.2, GuidanceVectorX, GuidanceVectorY);
 
             std::cout << std::fixed << std::setprecision(0)
             << "################################################" << std::endl
