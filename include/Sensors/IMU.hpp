@@ -2,9 +2,7 @@
 #define IMU_HPP
 
 // Using "DeepVL: Dynamics and Inertial Measurements-based Deep Velocity Learning for Underwater Odometry"
-// by Mohit Singh, and Kostas Alexis
-// Date; 2025
-// url={https://arxiv.org/abs/2502.07726}
+// by Mohit Singh, and Kostas Alexis (2025)
 
 #include <Eigen/Dense>
 #include <random>
@@ -15,7 +13,8 @@ struct IMUData {
 };
 
 /**
- * @brief Simulate raw IMU measurements following NTNU formulation
+ * @brief Simulate raw IMU measurements.
+ *        Accelerometer includes gravity (remove with GravityCompensation()).
  * 
  * @param x           12x1 state vector:
  *                    x(0:2) = u,v,w (body velocities)
@@ -23,17 +22,23 @@ struct IMUData {
  *                    x(6:8) = xn,yn,zn (NED position)
  *                    x(9:11)= phi,theta,psi (attitude)
  * @param gen         Random number generator
- * @param ba          Accelerometer bias (3x1)
- * @param bgyro       Gyroscope bias (3x1)
+ * @param ba          Accelerometer bias (3x1), updated in-place (random walk)
+ * @param bgyro       Gyroscope bias (3x1), updated in-place (random walk)
+ * @param dt          Sample time [s] (used to approximate a_body from v_body)
  * @param sigma_acc   Accelerometer noise std (m/s^2)
  * @param sigma_gyro  Gyroscope noise std (rad/s)
- * @return IMUData    Noisy IMU measurements
+ * @return IMUData    Noisy IMU measurements (accel includes gravity)
  */
 IMUData raw_IMU(const Eigen::VectorXd &x,
+                const Eigen::VectorXd &xdot,
                 std::mt19937 &gen,
                 Eigen::Vector3d &ba,
                 Eigen::Vector3d &bgyro,
                 double sigma_acc = 0.01,
                 double sigma_gyro = 0.001);
+
+// Remove gravity from raw accelerometer using attitude (φ,θ,ψ)
+Eigen::Vector3d GravityCompensation(const Eigen::Vector3d &accel_raw,
+                                    double phi, double theta, double psi);
 
 #endif // IMU_HPP

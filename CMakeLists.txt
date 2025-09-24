@@ -92,6 +92,8 @@ set(SOURCES
     src/Models/ref_model.cpp
     src/Models/model_utilities.cpp
 
+    src/Observers/kalmanObserver.cpp
+
     src/Planning/fermat_spiral_planning.cpp
     src/Planning/straight_line_planning.cpp
     src/Planning/plan_selector.cpp
