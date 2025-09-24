@@ -12,13 +12,13 @@ std::tuple<double, double> ALOS::update(double xn, double yn,
                                         double precomputed_y_e)
 {
 // Compute the path-tangent angle (pi_h) using the derivatives of the path.
-double pi_h = std::atan2(path_y_dot, path_x_dot);
+double pi_h = std::atan2(path_x_dot, path_y_dot);
 
 // Use pre-computed cross-track error if provided, otherwise calculate it
-double y_e = -(xn - path_x) * std::sin(pi_h) + (yn - path_y) * std::cos(pi_h);
+double y_e = -(xn - path_x) * std::cos(pi_h) + (yn - path_y) * std::sin(pi_h);
 
 // Compute the desired heading (psi_ref) using the adaptive LOS guidance law.
-double psi_ref = pi_h - beta_hat - std::atan(y_e / Delta_h_);
+double psi_ref = pi_h + beta_hat + std::atan(y_e / Delta_h_);
 
 // Update the crab angle estimate.
 beta_hat += h_ * gamma_h_ * Delta_h_ * y_e / std::hypot(Delta_h_, y_e);

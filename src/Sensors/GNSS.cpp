@@ -9,6 +9,7 @@ Eigen::Vector3d raw_GNSS(const Eigen::VectorXd &x,
                          std::mt19937 &gen,
                          double sigma_pos /* m */)
 {
+<<<<<<< HEAD
     // Extract pose
     const double xn = x(6);
     const double yn = x(7);
@@ -16,6 +17,14 @@ Eigen::Vector3d raw_GNSS(const Eigen::VectorXd &x,
     const double phi   = x(9);
     const double theta = x(10);
     const double psi   = x(11);
+=======
+    double xn    = x(6);  // East (LON)
+    double yn    = x(7);  // North (LAT)
+    double zn    = x(8); 
+    double phi   = x(9);
+    double theta = x(10);
+    double psi   = x(11);
+>>>>>>> 9c3eb6304abfd1724306a35a452bfb3791711eb5
 
     // Body-origin in NED
     const Eigen::Vector3d p_body_origin_ned(xn, yn, zn);
@@ -62,8 +71,8 @@ double gnss_heading_from_two_antennas(const Eigen::Vector3d &ant_port_ned,
     // Baseline (stbd - port); consistent with your sign convention
     const Eigen::Vector3d b = ant_stbd_ned - ant_port_ned;
 
-    const double bN = b(0); // North
-    const double bE = b(1); // East
+    const double bE = b(0); // North component
+    const double bN = b(1); // East component
 
     // Yaw measured (NED): atan2(E,N) + 90deg
     const double psi_meas = std::atan2(bE, bN) + M_PI/2.0;

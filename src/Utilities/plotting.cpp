@@ -205,8 +205,8 @@ void plotTrajectory(const Waypoints& wpt, const Waypoints& path) {
     for (size_t i = 0; i < xn.size(); i += 200) { 
         xq.push_back(xn[i]);
         yq.push_back(yn[i]);
-        u.push_back(arrowLength * cos(psi[i]));
-        v.push_back(arrowLength * sin(psi[i]));
+        u.push_back(arrowLength * sin(psi[i]));
+        v.push_back(arrowLength * cos(psi[i]));
     }
     
     // Use quiver-like representation with arrows
@@ -730,8 +730,8 @@ void RealTimePlotter::draw_vessel(double x, double y, double theta, const std::s
     x_rotated.reserve(x_shape.size());
     y_rotated.reserve(y_shape.size());
     for (size_t i = 0; i < x_shape.size(); ++i) {
-        double x_new = x + x_shape[i] * std::cos(theta) - y_shape[i] * std::sin(theta);
-        double y_new = y + x_shape[i] * std::sin(theta) + y_shape[i] * std::cos(theta);
+        double x_new = x + x_shape[i] * sin(theta) + y_shape[i] * cos(theta);
+        double y_new = y + x_shape[i] * cos(theta) - y_shape[i] * sin(theta);
         x_rotated.push_back(x_new);
         y_rotated.push_back(y_new);
     }

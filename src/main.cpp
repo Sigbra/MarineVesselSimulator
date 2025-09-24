@@ -103,9 +103,9 @@ int main() {
 
     // x = [u v w p q r xn yn zn phi theta psi]'
     Eigen::VectorXd x = Eigen::VectorXd::Zero(12); 
-    x(6) = wpt[0].x; // North position (NED frame)
-    x(7) = wpt[0].y; // East position (NED frame)
-    x(11) = std::atan2(wpt[1].y - wpt[0].y, wpt[1].x - wpt[0].x);
+    x(6) = wpt[0].x; // Xn (LON/East)
+    x(7) = wpt[0].y; // Yn (LAT/North)
+    x(11) = std::atan2(wpt[1].x - wpt[0].x, wpt[1].y - wpt[0].y);
 
     Eigen::VectorXd xdot = Eigen::VectorXd::Zero(12);
 
