@@ -9,7 +9,6 @@ Eigen::Vector3d raw_GNSS(const Eigen::VectorXd &x,
                          std::mt19937 &gen,
                          double sigma_pos /* m */)
 {
-<<<<<<< HEAD
     // Extract pose
     const double xn = x(6);
     const double yn = x(7);
@@ -17,14 +16,6 @@ Eigen::Vector3d raw_GNSS(const Eigen::VectorXd &x,
     const double phi   = x(9);
     const double theta = x(10);
     const double psi   = x(11);
-=======
-    double xn    = x(6);  // East (LON)
-    double yn    = x(7);  // North (LAT)
-    double zn    = x(8); 
-    double phi   = x(9);
-    double theta = x(10);
-    double psi   = x(11);
->>>>>>> 9c3eb6304abfd1724306a35a452bfb3791711eb5
 
     // Body-origin in NED
     const Eigen::Vector3d p_body_origin_ned(xn, yn, zn);
