@@ -107,7 +107,10 @@ int main() {
     x(7) = wpt[0].y; // East position (NED frame)
     x(11) = std::atan2(wpt[1].y - wpt[0].y, wpt[1].x - wpt[0].x);
 
+    Eigen::VectorXd xdot = Eigen::VectorXd::Zero(12);
+
     // Sensor Measurements
+
     Eigen::Vector3d lever_arm_port_body( -2,  1, -1.5 ); //Measure!
     Eigen::Vector3d lever_arm_stbd_body( -2, -1, -1.5 ); //Measure!
 
@@ -120,13 +123,12 @@ int main() {
     Eigen::Vector3d ba(0.0, 0.0, 0.0);      // Initial Accelerometer bias
     Eigen::Vector3d bgyro(0.0, 0.0, 0.0);   // Initial Gyroscope bias
 
-    IMUData imu = raw_IMU(x, gen, ba, bgyro, h);
+    IMUData imu = raw_IMU(x, xdot, gen, ba, bgyro, 0.0, 0.00);
     imu.accel = GravityCompensation(imu.accel, x(9), x(10), x(11));
 
     // Observers
-    KalmanFilter15 kf(h);
-    Eigen::VectorXd kf_est = kf.Observer(nav_pos_1, nav_pos_2, psi_gnss, imu.accel, imu.gyro);
-    Eigen::VectorXd x_est = kf_est.head(12);
+    EKF12 ekf;
+    Eigen::VectorXd x_est = x;
 
     // Control system variables
     std::vector<double> tau_XYN = {0.0, 0.0, 0.0};
@@ -137,6 +139,8 @@ int main() {
     // Model;   
     RAN ran_model;
     ran_model.update(x, mp, V_c, beta_c, h, n_c, alpha_c);
+    xdot = ran_model.get_xdot(); 
+
 
     double T_n = ran_model.getT_n();          // Propeller time constant (s)
     double T_alpha = ran_model.getT_alpha();  // Azimuth angle time constant (s)
@@ -253,11 +257,15 @@ int main() {
 
         t[i] = i * h;
         
-        // ------------------------------ Navigation System ------------------------------
-        imu = raw_IMU(x, gen, ba, bgyro, h);
+        // ------------------------------ Sensor data simulation + State estimation ------------------------------
+
+        xdot = ran_model.get_xdot();
+        imu = raw_IMU(x, xdot, gen, ba, bgyro, 0.01, 0.001);
+
         imu.accel = GravityCompensation(imu.accel, x_est(9), x_est(10), x_est(11));
 
-        kf.predict(imu.accel, imu.gyro);
+        ekf.predict(imu.accel, h);
+        ekf.updateGyro(imu.gyro);
 
         if (std::fmod(t[i], 0.5) < 1e-9) {
             // Simulate raw GNSS measurements for both antennas
@@ -265,8 +273,8 @@ int main() {
             ant2_meas = raw_GNSS(x, lever_arm_stbd_body, gen, 0.02);
 
             // Transform raw_GNSS position to origin position.
-            nav_pos_1 = origin_from_raw_GNSS(x, ant1_meas, lever_arm_port_body);
-            nav_pos_2 = origin_from_raw_GNSS(x, ant2_meas, lever_arm_stbd_body);
+            nav_pos_1 = origin_from_raw_GNSS(x_est, ant1_meas, lever_arm_port_body);
+            nav_pos_2 = origin_from_raw_GNSS(x_est, ant2_meas, lever_arm_stbd_body);
 
             // Compute heading from the two GNSS measurements
             psi_gnss = gnss_heading_from_two_antennas(ant1_meas, ant2_meas);
@@ -276,14 +284,12 @@ int main() {
                 break; 
             }
 
-            kf.update(nav_pos_1, psi_gnss);   // pos+heading from antenna 1
-            kf.update_pos_only(nav_pos_2);  // pos+heading from antenna 2 (optionally drop heading here)
+            ekf.updatePos(nav_pos_1);   
+            ekf.updatePos(nav_pos_2);   
+            ekf.updateHeading(psi_gnss);  
         }
 
-        // ------------------------------ State Estimation; Observer ------------------------------
-
-        kf_est = kf.getState().x;
-        x_est  = kf_est.head(12);
+        x_est = ekf.getState();
 
         double u     = x_est(0);  // Surge velocity (BODY frame)
         double v     = x_est(1);  // Sway velocity  (BODY frame)
@@ -528,6 +534,7 @@ int main() {
             << "HDG   (deg)  : " << rad2deg(psi_gnss)    << std::endl
             << "------------------------------------------------" << std::endl
             << "Nav data IMU : "  << std::endl
+            << std::fixed << std::setprecision(4)
             << "Accelerometer (body frame): " << imu.accel.transpose() << " m/s^2" << std::endl
             << "Gyroscope (body frame)    : " << imu.gyro.transpose() << " rad/s" << std::endl
             << "" << std::endl

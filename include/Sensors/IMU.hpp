@@ -30,10 +30,10 @@ struct IMUData {
  * @return IMUData    Noisy IMU measurements (accel includes gravity)
  */
 IMUData raw_IMU(const Eigen::VectorXd &x,
+                const Eigen::VectorXd &xdot,
                 std::mt19937 &gen,
                 Eigen::Vector3d &ba,
                 Eigen::Vector3d &bgyro,
-                double dt,
                 double sigma_acc = 0.01,
                 double sigma_gyro = 0.001);
 

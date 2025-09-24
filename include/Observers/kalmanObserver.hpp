@@ -1,50 +1,54 @@
-#ifndef KALMANFILTER15_HPP
-#define KALMANFILTER15_HPP
+#ifndef EKF12_HPP
+#define EKF12_HPP
 
 #include <Eigen/Dense>
-#include <iostream>
+#include "Models/model_utilities.hpp"
 
-struct KFState15 {
-    Eigen::VectorXd x;   // 15x1 state estimate
-    Eigen::MatrixXd P;   // 15x15 covariance
-};
-
-class KalmanFilter15 {
+// -----------------------------------------------------------------------------
+// 12-state EKF for vessel INS with IMU (acc, gyro) + GNSS (pos, heading)
+// State x = [u v w p q r x_n y_n z_n phi theta psi]^T
+// -----------------------------------------------------------------------------
+class EKF12 {
 public:
-    KalmanFilter15(double dt);
+  using Vec12 = Eigen::Matrix<double,12,1>;
+  using Mat12 = Eigen::Matrix<double,12,12>;
 
-    // Predict using IMU (accelerometer + gyro)
-    void predict(const Eigen::Vector3d &imu_accel,
-                 const Eigen::Vector3d &imu_gyro);
+  EKF12();
 
-    // Update using GNSS position and heading
-    void update(const Eigen::Vector3d &gnss_pos,
-                double gnss_heading);
+  // --- Configuration ---
+  void setGravity(double g);
+  void setState(const Vec12& x);
+  void setCovariance(const Mat12& P);
+  void setProcessNoise(const Vec12& q);
+  void setRgyro(const Eigen::Matrix3d& R);
+  void setRpos (const Eigen::Matrix3d& R);
+  void setRhead(double R);
 
-    // Position-only update (used for second antenna in Observer)
-    void update_pos_only(const Eigen::Vector3d &gnss_pos);
+  // --- Getters (dynamic types for flexibility) ---
+  Eigen::VectorXd getState() const;        // 12x1 state vector
+  Eigen::MatrixXd getCovariance() const;   // 12x12 covariance matrix
 
-    // One-shot convenience
-    Eigen::VectorXd Observer(const Eigen::Vector3d &gnss_pos1,
-                             const Eigen::Vector3d &gnss_pos2,
-                             double gnss_heading,
-                             const Eigen::Vector3d &imu_accel,
-                             const Eigen::Vector3d &imu_gyro);
+  // --- Prediction ---
+  void predict(const Eigen::Vector3d& a_m, double dt);
 
-    KFState15 getState() const { return {x_, P_}; }
+  // --- Updates ---
+  void updateGyro(const Eigen::Vector3d& y_gyro);
+  void updatePos(const Eigen::Vector3d& y_pos);
+  void updateHeading(double y_head);
 
 private:
-    double dt_;
-    Eigen::VectorXd x_;    // 15x1 state vector
-    Eigen::MatrixXd P_;    // 15x15 covariance
-    Eigen::MatrixXd F_;    // 15x15 state transition (Jacobian)
-    Eigen::MatrixXd Q_;    // 15x15 process noise
-    Eigen::MatrixXd H_;    // 4x15 measurement matrix (pos+heading)
-    Eigen::MatrixXd R_;    // 4x4 measurement noise
+  Vec12 f(const Vec12& xs, const Eigen::Vector3d& a_m) const;
+  Mat12 A_numeric(const Vec12& xs, const Eigen::Vector3d& a_m, double eps=1e-7) const;
+  static double wrapPi(double a);
 
-    // Helper: convert body rates to Euler rates
-    Eigen::Vector3d eulerRateFromBodyRates(const Eigen::Vector3d &bodyRates,
-                                           const Eigen::Vector3d &angles);
+  // --- Members ---
+  double g_;
+  Vec12   x_;
+  Mat12   P_;
+  Vec12   q_;
+  Eigen::Matrix3d R_gyro_;
+  Eigen::Matrix3d R_pos_;
+  double R_head_;
 };
 
 #endif // KALMANFILTER15_HPP

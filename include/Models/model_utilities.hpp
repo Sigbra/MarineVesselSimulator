@@ -11,6 +11,8 @@ Eigen::Matrix3d Smtrx(const Eigen::Vector3d &v);
 // Transformation matrix Hmtrx
 Eigen::MatrixXd Hmtrx(const Eigen::Vector3d &r);
 
+Eigen::Matrix3d Tzyx(double phi, double theta);
+
 // Added mass to Coriolis matrix (m2c)
 Eigen::MatrixXd m2c(const Eigen::MatrixXd &MA, const Eigen::VectorXd &nu_r);
 

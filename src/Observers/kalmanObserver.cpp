@@ -1,207 +1,141 @@
 #include "Observers/kalmanObserver.hpp"
-#include <Eigen/Dense>
 #include "Models/model_utilities.hpp"
 #include <cmath>
 
-// ---------- Helpers ----------
-static inline double wrap_to_pi(double a){
-    while (a >  M_PI) a -= 2.0*M_PI;
-    while (a <= -M_PI) a += 2.0*M_PI;
-    return a;
+// -----------------------------------------------------------------------------
+// Constructor
+// -----------------------------------------------------------------------------
+EKF12::EKF12()
+: g_(9.80665),
+  x_(Vec12::Zero()),
+  P_(Mat12::Identity() * 1e-2),
+  q_(Vec12::Zero()),
+  R_gyro_(Eigen::Matrix3d::Identity() * (0.005*0.005)),
+  R_pos_ (Eigen::Matrix3d::Identity() * (0.05*0.05)),
+  R_head_(std::pow(0.5*M_PI/180.0, 2))
+{
+  q_.segment<3>(0).setConstant(0.05*0.05);   // u,v,w
+  q_.segment<3>(3).setConstant(0.01*0.01);   // p,q,r
+  q_.segment<3>(6).setConstant(1e-4);        // x,y,z
+  q_.segment<3>(9).setConstant(1e-5);        // phi,theta,psi
 }
 
-// ----------------- Constructor -----------------
-KalmanFilter15::KalmanFilter15(double dt)
-: dt_(dt)
-{
-    x_ = Eigen::VectorXd::Zero(15);
-    P_ = Eigen::MatrixXd::Identity(15,15) * 0.1;
+// -----------------------------------------------------------------------------
+// Config setters
+// -----------------------------------------------------------------------------
+void EKF12::setGravity(double g){ g_ = g; }
+void EKF12::setState(const Vec12& x){ x_ = x; x_(11)=wrapPi(x_(11)); }
+void EKF12::setCovariance(const Mat12& P){ P_ = P; }
+void EKF12::setProcessNoise(const Vec12& q){ q_ = q; }
+void EKF12::setRgyro(const Eigen::Matrix3d& R){ R_gyro_ = R; }
+void EKF12::setRpos (const Eigen::Matrix3d& R){ R_pos_  = R; }
+void EKF12::setRhead(double R){ R_head_ = R; }
 
-    // State transition Jacobian (will be rebuilt each predict)
-    F_ = Eigen::MatrixXd::Identity(15,15);
-
-    // Process noise (block-wise, scaled by dt)
-    Q_ = Eigen::MatrixXd::Zero(15,15);
-    const double q_vel  = 5e-3;   // m^2/s^3   (vel process)
-    const double q_pos  = 1e-4;   // m^2/s     (pos process)
-    const double q_ang  = 5e-5;   // rad^2/s   (angles)
-    const double q_bias = 1e-8;   // (gyro bias)
-
-    Q_.block<3,3>(0,0)    = q_vel  * dt_ * Eigen::Matrix3d::Identity();
-    Q_.block<3,3>(6,6)    = q_pos  * dt_ * Eigen::Matrix3d::Identity();
-    Q_.block<3,3>(9,9)    = q_ang  * dt_ * Eigen::Matrix3d::Identity();
-    Q_.block<3,3>(12,12)  = q_bias * dt_ * Eigen::Matrix3d::Identity();
-
-    // Measurement matrix (GNSS: xN,yN,zN + heading)
-    H_ = Eigen::MatrixXd::Zero(4,15);
-    H_.block<3,3>(0,6) = Eigen::Matrix3d::Identity();  // positions
-    H_(3,11) = 1.0;                                    // heading (psi)
-
-    // Measurement noise (match your simulator settings as close as possible)
-    // If you use raw_GNSS sigma_pos = 0.02, set R_pos = 0.02^2
-    const double sigma_pos = 0.02;  // m
-    const double sigma_psi = 0.01;  // rad (tune based on antenna baseline)
-    R_ = Eigen::MatrixXd::Identity(4,4);
-    R_.block<3,3>(0,0) *= sigma_pos * sigma_pos;
-    R_(3,3) = sigma_psi * sigma_psi;
+// -----------------------------------------------------------------------------
+// Getters
+// -----------------------------------------------------------------------------
+Eigen::VectorXd EKF12::getState() const {
+  return Eigen::VectorXd::Map(x_.data(), x_.size());
 }
 
-// ----------------- Helper: Euler rates -----------------
-Eigen::Vector3d KalmanFilter15::eulerRateFromBodyRates(const Eigen::Vector3d &bodyRates,
-                                                       const Eigen::Vector3d &angles)
-{
-    const double phi = angles(0), theta = angles(1);
-    const double sphi = std::sin(phi), cphi = std::cos(phi);
-    const double tth  = std::tan(theta), cth = std::cos(theta);
-
-    Eigen::Matrix3d T;
-    T << 1.0, sphi*tth,   cphi*tth,
-         0.0, cphi,      -sphi,
-         0.0, sphi/cth,   cphi/cth;
-
-    return T * bodyRates;
+Eigen::MatrixXd EKF12::getCovariance() const {
+  return Eigen::MatrixXd(P_);
 }
 
-// ----------------- Predict -----------------
-void KalmanFilter15::predict(const Eigen::Vector3d &imu_accel,
-                             const Eigen::Vector3d &imu_gyro)
-{
-    // ----- angles (integrate using bias-corrected gyro) -----
-    const Eigen::Vector3d bgyro = x_.segment<3>(12);
-    const Eigen::Vector3d gyro_corrected = imu_gyro - bgyro;
+// -----------------------------------------------------------------------------
+// Prediction
+// -----------------------------------------------------------------------------
+void EKF12::predict(const Eigen::Vector3d& a_m, double dt){
+  if (std::abs(std::cos(x_(10))) < 1e-6)
+    x_(10) = (x_(10)>0.0 ? (M_PI/2 - 1e-6) : (-M_PI/2 + 1e-6));
 
-    // Euler rates
-    Eigen::Vector3d euler_dot = eulerRateFromBodyRates(gyro_corrected, x_.segment<3>(9));
+  Vec12 xdot = f(x_, a_m);
+  x_ += xdot * dt;
+  x_(11) = wrapPi(x_(11));
 
-    // Integrate & wrap
-    x_(9)  = wrap_to_pi(x_(9)  + euler_dot(0) * dt_);
-    x_(10) = wrap_to_pi(x_(10) + euler_dot(1) * dt_);
-    x_(11) = wrap_to_pi(x_(11) + euler_dot(2) * dt_);
+  Mat12 A  = A_numeric(x_, a_m);
+  Mat12 Fd = Mat12::Identity() + A * dt;
 
-    // ----- rotation with UPDATED angles -----
-    const double phi   = x_(9);
-    const double theta = x_(10);
-    const double psi   = x_(11);
+  Mat12 Qd = Mat12::Zero();
+  for(int i=0;i<12;++i) Qd(i,i) = q_(i) * dt;
 
-    const double cphi = std::cos(phi),  sphi = std::sin(phi);
-    const double cth  = std::cos(theta), sth  = std::sin(theta);
-    const double cpsi = std::cos(psi),  spsi = std::sin(psi);
-
-    Eigen::Matrix3d R_b2n;
-    R_b2n <<  cth*cpsi,  sphi*sth*cpsi - cphi*spsi,  cphi*sth*cpsi + sphi*spsi,
-              cth*spsi,  sphi*sth*spsi + cphi*cpsi,  cphi*sth*spsi - sphi*cpsi,
-             -sth,       sphi*cth,                    cphi*cth;
-
-    // ----- kinematics for position & velocity -----
-    const Eigen::Vector3d v_body = x_.segment<3>(0);
-
-    // position update in NED
-    x_.segment<3>(6) += R_b2n * v_body * dt_;
-
-    // velocity update in BODY (imu_accel is already gravity-compensated upstream)
-    x_.segment<3>(0) += imu_accel * dt_;
-
-    // ----- build state Jacobian F (key fix) -----
-    F_.setIdentity();
-
-    // (1) pos depends on body velocity: ∂pos/∂v = R_b2n * dt
-    F_.block<3,3>(6,0) = R_b2n * dt_;
-
-    // (2) pos depends on angles via R(angles)*v : ∂pos/∂angles
-    const double eps = 1e-6;
-    const Eigen::Matrix3d Rphi = Rzyx(phi + eps, theta,      psi);
-    const Eigen::Matrix3d Rth  = Rzyx(phi,       theta+eps,  psi);
-    const Eigen::Matrix3d Rpsi = Rzyx(phi,       theta,      psi+eps);
-
-    const Eigen::Vector3d dpos_dphi   = ((Rphi - R_b2n) / eps) * v_body * dt_;
-    const Eigen::Vector3d dpos_dtheta = ((Rth  - R_b2n) / eps) * v_body * dt_;
-    const Eigen::Vector3d dpos_dpsi   = ((Rpsi - R_b2n) / eps) * v_body * dt_;
-
-    F_(6,9)  = dpos_dphi(0);   F_(6,10) = dpos_dtheta(0);   F_(6,11) = dpos_dpsi(0);
-    F_(7,9)  = dpos_dphi(1);   F_(7,10) = dpos_dtheta(1);   F_(7,11) = dpos_dpsi(1);
-    F_(8,9)  = dpos_dphi(2);   F_(8,10) = dpos_dtheta(2);   F_(8,11) = dpos_dpsi(2);
-
-    // (3) angles depend on gyro biases: ∂angles/∂bgyro = -T * dt
-    // T(φ,θ) mapping body rates -> euler rates
-    Eigen::Matrix3d T;
-    {
-        const double tth = std::tan(theta);
-        T << 1.0, sphi*tth,   cphi*tth,
-             0.0, cphi,      -sphi,
-             0.0, sphi/cth,   cphi/cth;
-    }
-    F_.block<3,3>(9,12) = -T * dt_;
-
-    // ----- covariance propagation -----
-    P_ = F_ * P_ * F_.transpose() + Q_;
-    P_ = 0.5 * (P_ + P_.transpose());  // keep symmetry
+  P_ = Fd * P_ * Fd.transpose() + Qd;
 }
 
+// -----------------------------------------------------------------------------
+// Updates
+// -----------------------------------------------------------------------------
+void EKF12::updateGyro(const Eigen::Vector3d& y_gyro){
+  Eigen::Matrix<double,3,12> H = Eigen::Matrix<double,3,12>::Zero();
+  H.block<3,3>(0,3) = Eigen::Matrix3d::Identity();
 
-// ----------------- Update (pos + heading) -----------------
-void KalmanFilter15::update(const Eigen::Vector3d &gnss_pos,
-                            double gnss_heading)
-{
-    Eigen::VectorXd z(4);
-    z.segment<3>(0) = gnss_pos;
-    z(3) = gnss_heading;
+  Eigen::Vector3d innov = y_gyro - x_.segment<3>(3);
+  Eigen::Matrix3d  S    = H*P_*H.transpose() + R_gyro_;
+  Eigen::Matrix<double,12,3> K = P_*H.transpose()*S.inverse();
 
-    // Innovation
-    Eigen::VectorXd y = z - H_ * x_;
-    y(3) = wrap_to_pi(y(3)); // wrap heading residual
-
-    // Kalman gain
-    const Eigen::MatrixXd S = H_ * P_ * H_.transpose() + R_;
-    const Eigen::MatrixXd K = P_ * H_.transpose() * S.inverse();
-
-    // Update
-    x_ += K * y;
-    x_(9)  = wrap_to_pi(x_(9));
-    x_(10) = wrap_to_pi(x_(10));
-    x_(11) = wrap_to_pi(x_(11));
-
-    const Eigen::MatrixXd I = Eigen::MatrixXd::Identity(15,15);
-    P_ = (I - K * H_) * P_;
-    P_ = 0.5 * (P_ + P_.transpose());
+  x_ += K * innov;
+  P_  = (Mat12::Identity() - K*H) * P_;
 }
 
-// ----------------- Update (pos only) -----------------
-void KalmanFilter15::update_pos_only(const Eigen::Vector3d &gnss_pos)
-{
-    Eigen::Matrix<double,3,15> Hpos = Eigen::Matrix<double,3,15>::Zero();
-    Hpos.block<3,3>(0,6) = Eigen::Matrix3d::Identity();
+void EKF12::updatePos(const Eigen::Vector3d& y_pos){
+  Eigen::Matrix<double,3,12> H = Eigen::Matrix<double,3,12>::Zero();
+  H.block<3,3>(0,6) = Eigen::Matrix3d::Identity();
 
-    // Use the same position variance as R_(0,0)
-    Eigen::Matrix3d Rpos = Eigen::Matrix3d::Identity() * R_(0,0);
+  Eigen::Vector3d innov = y_pos - x_.segment<3>(6);
+  Eigen::Matrix3d  S    = H*P_*H.transpose() + R_pos_;
+  Eigen::Matrix<double,12,3> K = P_*H.transpose()*S.inverse();
 
-    const Eigen::Vector3d z = gnss_pos;
-    const Eigen::Vector3d y = z - Hpos * x_;
-    const Eigen::Matrix3d S = Hpos * P_ * Hpos.transpose() + Rpos;
-    const Eigen::Matrix<double,15,3> K = P_ * Hpos.transpose() * S.inverse();
-
-    x_ += K * y;
-
-    const Eigen::MatrixXd I = Eigen::MatrixXd::Identity(15,15);
-    P_ = (I - K * Hpos) * P_;
-    P_ = 0.5 * (P_ + P_.transpose());
+  x_ += K * innov;
+  P_  = (Mat12::Identity() - K*H) * P_;
 }
 
-// ----------------- Combined Observer -----------------
-Eigen::VectorXd KalmanFilter15::Observer(const Eigen::Vector3d &gnss_pos1,
-                                         const Eigen::Vector3d &gnss_pos2,
-                                         double gnss_heading,
-                                         const Eigen::Vector3d &imu_accel,
-                                         const Eigen::Vector3d &imu_gyro)
-{
-    // 1) Predict using IMU
-    predict(imu_accel, imu_gyro);
+void EKF12::updateHeading(double y_head){
+  Eigen::Matrix<double,1,12> H = Eigen::Matrix<double,1,12>::Zero();
+  H(0,11) = 1.0;
 
-    // 2) One fused update with pos1 + heading
-    update(gnss_pos1, gnss_heading);
+  double innov = wrapPi(y_head - x_(11));
+  double S     = (H*P_*H.transpose())(0,0) + R_head_;
+  Eigen::Matrix<double,12,1> K = P_*H.transpose() / S;
 
-    // 3) Second antenna as an additional POSITION-ONLY update
-    update_pos_only(gnss_pos2);
+  x_ += K * innov;
+  P_  = (Mat12::Identity() - K*H) * P_;
+  x_(11) = wrapPi(x_(11));
+}
 
-    // Return full 15-state estimate
-    return x_;
+// -----------------------------------------------------------------------------
+// Private helpers
+// -----------------------------------------------------------------------------
+EKF12::Vec12 EKF12::f(const Vec12& xs, const Eigen::Vector3d& a_m) const {
+  Vec12 xd = Vec12::Zero();
+
+  const Eigen::Vector3d v = xs.segment<3>(0);
+  const Eigen::Vector3d w = xs.segment<3>(3);
+  const double phi=xs(9), theta=xs(10), psi=xs(11);
+
+  const Eigen::Matrix3d Rnb = Rzyx(phi,theta,psi);
+  const Eigen::Matrix3d Rbn = Rnb.transpose();
+  const Eigen::Vector3d g_n(0,0,g_);
+
+  xd.segment<3>(0) = a_m + Rbn*g_n - Smtrx(w)*v;
+  xd.segment<3>(3).setZero();
+  xd.segment<3>(6) = Rnb * v;
+  xd.segment<3>(9) = Tzyx(phi,theta) * w;
+
+  return xd;
+}
+
+EKF12::Mat12 EKF12::A_numeric(const Vec12& xs, const Eigen::Vector3d& a_m, double eps) const {
+  Mat12 A = Mat12::Zero();
+  Vec12 f0 = f(xs,a_m);
+  for(int i=0;i<12;++i){
+    Vec12 xh = xs; xh(i)+=eps;
+    A.col(i) = (f(xh,a_m)-f0)/eps;
+  }
+  return A;
+}
+
+double EKF12::wrapPi(double a){
+  while(a<=-M_PI) a+=2*M_PI;
+  while(a> M_PI)  a-=2*M_PI;
+  return a;
 }
