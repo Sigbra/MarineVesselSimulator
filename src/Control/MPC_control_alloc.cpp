@@ -25,8 +25,8 @@ std::vector<double> MPC_control_alloc(double tau_X, double tau_Y, double tau_N,
     double pod_radius = 0.2;    
 
     // Constants from ran()    
-    double n_max =  0.75;           
-    double n_min = -0.75;            
+    double n_max =  0.3;           
+    double n_min = -0.3;            
     double alpha_max = M_PI/2; 
     double alpha_min = -M_PI/2; 
 
@@ -109,8 +109,13 @@ std::vector<double> MPC_control_alloc(double tau_X, double tau_Y, double tau_N,
     for (int k = 0; k < N; ++k) {
         MX n1 = n_vars(0, k);
         MX n2 = n_vars(1, k);
+        MX n1_cmd = n_cmd(0, k);
+        MX n2_cmd = n_cmd(1, k);
+
         MX alpha1 = alpha_vars(0, k);
         MX alpha2 = alpha_vars(1, k);
+        MX alpha1_cmd = alpha_cmd(0, k);
+        MX alpha2_cmd = alpha_cmd(1, k);
 
         MX ly1 = ly1_o - pod_radius * sin(alpha1);
         MX ly2 = ly2_o - pod_radius * sin(alpha2);
@@ -137,26 +142,37 @@ std::vector<double> MPC_control_alloc(double tau_X, double tau_Y, double tau_N,
         
         // - Penalties for directing thrust into another pod slip stream 
         //   (effect not captured by the current ran model, but on the real vessel)
-        MX b1 = exp( -pow((alpha1 + M_PI/2), 2) / 0.2 ); 
-        J += 5 * b1; 
+        //MX b1 = exp( -pow((alpha1 + M_PI/2), 2) / 0.2 ); 
+        //J += 5 * b1; 
 
-        MX b2 = exp( -pow((alpha2 - M_PI/2), 2) / 0.2 ); 
-        J += 5 * b2;
+        //MX b2 = exp( -pow((alpha2 - M_PI/2), 2) / 0.2 ); 
+        //J += 5 * b2;
 
         // Penalties for pods beeing +90 or -90 at the same time,
         // leading to loss of surge control because of slowly time variying dynamics
         // not captured by this optimalization method.
-        MX d1 = exp( -pow(abs(alpha1) - M_PI/2, 2) / 0.1 );
-        MX d2 = exp( -pow(abs(alpha2) - M_PI/2, 2) / 0.1 );
-        J += 10 * d1 * d2;
+        //MX d1 = exp( -pow(abs(alpha1) - M_PI/2, 2) / 0.1 );
+        //MX d2 = exp( -pow(abs(alpha2) - M_PI/2, 2) / 0.1 );
+        //J += 10 * d1 * d2;
 
         // Penalty for large changes in propeller speed and azimuth angle
-        MX d_n1 = n_cmd(0, k) - n_vars(0, k);
-        MX d_n2 = n_cmd(1, k) - n_vars(1, k);
-        MX d_alpha1 = alpha_cmd(0, k) - alpha_vars(0, k);
-        MX d_alpha2 = alpha_cmd(1, k) - alpha_vars(1, k);
+        MX d_n1 = n1_cmd - n1;
+        MX d_n2 = n1_cmd - n2;
+        MX d_alpha1 = alpha1_cmd - alpha1;
+        MX d_alpha2 = alpha2_cmd - alpha2;
         J += 5 * (dot(d_n1,d_n1) + dot(d_n2,d_n2)) 
            + 5 * (dot(d_alpha1,d_alpha1) + dot(d_alpha2,d_alpha2));
+
+        // Penalize large speed resulting in large discretization steps that the MPC can't handle
+        MX U_i = sqrt(n1*n1 + n2*n2 + 1e-4);
+        J += exp((U_i-0.4)/0.1); 
+
+        // Penalize deviation from preferred azimuths (this gives surge and sway control)
+        double pref_a1 =  M_PI/12;   // +15 degrees
+        double pref_a2 = -M_PI/12;   // -15 degrees
+        J += 0.01 * pow(alpha1_cmd - pref_a1, 2);  // thruster 1
+        J += 0.01 * pow(alpha2_cmd - pref_a2, 2);  // thruster 2
+
     }
 
     // Optimization:
