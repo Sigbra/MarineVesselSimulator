@@ -26,7 +26,7 @@
 #include "Models/ref_model.hpp"
 #include "Models/model_utilities.hpp"
 
-#include "Observers/kalmanObserver.hpp"
+#include "Observers/EKF18.hpp"
 
 #include "Planning/plan_selector.hpp"
 #include "Planning/straight_line_planning.hpp"
@@ -127,7 +127,7 @@ int main() {
     imu.accel = GravityCompensation(imu.accel, x(9), x(10), x(11));
 
     // Observers
-    EKF12 ekf;
+    EKF18 ekf;
     Eigen::VectorXd x_est = x;
 
     // Control system variables
@@ -224,7 +224,7 @@ int main() {
     // Motion control classes
     MIMOPIDController MIMO_PID;
     HeadingPIDController headPID;
-    MPC_Control_System mpc_control(40, 0.8); 
+    MPC_Control_System mpc_control(20, 0.1); 
 
     // Desired rate of turn and acceleration
     double r_d = 0.0; 
@@ -262,7 +262,7 @@ int main() {
         xdot = ran_model.get_xdot();
         imu = raw_IMU(x, xdot, gen, ba, bgyro, 0.01, 0.001);
 
-        imu.accel = GravityCompensation(imu.accel, x_est(9), x_est(10), x_est(11));
+        //imu.accel = GravityCompensation(imu.accel, x_est(9), x_est(10), x_est(11));
 
         ekf.predict(imu.accel, h);
         ekf.updateGyro(imu.gyro);
@@ -289,7 +289,7 @@ int main() {
             ekf.updateHeading(psi_gnss);  
         }
 
-        x_est = ekf.getState();
+        x_est = ekf.getState12();
 
         double u     = x_est(0);  // Surge velocity (BODY frame)
         double v     = x_est(1);  // Sway velocity  (BODY frame)

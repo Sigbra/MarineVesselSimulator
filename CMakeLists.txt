@@ -92,7 +92,8 @@ set(SOURCES
     src/Models/ref_model.cpp
     src/Models/model_utilities.cpp
 
-    src/Observers/kalmanObserver.cpp
+    src/Observers/EKF12.cpp
+    src/Observers/EKF18.cpp
 
     src/Planning/fermat_spiral_planning.cpp
     src/Planning/straight_line_planning.cpp

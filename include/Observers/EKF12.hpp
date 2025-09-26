@@ -51,4 +51,4 @@ private:
   double R_head_;
 };
 
-#endif // KALMANFILTER15_HPP
+#endif 
