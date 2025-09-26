@@ -68,11 +68,11 @@ Path following:
 <table>
   <tr>
     <td>
-      <img src="data/live-plotting/Live-StraightPath-LOS-NLOpt.png" width="400"/>
+      <img src="data/live-plotting/Live-EKF18-StraightPath-LOS-NLOpt.png" width="400"/>
       <div align="center">Live, Straight path, LOS, POD Model Control allocation</div>
     </td>
     <td>
-      <img src="data/live-plotting/Live-CurvedPath-LOS-NLOpt.png" width="400"/>
+      <img src="data/live-plotting/Live-EKF18-CurvedPath-LOS-NLOpt.png" width="400"/>
       <div align="center">Live, Curved path, LOS, POD Model Control allocation</div>
     </td>
   </tr>

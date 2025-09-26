@@ -30,7 +30,7 @@ if __name__ == "__main__":
 
     # Fit 7th order polynomial with p(0)=0
     coeffs = constrained_poly_fit(thrust_filt, force_filt, order=5)
-    print("Fitted coefficients (x^7 to x^1):", coeffs)
+    print("Fitted coefficients (x^5 to x^1):", coeffs)
 
     # Generate fitted curve
     x_fit = np.linspace(-1, 1, 500)
@@ -38,12 +38,12 @@ if __name__ == "__main__":
 
     # Plot results
     plt.scatter(thrust_filt, force_filt, color='blue', label='Data points')
-    plt.plot(x_fit, y_fit, color='red', label='7th order fit (p(0)=0)')
+    plt.plot(x_fit, y_fit, color='red', label='5th order fit (p(0)=0)')
     plt.axhline(0, color='gray', linestyle='--')
     plt.axvline(0, color='gray', linestyle='--')
     plt.xlabel('Thrust')
     plt.ylabel('Force')
-    plt.title('7th Order Polynomial Fit with p(0)=0')
+    plt.title('5th Order Polynomial Fit with p(0)=0')
     plt.legend()
     plt.grid(True)
     plt.show()

@@ -101,18 +101,18 @@ MX control_allocation(const MX& n, const MX& alpha, double lx_o, double ly1_o, d
     MX n1 = n(0), n2 = n(1);
     MX alpha1 = alpha(0), alpha2 = alpha(1);
 
-    MX ly1 = ly1_o - pod_radius * sin(alpha1);
-    MX ly2 = ly2_o - pod_radius * sin(alpha2);
     MX lx1  = lx_o - pod_radius * cos(alpha1);
     MX lx2  = lx_o - pod_radius * cos(alpha2);
+    MX ly1 = ly1_o - pod_radius * sin(alpha1);
+    MX ly2 = ly2_o - pod_radius * sin(alpha2);
 
     MX Thrust1 = ThrustFromRelativeN_MX(n1);
     MX Thrust2 = ThrustFromRelativeN_MX(n2);
 
     MX tau_X_model = Thrust1 * cos(alpha1) + Thrust2 * cos(alpha2);
     MX tau_Y_model = Thrust1 * sin(alpha1) + Thrust2 * sin(alpha2);
-    MX tau_N_model = lx1 * Thrust1 * sin(alpha1) - ly1 * Thrust1 * cos(alpha1)
-                   + lx2 * Thrust2 * sin(alpha2) - ly2 * Thrust2 * cos(alpha2);
+    MX tau_N_model = lx1 * Thrust1 * sin(alpha1) + lx2 * Thrust2 * sin(alpha2)
+                   + ly1 * Thrust1 * cos(alpha1) + ly2 * Thrust2 * cos(alpha2);
 
     return MX::vertcat({tau_X_model, tau_Y_model, tau_N_model});
 }

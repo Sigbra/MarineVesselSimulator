@@ -256,10 +256,10 @@ void RAN::update(const Eigen::VectorXd x, double mp, double V_c, double beta_c,
     }
 
     // Lever arms considering pod radius
-    double ly1 = ly1_o - pod_radius*sin(alpha(0));         
-    double ly2 = ly2_o - pod_radius*sin(alpha(1));        
     double lx1 = lx_o  - pod_radius*cos(alpha(0));
     double lx2 = lx_o  - pod_radius*cos(alpha(1));
+    double ly1 = ly1_o - pod_radius*sin(alpha(0));         
+    double ly2 = ly2_o - pod_radius*sin(alpha(1));        
 
     // Thrusts from podded propellars
     // TODO: Reduce thrust if slipstream from one propellar hits the other.
@@ -270,8 +270,8 @@ void RAN::update(const Eigen::VectorXd x, double mp, double V_c, double beta_c,
     Eigen::VectorXd tau = Eigen::VectorXd::Zero(6);
     tau(0) = Thrusts(0) * cos(alpha(0)) + Thrusts(1) * cos(alpha(1)); //X: Combined Surge 
     tau(1) = Thrusts(0) * sin(alpha(0)) + Thrusts(1) * sin(alpha(1)); //Y: Combined Sway 
-    tau(5) = lx1 * Thrusts(0) * sin(alpha(0)) - ly1 * Thrusts(0) * cos(alpha(0))  //N: Yaw pod 1
-           + lx2 * Thrusts(1) * sin(alpha(1)) - ly2 * Thrusts(1) * cos(alpha(1)); //N: Yaw pod 2
+    tau(5) = lx1 * Thrusts(0) * sin(alpha(0)) + lx2 * Thrusts(1) * sin(alpha(1))  //N: Yaw pod 
+           + ly1 * Thrusts(0) * cos(alpha(0)) + ly2 * Thrusts(1) * cos(alpha(1)); 
 
     //Linear damping using relative velocities + nonlinear yaw dampning
     double Xh = Xu * nu_r(0);
