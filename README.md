@@ -54,11 +54,11 @@ Four square test:
 <table>
   <tr>
     <td>
-      <img src="data/live-plotting/Live-DP-MPC_NLOpt.png" width="400"/>
+      <img src="data/live-plotting/Live-EKF18-DP-MPC_Control.png" width="400"/>
       <div align="center">Live, 4 square test, DP, POD Model MPC Control allocation</div>
     </td>
     <td>
-      <img src="data/live-plotting/Live-EKF-DP-MPC_Sys.png" width="400"/>
+      <img src="data/live-plotting/Live-EKF18-DP-MPC_Sys.png" width="400"/>
       <div align="center">Live, 4 square test, DP, Full Model MPC Control allocation</div>
     </td>
   </tr>
