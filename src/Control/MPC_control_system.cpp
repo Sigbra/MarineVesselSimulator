@@ -313,13 +313,13 @@ bool MPC_Control_System::solve(const std::vector<double>& x0, double x_s, double
         else { // Penalties in normal operation
             cost += 5 * crosstrack_error_sq; //9
             cost += 35 * position_error_sq;   //12
-            cost += 12 * heading_error_sq;    //18
+            cost += 8 * heading_error_sq;    //18
         }
 
        
         MX d_n = n_cmd(Slice(), i) - n_vars(Slice(), i);
         MX d_alpha = alpha_cmd(Slice(), i) - alpha_vars(Slice(), i);
-        cost += 5*dot(d_n, d_n) + 1*dot(d_alpha, d_alpha); // 5 and 1
+        cost += 10*dot(d_n, d_n) + 10*dot(d_alpha, d_alpha); // 5 and 1
 
         // Incentive to avoid +-90 if possible.
         // MX abs_angle = dot(alpha_cmd(Slice(), i), alpha_cmd(Slice(), i));
@@ -330,10 +330,10 @@ bool MPC_Control_System::solve(const std::vector<double>& x0, double x_s, double
         cost += exp((U_i-0.4)/0.1); 
 
         // Penalize deviation from preferred azimuths (this gives surge and sway control)
-        double pref_a1 =  M_PI/12;   // +15 degrees
-        double pref_a2 = -M_PI/12;   // -15 degrees
-        cost += 0.01 * pow(alpha_cmd(0) - pref_a1, 2);  // thruster 1
-        cost += 0.01 * pow(alpha_cmd(1) - pref_a2, 2);  // thruster 2
+        double pref_a1 = 0; // M_PI/12;   // +15 degrees
+        double pref_a2 = 0; //-M_PI/12;   // -15 degrees
+        cost += 0.02 * pow(alpha_cmd(0) - pref_a1, 2);  // thruster 1
+        cost += 0.02 * pow(alpha_cmd(1) - pref_a2, 2);  // thruster 2
 
     } 
     
