@@ -48,14 +48,6 @@ Eigen::Vector3d origin_from_raw_GNSS(const Eigen::VectorXd &x,
     return ant_meas_ned - R_b2n * lever_arm_body;
 }
 
-// Heading from two GNSS antenna positions (both in NED, noisy)
-// Antennas placed port (y>0) and starboard (y<0) at the stern
-inline double wrap_to_pi(double a){
-    while (a >  M_PI) a -= 2.0*M_PI;
-    while (a <= -M_PI) a += 2.0*M_PI;
-    return a;
-}
-
 double gnss_heading_from_two_antennas(const Eigen::Vector3d &ant_port_ned,
                                       const Eigen::Vector3d &ant_stbd_ned)
 {
