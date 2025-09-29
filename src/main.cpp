@@ -111,8 +111,8 @@ int main() {
 
     // Sensor Measurements
 
-    Eigen::Vector3d lever_arm_port_body( -2,  1, -1.5 ); //Measure!
-    Eigen::Vector3d lever_arm_stbd_body( -2, -1, -1.5 ); //Measure!
+    Eigen::Vector3d lever_arm_port_body( -2, -1, -1.5 ); //Measure!
+    Eigen::Vector3d lever_arm_stbd_body( -2,  1, -1.5 ); //Measure!
 
     Eigen::Vector3d ant1_meas = raw_GNSS(x, lever_arm_port_body, gen, 0.05);
     Eigen::Vector3d ant2_meas = raw_GNSS(x, lever_arm_stbd_body, gen, 0.05);

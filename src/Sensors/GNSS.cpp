@@ -2,7 +2,7 @@
 #include <random>
 #include <cmath>
 #include "Models/model_utilities.hpp"
-
+#include "Utilities/calculations.hpp"
 // raw_GNSS: simulate raw GNSS antenna position measurement (NED) given state x and lever-arm (body-frame)
 Eigen::Vector3d raw_GNSS(const Eigen::VectorXd &x,
                          const Eigen::Vector3d &lever_arm_body,
@@ -59,13 +59,12 @@ inline double wrap_to_pi(double a){
 double gnss_heading_from_two_antennas(const Eigen::Vector3d &ant_port_ned,
                                       const Eigen::Vector3d &ant_stbd_ned)
 {
-    // Baseline (stbd - port); consistent with your sign convention
     const Eigen::Vector3d b = ant_stbd_ned - ant_port_ned;
 
-    const double bE = b(0); // North component
-    const double bN = b(1); // East component
+    const double bE = b(0); 
+    const double bN = b(1); 
 
-    // Yaw measured (NED): atan2(E,N) + 90deg
-    const double psi_meas = std::atan2(bE, bN) + M_PI/2.0;
-    return wrap_to_pi(psi_meas);
+    // Yaw measured in rad(NED): atan2(E,N) + 90deg
+    const double psi_meas = std::atan2(bE, bN) - M_PI/2;
+    return ssa(psi_meas);
 }
