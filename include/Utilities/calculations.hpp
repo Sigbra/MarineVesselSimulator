@@ -4,11 +4,8 @@
 #include <cmath>
 #include <vector>
 #include <Eigen/Dense>
-<<<<<<< HEAD
-=======
 #include <Eigen/Core>
 #include <Eigen/Geometry>
->>>>>>> 35-pirnn-observer
 
 //----------------------------------------------
 // 2D Vector Class
@@ -86,8 +83,6 @@ double deg2rad(double degrees);
 
 double rad2deg(double radians);
 
-<<<<<<< HEAD
-=======
 using Vec3 = Eigen::Vector3d;
 using Mat3 = Eigen::Matrix3d;
 
@@ -109,7 +104,6 @@ double yawFromQuatEND(const Eigen::Quaterniond& q_in);
 Eigen::Quaterniond quatFromEulerEND(double phi, double theta, double psi); // ZYX
 
 
->>>>>>> 35-pirnn-observer
 Waypoints addIntermediateWaypoints(const Waypoints& input, double space);
 
 #endif 

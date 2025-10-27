@@ -83,11 +83,7 @@ std::vector<double> NLOptControlAlloc(double tau_X, double tau_Y, double tau_N, 
     
     J = 0.5 * (pow(tau_X - tau_X_model, 2) +
                pow(tau_Y - tau_Y_model, 2) +
-<<<<<<< HEAD
-               pow(tau_N - tau_N_model, 2));
-=======
                5*pow(tau_N - tau_N_model, 2));
->>>>>>> 35-pirnn-observer
 
     // - Penalty for both pods forward, leading to loss of sway control.
     // MX a1 = exp( -pow( abs(vars(1)), 2 ) / 0.1 ); 

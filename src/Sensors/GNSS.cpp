@@ -40,11 +40,7 @@ Eigen::Vector3d origin_from_raw_GNSS(const Eigen::VectorXd &x,
 {
     const double phi   = x(9);
     const double theta = x(10);
-<<<<<<< HEAD
-    const double psi   = x(11);
-=======
     const double psi   = x(11); 
->>>>>>> 35-pirnn-observer
 
     const Eigen::Matrix3d R_b2n = Rzyx(phi, theta, psi);
 
@@ -60,11 +56,7 @@ double gnss_heading_from_two_antennas(const Eigen::Vector3d &ant_port_ned,
     const double bE = b(0); 
     const double bN = b(1); 
 
-<<<<<<< HEAD
-    // Yaw measured in rad(NED): atan2(E,N) + 90deg
-=======
     // Yaw measured in rad(NED): atan2(E,N) - 90deg
->>>>>>> 35-pirnn-observer
     const double psi_meas = std::atan2(bE, bN) - M_PI/2;
     return ssa(psi_meas);
 }

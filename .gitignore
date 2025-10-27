@@ -35,9 +35,6 @@
 external/
 
 #build
-<<<<<<< HEAD
-build/
-=======
 build/
 
 #Ignore virtual env
@@ -45,4 +42,3 @@ build/
 
 #Ignore Dataset files
 data/simdata.csv
->>>>>>> 35-pirnn-observer

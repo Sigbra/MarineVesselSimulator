@@ -31,8 +31,6 @@ void plotClosestPointErrors();
 
 std::vector<double> loadWaypointChangeTimes();
 
-<<<<<<< HEAD
-=======
 static void decimate_in_place(std::vector<double>& t,
                               std::vector<double>& x,
                               std::vector<double>& y,
@@ -45,7 +43,6 @@ void plotIMUGyro();
 
 void plotStateEstimateErrors();
 
->>>>>>> 35-pirnn-observer
 //void addWaypointChangeLines(const std::vector<double>& change_times);
 
 class RealTimePlotter {

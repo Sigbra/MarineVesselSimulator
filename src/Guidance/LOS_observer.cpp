@@ -21,11 +21,7 @@ void LOSObserver::update(double LOScommand) {
 }
 
 double LOSObserver::getLOSAngle() const {
-<<<<<<< HEAD
-    return LOSangle;
-=======
     return ssa(LOSangle);
->>>>>>> 35-pirnn-observer
 }
 
 double LOSObserver::getLOSRate() const {

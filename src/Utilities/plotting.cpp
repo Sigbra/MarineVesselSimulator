@@ -518,20 +518,12 @@ void plotTau() {
             try { vals.push_back(std::stod(cell)); }
             catch (const std::invalid_argument&) { /* skip non-numeric */ }
         }
-<<<<<<< HEAD
-        if (vals.size() >= 27) {
-            time.push_back(vals[0]);
-            tauX.push_back(vals[24]);
-            tauY.push_back(vals[25]);
-            tauN.push_back(vals[26]);
-=======
         if (vals.size() >= 30) {
             time.push_back(vals[0]);
             // actual τ_X, τ_Y, τ_N now at 27..29
             tauX.push_back(vals[27]);
             tauY.push_back(vals[28]);
             tauN.push_back(vals[29]);
->>>>>>> 35-pirnn-observer
         }
     }
     file.close();
@@ -631,17 +623,10 @@ void plotClosestPointErrors() {
             }
         }
 
-<<<<<<< HEAD
-        if (values.size() >= 31) {
-            double t = values[0];
-            double xe = values[29];
-            double ye = values[30];
-=======
         if (values.size() >= 34) {
             double t = values[0];
             double xe = values[32];  // closest.x_e
             double ye = values[33];  // closest.y_e
->>>>>>> 35-pirnn-observer
 
             double h = (t - prev_time);
             
@@ -698,8 +683,6 @@ void plotClosestPointErrors() {
     plt::show();
 }
 
-<<<<<<< HEAD
-=======
 static void decimate_in_place(std::vector<double>& t,
                               std::vector<double>& x,
                               std::vector<double>& y,
@@ -1005,7 +988,6 @@ void plotStateEstimateErrors() {
 
 
 
->>>>>>> 35-pirnn-observer
 RealTimePlotter::RealTimePlotter() {
     plt::figure();   
     plt::xlabel("x(t) [m]");
@@ -1083,52 +1065,16 @@ void RealTimePlotter::updatePlot(double x, double y, double psi_value,
     // clear and redraw
     plt::cla();
 
-<<<<<<< HEAD
-    // vessels (distinct styles)
-    draw_vessel(x,     y,     psi_value, "r-"); // real: red
-    draw_vessel(x_est, y_est, psi_est,   "c-"); // est:  cyan
-
-    // path
-=======
     // --- draw order: ESTIMATED (red) first, then TRUE (green) to overlay ---
     // vessels
     draw_vessel(x_est, y_est, psi_est,   "r-"); // estimated: red
     draw_vessel(x,     y,     psi_value, "g-"); // true:      green
 
     // path (unchanged)
->>>>>>> 35-pirnn-observer
     if (!m_path_x.empty() && !m_path_y.empty()) {
         plt::plot(m_path_x, m_path_y, "k-");
     }
 
-<<<<<<< HEAD
-    // trails (distinct styles)
-    // You can use named_plot if available; plain plot is safest across matplotlib-cpp variants.
-    plt::plot(m_x,     m_y,     "b-");  // real trail: blue
-    plt::plot(m_x_est, m_y_est, "m--"); // est trail:  magenta dashed
-
-    // guidance target(s)
-    if (!guidance_x.empty()) {
-        if (guidance_x.size() == 1) {
-            plt::plot(guidance_x, guidance_y, "go"); // point
-        } else {
-            plt::plot(guidance_x, guidance_y, "g-"); // curve
-        }
-    }
-
-    // current positions
-    plt::plot(std::vector<double>{x},     std::vector<double>{y},     "ro"); // real pos
-    plt::plot(std::vector<double>{x_est}, std::vector<double>{y_est}, "co"); // est  pos
-
-    plt::xlabel("x(t) [m]");
-    plt::ylabel("y(t) [m]");
-    plt::title("Live Plot: Current Vessel Status (real vs estimated)");
-    plt::axis("equal");
-    plt::grid(true);
-
-    // If your matplotlib-cpp supports legend labels, you can replace the trail plots with named_plot and add:
-    // plt::legend();
-=======
     // trails
     plt::plot(m_x_est, m_y_est, "r-"); // estimated trail: red dashed
     plt::plot(m_x,     m_y,     "g-");  // true trail:      green solid
@@ -1153,7 +1099,6 @@ void RealTimePlotter::updatePlot(double x, double y, double psi_value,
     plt::grid(true);
 
     // plt::legend(); // enable if your matplotlib-cpp build supports labels
->>>>>>> 35-pirnn-observer
 
     plt::draw();
     plt::pause(0.01);
@@ -1209,8 +1154,6 @@ std::vector<double> loadWaypointChangeTimes() {
 // }
 
 
-<<<<<<< HEAD
-=======
 //-----------------------------------old-------------------------------
 // #include <cmath>
 // #include <iostream>
@@ -2206,5 +2149,3 @@ std::vector<double> loadWaypointChangeTimes() {
 // //     }
 // // }
 
-
->>>>>>> 35-pirnn-observer

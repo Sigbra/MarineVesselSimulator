@@ -13,13 +13,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if(DEFINED ENV{CONDA_PREFIX})
     set(CONDA_PREFIX $ENV{CONDA_PREFIX})
     message(STATUS "Using conda environment at: ${CONDA_PREFIX}")
-<<<<<<< HEAD
-=======
 
     # Make CMake search the Conda env first and hint FindGSL
     set(CMAKE_PREFIX_PATH "${CONDA_PREFIX};${CMAKE_PREFIX_PATH}")
     set(GSL_ROOT_DIR "${CONDA_PREFIX}")
->>>>>>> 35-pirnn-observer
 endif()
 
 # -----------------------------------
@@ -63,12 +60,8 @@ find_package(yaml-cpp REQUIRED)
 
 # 6. GSL
 find_package(GSL REQUIRED)
-<<<<<<< HEAD
-message(STATUS "GSL found: ${GSL_INCLUDE_DIRS}")
-=======
 message(STATUS "GSL include dirs: ${GSL_INCLUDE_DIRS}")
 message(STATUS "GSL libraries: ${GSL_LIBRARIES}")
->>>>>>> 35-pirnn-observer
 
 # 7. CasADi
 find_path(CASADI_INCLUDE_DIR casadi/casadi.hpp HINTS ${CONDA_PREFIX}/include)
@@ -105,9 +98,6 @@ set(SOURCES
     src/Models/model_utilities.cpp
 
     src/Observers/EKF12.cpp
-<<<<<<< HEAD
-    src/Observers/EKF18.cpp
-=======
     src/Observers/EKF13.cpp
     src/Observers/EKF18.cpp
     src/Observers/nn_EKF_v1.cpp
@@ -122,7 +112,6 @@ set(SOURCES
     src/Observers/nn_ekf_v10.cpp
     src/Observers/quatObserver.cpp
     src/Observers/observer_selector.cpp
->>>>>>> 35-pirnn-observer
 
     src/Planning/fermat_spiral_planning.cpp
     src/Planning/straight_line_planning.cpp
@@ -173,8 +162,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ${GSL_LIBRARIES} m)
 
 # matplotlib-cpp
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/external/matplotlib-cpp)
-<<<<<<< HEAD
-=======
 
 # -------- LibTorch (minimal additions) --------
 # Prefer a user-specified Torch_DIR, else try common locations.
@@ -220,4 +207,3 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9)
     target_link_libraries(${PROJECT_NAME} PRIVATE stdc++fs)
 endif()
->>>>>>> 35-pirnn-observer

@@ -77,8 +77,6 @@ IMUData raw_IMU(const Eigen::VectorXd &x,
 }
 
 
-<<<<<<< HEAD
-=======
 // raw IMU using w x v term for accel and taking dt into account
 IMUData raw_IMU_v2(const Eigen::VectorXd &x,
                    const Eigen::VectorXd &x_dot,
@@ -130,4 +128,3 @@ IMUData raw_IMU_v2(const Eigen::VectorXd &x,
 
     return imu;
 }
->>>>>>> 35-pirnn-observer

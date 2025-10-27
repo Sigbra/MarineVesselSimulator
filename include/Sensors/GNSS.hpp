@@ -26,4 +26,3 @@ double gnss_heading_from_two_antennas(const Eigen::Vector3d &ant_port_ned,
                                       const Eigen::Vector3d &ant_stbd_ned);
 
 #endif // GNSS_HPP
-

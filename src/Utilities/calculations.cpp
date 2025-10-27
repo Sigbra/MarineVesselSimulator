@@ -4,11 +4,7 @@
 
 double ssa(double angle)
 {
-<<<<<<< HEAD
-    if (std::abs(angle) > 360) {
-=======
     if (std::abs(angle) > 2*M_PI) {
->>>>>>> 35-pirnn-observer
         std::cerr << "Warning: Unusually large angle value detected: " << angle << std::endl;
         angle = std::fmod(angle, 2 * M_PI); 
     }
@@ -27,8 +23,6 @@ double rad2deg(double radians) {
     return radians * 180.0 / M_PI;
 }
 
-<<<<<<< HEAD
-=======
 Mat3 skew3(const Vec3& a) {
   Mat3 S;
   S <<    0,   -a.z(),  a.y(),
@@ -108,7 +102,6 @@ Eigen::Quaterniond quatFromEulerEND(double phi, double theta, double psi) {
   return Eigen::Quaterniond(w,x,y,z).normalized();
 }
 
->>>>>>> 35-pirnn-observer
 Waypoints addIntermediateWaypoints(const Waypoints& input, double space) {
     Waypoints output;
     

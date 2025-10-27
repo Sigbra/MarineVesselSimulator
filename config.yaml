@@ -1,13 +1,8 @@
 #config.yaml
 
 simulation:
-<<<<<<< HEAD
-  h: 0.05               # Sampling time [s]
-  T_final: 1500         # Final simulation time [s]
-=======
   h: 0.01               # Sampling time [s]
   T_final: 3200         # Final simulation time [s]
->>>>>>> 35-pirnn-observer
 
 load_condition:
   mp: 0.0               # Payload mass (front cabin) [kg]
@@ -22,33 +17,20 @@ waypoints:
 
 # Waypoint lists for DP simulation
 
-<<<<<<< HEAD
-  x:      [0,  0, 15, 15, 0] 
-  y:      [0, 15, 15,  0, 0] 
-  angles: [0,  0,  0, -45]
-=======
   #x:      [0,  0, 15, 15, 0] 
   #y:      [0, 15, 15,  0, 0] 
   #angles: [0,  0,  0, -45]
->>>>>>> 35-pirnn-observer
 
 # Waypoint list for path following simulation
 
   # Right turn then left turn
-<<<<<<< HEAD
-  #x: [0,  0, 40, 40] 
-  #y: [0, 40, 40, 80] 
-=======
   #x: [ 0,  0, 40, 40] 
   #y: [ 0, 40, 40, 80] 
->>>>>>> 35-pirnn-observer
 
   #Zig zag
   #x: [5,  0,  5,  0,  5,  0]
   #y: [0, 10, 20, 30, 40, 50]
 
-<<<<<<< HEAD
-=======
   # Expanded ML learning paths: continuous polyline, varied maneuvers for rich training signals
   #x: [0, 0, 10, 10, 20, 30, 40, 50, 60, 70, 75, 80, 80, 75, 70, 50, 50, 70, 75, 80, 80, 75, 70, 60, 50, 40, 30, 20, 10, 10, 0, 0, -40, -30, -30, -40, -40, -45, -40, -45, -40, -45, -45, -40, -35, -30, -30, -10, -30, -10, -10, -5, 0, 5, 5, 0, 5, 0, 5, 0, 0, -10, -10, 0]
   #y: [0, 10, 10, 0, 0, -5, 0, -5, 0, -5, -5, 0, 5, 10, 10, 30, 10, 30, 30, 35, 40, 45, 45, 40, 45, 40, 45, 40, 40, 30, 30, 40, 40, 40, 50, 50, 60, 70, 80, 90, 100, 110, 115, 120, 120, 115, 110, 90, 90, 110, 115, 120, 120, 115, 110, 100, 90, 80, 70, 60, 50, 50, 40, 40]
@@ -64,17 +46,11 @@ waypoints:
   #x: [0, 0, 10]
   #y: [0, -50, -30]
 
->>>>>>> 35-pirnn-observer
 path_following:
   #Additional parameters for MPC DP mode
   R_switch: 0.4  # Radius for wpt switching in DP[m] #ideal: 0.25
   K_f: 0.3       # LOS observer gain
 
   #LOS and ALOS parameters
-<<<<<<< HEAD
-  Delta_h: 20    # Look-ahead distance
-=======
   Delta_h: 15    # Look-ahead distance
->>>>>>> 35-pirnn-observer
   gamma_h: 0.001 # ALOS adaptive gain
-

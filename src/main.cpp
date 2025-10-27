@@ -7,15 +7,12 @@
 
 #include <chrono>
 #include <thread>
-<<<<<<< HEAD
-=======
 #include <fstream>
 #include <cstdlib>
 #include <atomic>
 #include <csignal>
 #include <cstdio>     // fprintf, fflush
 #include <unistd.h>   // _exit (alt)
->>>>>>> 35-pirnn-observer
 
 #include "Control/control_alloc_selector.hpp"
 #include "Control/pseudo_inverse_allocation.hpp"
@@ -35,9 +32,6 @@
 #include "Models/ref_model.hpp"
 #include "Models/model_utilities.hpp"
 
-<<<<<<< HEAD
-#include "Observers/EKF18.hpp"
-=======
 #include "Observers/EKF13.hpp"
 #include "Observers/EKF18.hpp"
 #include "Observers/nn_EKF_v1.hpp"
@@ -53,7 +47,6 @@
 #include "Observers/quatObserver.hpp"
 #include "Observers/observer_selector.hpp"
 
->>>>>>> 35-pirnn-observer
 
 #include "Planning/plan_selector.hpp"
 #include "Planning/straight_line_planning.hpp"
@@ -65,10 +58,6 @@
 #include "Utilities/calculations.hpp"
 #include "Utilities/plotting.hpp"
 
-<<<<<<< HEAD
-
-int main() {
-=======
 using Eigen::Vector3d;
 using Eigen::Matrix3d;
 
@@ -109,7 +98,6 @@ static void graceful_shutdown() {
 int main() {
     install_signal_handlers();
     bool interrupted = false;
->>>>>>> 35-pirnn-observer
     srand(time(0)); 
     YAML::Node config = YAML::LoadFile("../config.yaml");
 
@@ -176,10 +164,7 @@ int main() {
     x(6) = wpt[0].x; // Xn (LON/East)
     x(7) = wpt[0].y; // Yn (LAT/North)
     x(11) = std::atan2(wpt[1].x - wpt[0].x, wpt[1].y - wpt[0].y);
-<<<<<<< HEAD
-=======
     Eigen::VectorXd x_est = x;
->>>>>>> 35-pirnn-observer
 
     Eigen::VectorXd xdot = Eigen::VectorXd::Zero(12);
 
@@ -188,25 +173,6 @@ int main() {
     Eigen::Vector3d lever_arm_port_body( -2, -1, -1.5 ); //Measure!
     Eigen::Vector3d lever_arm_stbd_body( -2,  1, -1.5 ); //Measure!
 
-<<<<<<< HEAD
-    Eigen::Vector3d ant1_meas = raw_GNSS(x, lever_arm_port_body, gen, 0.05);
-    Eigen::Vector3d ant2_meas = raw_GNSS(x, lever_arm_stbd_body, gen, 0.05);
-    Eigen::Vector3d nav_pos_1 = origin_from_raw_GNSS(x, ant1_meas, lever_arm_port_body);
-    Eigen::Vector3d nav_pos_2 = origin_from_raw_GNSS(x, ant2_meas, lever_arm_stbd_body);
-    double psi_gnss = gnss_heading_from_two_antennas(ant1_meas, ant2_meas);
-
-    Eigen::Vector3d ba(0.0, 0.0, 0.0);      // Initial Accelerometer bias
-    Eigen::Vector3d bgyro(0.0, 0.0, 0.0);   // Initial Gyroscope bias
-
-    IMUData imu = raw_IMU(x, xdot, gen, ba, bgyro, 0.0, 0.00);
-    imu.accel = GravityCompensation(imu.accel, x(9), x(10), x(11));
-
-    // Observers
-    EKF18 ekf;
-    Eigen::VectorXd x_est = x;
-
-    // Control system variables
-=======
     Eigen::Vector3d ant1_meas = raw_GNSS(x, lever_arm_port_body, gen, h);
     Eigen::Vector3d ant2_meas = raw_GNSS(x, lever_arm_stbd_body, gen, h);
     Eigen::Vector3d nav_pos_1 = origin_from_raw_GNSS(x, ant1_meas, lever_arm_port_body);
@@ -501,7 +467,6 @@ int main() {
 
     // Control system variables
     std::vector<double> tau_XYN_c = {0.0, 0.0, 0.0};
->>>>>>> 35-pirnn-observer
     std::vector<double> tau_XYN = {0.0, 0.0, 0.0};
     std::vector<double> control_allocation = {0.0, 0.0, 0.0, 0.0};
     Eigen::Vector2d n_c = {0.0, 0.0};
@@ -610,11 +575,7 @@ int main() {
     std::vector<double> t(num_steps);    
 
     // SIM data storage
-<<<<<<< HEAD
-    Eigen::MatrixXd simdata(num_steps, 43);         
-=======
     Eigen::MatrixXd simdata(num_steps, 59);         
->>>>>>> 35-pirnn-observer
     
     RealTimePlotter plotter;
     if (pathType == 1 || pathType == 2) {
@@ -627,24 +588,6 @@ int main() {
     bool break_flag = false;
     std::vector<double> wpt_change_times;        
 
-<<<<<<< HEAD
-    // Main simulation loop
-    for (int i = 0; i < num_steps; ++i) {
-
-        t[i] = i * h;
-        
-        // ------------------------------ Sensor data simulation + State estimation ------------------------------
-
-        xdot = ran_model.get_xdot();
-        imu = raw_IMU(x, xdot, gen, ba, bgyro, 0.01, 0.001);
-
-        //imu.accel = GravityCompensation(imu.accel, x_est(9), x_est(10), x_est(11));
-
-        ekf.predict(imu.accel, h);
-        ekf.updateGyro(imu.gyro);
-
-        if (std::fmod(t[i], 0.5) < 1e-9) {
-=======
     // Time since last update. Init to x to get first update. 
     static double gnss_time = 0.5;
     static double planning_time = 2;
@@ -672,7 +615,6 @@ int main() {
         if (gnss_time >= 0.5) { // 2 Hz gnss updates
             do { gnss_time -= 0.5; } while (gnss_time >= 0.5);
 
->>>>>>> 35-pirnn-observer
             // Simulate raw GNSS measurements for both antennas
             ant1_meas = raw_GNSS(x, lever_arm_port_body, gen, 0.02);
             ant2_meas = raw_GNSS(x, lever_arm_stbd_body, gen, 0.02);
@@ -683,20 +625,6 @@ int main() {
 
             // Compute heading from the two GNSS measurements
             psi_gnss = gnss_heading_from_two_antennas(ant1_meas, ant2_meas);
-<<<<<<< HEAD
-
-            if (std::isnan(psi_gnss)) {
-                std::cerr << "NaN detected for psi_gnss at iteration " << i << ", time: " << t[i] << "s\n";
-                break; 
-            }
-
-            ekf.updatePos(nav_pos_1);   
-            ekf.updatePos(nav_pos_2);   
-            ekf.updateHeading(psi_gnss);  
-        }
-
-        x_est = ekf.getState12();
-=======
             have_gnss_now = !std::isnan(psi_gnss);
             if (!have_gnss_now) {
             std::cerr << "NaN psi_gnss at i=" << i << ", t=" << t[i] << "s\n";
@@ -1049,7 +977,6 @@ int main() {
             }
 
         }
->>>>>>> 35-pirnn-observer
 
         double u     = x_est(0);  // Surge velocity (BODY frame)
         double v     = x_est(1);  // Sway velocity  (BODY frame)
@@ -1058,21 +985,12 @@ int main() {
         double q     = x_est(4);  // Pitch rate     (BODY frame)
         double r     = x_est(5);  // Yaw rate       (BODY frame)
     
-<<<<<<< HEAD
-        double xn    = x_est(6);  // North position  (NED frame)
-        double yn    = x_est(7);  // East position   (NED frame)
-        double zn    = x_est(8);  // Down position   (NED frame)
-        double phi   = x_est(9);  // Roll angle      (NED frame)
-        double theta = x_est(10); // Pitch angle     (NED frame)
-        double psi   = x_est(11); // Heading angle   (NED frame)
-=======
         double xn    = x_est(6);  // East position   (END frame)
         double yn    = x_est(7);  // North position  (END frame)
         double zn    = x_est(8);  // Down position   (END frame)
         double phi   = x_est(9);  // Roll angle      (END frame)
         double theta = x_est(10); // Pitch angle     (END frame)
         double psi   = x_est(11); // Heading angle   (END frame)
->>>>>>> 35-pirnn-observer
 
         // ------------------------------ Update model real dynamics and estimates ------------------------------
         ran_model.update(x, mp, V_c, beta_c, h, n, alpha);
@@ -1100,141 +1018,6 @@ int main() {
         // }
 
         // ------------------------------ Path planning: connecting waypoints ------------------------------
-<<<<<<< HEAD
-        switch (pathType) {
-            case 1: { // Dynamic Positioning.
-                if (R_switch > std::sqrt(std::pow(xn - wpt[wpt_index].x, 2) + std::pow(yn - wpt[wpt_index].y, 2))){
-                    if (std::abs(ssa(psi_d-psi)) < deg2rad(3) && U_est < 0.01) {
-                        if (wpt_index < wpt.size()-1) {
-                            wpt_index += 1;
-                            MIMO_PID.reset();
-                            wpt_change_times.push_back(t[i]);
-                        }
-                        else {
-                            std::cout << "Reached the last waypoint." << std::endl;
-                            break_flag = true;
-                        }
-                    }
-                }
-                break; 
-            }
-            case 2: { // Straight line path.
-                closest = straightLinePath.getClosestPoint(Vector2D(xn, yn), wpt_index);
-                y_e = closest.y_e;
-                x_e = closest.x_e;
-                path_x = closest.point.pos.x;
-                path_y = closest.point.pos.y;
-                path_x_dot = closest.point.dpos.x;
-                path_y_dot = closest.point.dpos.y;
-                if (wpt_index == wpt.size()-1){
-                    if (closest.point.pos.x == wpt[wpt.size()-1].x && closest.point.pos.y == wpt[wpt.size()-1].y) {
-                        break_flag = true;
-                    }
-                }
-                break;
-            }
-            case 3: { // Continuous-Curvature Path Using Fermat's Spiral.
-                closest = spiral.getClosestPoint(Vector2D(xn, yn), wpt_index);
-                y_e = closest.y_e;
-                x_e = closest.x_e;
-                path_x = closest.point.pos.x;
-                path_y = closest.point.pos.y;
-                path_x_dot = closest.point.dpos.x;
-                path_y_dot = closest.point.dpos.y;
-                if (wpt_index == wpt.size()-1){
-                    if (closest.point.pos.x == wpt[wpt.size()-1].x && closest.point.pos.y == wpt[wpt.size()-1].y) {
-                        break_flag = true;
-                    }
-                }
-                break;
-            }
-        }
-
-        // ------------------------------ Guidance laws ------------------------------
-        switch (GuidanceFlag) {
-            case 1: { // Dynamic Positioning wpt path
-                if (angles.empty()) {
-                    auto [xn_ref, yn_ref, psi_ref] = DP(xn, yn, wpt[wpt_index].x, wpt[wpt_index].y, wpt[wpt_index-1].x, wpt[wpt_index-1].y);
-                    xn_d = xn_ref;
-                    yn_d = yn_ref;
-                    psi_d = psi_ref;
-                }
-                else {
-                    auto [xn_ref, yn_ref, psi_ref] = DP(xn, yn, wpt[wpt_index].x, wpt[wpt_index].y, wpt[wpt_index-1].x, wpt[wpt_index-1].y, angles[wpt_index-1]);
-                    xn_d = xn_ref;
-                    yn_d = yn_ref;
-                    psi_d = psi_ref;
-                }
-                break;
-            }
-            case 2: { // LOS heading autopilot
-                auto [psi_ref, _ ] = LOS(xn, yn, Delta_h, path_x, path_y, path_x_dot, path_y_dot, y_e);
-
-                losObserver.update(psi_ref);
-                psi_d = losObserver.getLOSAngle();
-                r_d = losObserver.getLOSRate();
-                break;
-            }
-            case 3: { // ALOS heading autopilot
-                auto [psi_ref, _ ] = ALOS.update(xn, yn, path_x, path_y, path_x_dot, path_y_dot, y_e);
-
-                losObserver.update(psi_ref);
-                psi_d = losObserver.getLOSAngle();
-                r_d = losObserver.getLOSRate();
-                break;
-            }
-        }
-
-        // ------------------------------ Control System ------------------------------
-
-        // - Motion Control: Dynamic positioning
-        if (GuidanceFlag==1 && ControlAllocFlag != 4){
-            nu << u, v, w, p, q, r;
-            eta  << xn, yn, zn, phi, theta, psi;
-            tau_XYN = MIMO_PID.update(h, xn_d, yn_d, psi_d, M_est, eta, nu, V_c, beta_c);
-        } 
-        // - Motion Control: Path following: 
-        else if (GuidanceFlag==2 || GuidanceFlag==3) { 
-            tau_XYN[0] = 150;
-            tau_XYN[1] = 0;
-            tau_XYN[2] = headPID.update(h, M_est, psi, psi_d, r, r_d, a_d);
-        }              
-
-        // - Control allocation
-        switch (ControlAllocFlag) {
-            case 1: { // Pseudo-inverse control allocation
-                control_allocation = pseudo_inverse_allocation(tau_XYN, B_est, 880, 880);
-                n_c     = {control_allocation[0], control_allocation[2]};
-                alpha_c = {control_allocation[1], control_allocation[3]};
-                break;
-            }
-            case 2: { // Nonlinear optimization with constraints
-                control_allocation = NLOptControlAlloc(tau_XYN[0], tau_XYN[1], tau_XYN[2], U_est, n, alpha, failstate);
-                n_c     = {control_allocation[0], control_allocation[2]};
-                alpha_c = {control_allocation[1], control_allocation[3]};
-                break;
-            }
-            case 3: { // Nonlinear optimization with constraints over a horizon taking rate constriants into account
-                control_allocation = MPC_control_alloc(tau_XYN[0], tau_XYN[1], tau_XYN[2], U_est, T_n, T_alpha, n, alpha, failstate);
-                n_c     = {control_allocation[0], control_allocation[2]};
-                alpha_c = {control_allocation[1], control_allocation[3]};
-                break;
-            }
-            case 4: { // Model Predictive Control System (Motion control and control allocation using vessel model)
-                std::vector<double> x0 = {xn, yn, psi, u, v, r}; 
-                mpc_control.solve(x0, wpt[wpt_index-1].x, wpt[wpt_index-1].y, xn_d, yn_d, psi_d, V_c, beta_c, n, alpha, failstate);
-                n_c = mpc_control.get_n_opt();
-                alpha_c = mpc_control.get_alpha_opt();
-                break;
-            }
-            default: {
-                std::cerr << "Invalid control allocation method selected." << std::endl;
-                break_flag = true;
-                break;
-            }
-        }
-
-=======
         planning_time += h;
         if (planning_time >= 2) { // 2 Hz gnss updates
             do { planning_time -= 2; } while (planning_time >= 2);
@@ -1375,16 +1158,11 @@ int main() {
                 }
             }
         }
->>>>>>> 35-pirnn-observer
         // ------------------------------ State updates ------------------------------
 
         // Marine Craft Model, update states: x
         ran_model.rk4(x, mp, V_c, beta_c, h, n, alpha);
-<<<<<<< HEAD
-        //x(11) = ssa(x(11)); //makes plotting look bad       
-=======
         x(11) = ssa(x(11)); //makes plotting look bad       
->>>>>>> 35-pirnn-observer
         
         // Pod model, update states: n and alpha
         ran_model.update_n(n, n_c, h);
@@ -1393,14 +1171,10 @@ int main() {
         // ------------------------------ Plotting and Info ------------------------------
 
         // Show SIM progress once in a while
-<<<<<<< HEAD
-        if (i % 5 == 0) {
-=======
         plotting_time += h;
         if (plotting_time >= 2) { // 2 Hz gnss updates
             do { plotting_time -= 2; } while (plotting_time >= 2);
     
->>>>>>> 35-pirnn-observer
             std::vector<double> GuidanceVectorX;
             std::vector<double> GuidanceVectorY;
             if (GuidanceFlag == 1){
@@ -1413,9 +1187,6 @@ int main() {
             }
 
             plotter.updatePlot(x(6), x(7), x(11), x_est(6), x_est(7), x_est(11), 0.2, GuidanceVectorX, GuidanceVectorY);
-<<<<<<< HEAD
-
-=======
         }
 
         if ((i % 50) == 0) {
@@ -1429,7 +1200,6 @@ int main() {
         }
 
         if (i % 10 == 0) {
->>>>>>> 35-pirnn-observer
             std::cout << std::fixed << std::setprecision(0)
             << "################################################" << std::endl
             << "Iteration: " << i << ", Time: " << floor(t[i]/60) << "min, " << fmod(t[i], 60) << "s, " <<std::endl
@@ -1465,11 +1235,7 @@ int main() {
             << "alpha_c(0), alpha_c(1): " << rad2deg(alpha_c(0)) << ", " << rad2deg(alpha_c(1)) << std::endl
             << "alpha(0), alpha(1):     " << rad2deg(alpha(0)) << ", " << rad2deg(alpha(1)) << std::endl
             << "------------------------------------------------" << std::endl
-<<<<<<< HEAD
-            << "tauX, tauY, tauN: " << tau_XYN[0] << ", " << tau_XYN[1] << ", " << tau_XYN[2] << std::endl
-=======
             << "tauX, tauY, tauN: " << tau_XYN_c[0] << ", " << tau_XYN_c[1] << ", " << tau_XYN_c[2] << std::endl
->>>>>>> 35-pirnn-observer
             << "------------------------------------------------" << std::endl
             << "Nav data GNSS; " << std::endl
             << "Pos 1 (x,y,z): " << nav_pos_1(0) << ", " << nav_pos_1(1) << ", " << nav_pos_1(2) << std::endl
@@ -1481,14 +1247,11 @@ int main() {
             << "Accelerometer (body frame): " << imu.accel.transpose() << " m/s^2" << std::endl
             << "Gyroscope (body frame)    : " << imu.gyro.transpose() << " rad/s" << std::endl
             << "" << std::endl
-<<<<<<< HEAD
-=======
             << "------------------------------------------------" << std::endl
             << "True state:      " << x(0) << ", " << x(1) << ", " << x(2) << ", " << x(3) << ", " << x(4) << ", " << x(5) 
             << ", " << x(6) << ", " << x(7) << ", " << x(8) << ", " << x(9) << ", " << x(10) << ", " << x(11) << std::endl 
             << "Estimated state: " << x_est(0) << ", " << x_est(1) << ", " << x_est(2) << ", " << x_est(3) << ", " << x_est(4) << ", " << x_est(5)
             << ", " << x_est(6) << ", " << x_est(7) << ", " << x_est(8) << ", " << x_est(9) << ", " << x_est(10) << ", " << x_est(11) << std::endl 
->>>>>>> 35-pirnn-observer
             << std::defaultfloat;
         }
 
@@ -1506,16 +1269,6 @@ int main() {
         simdata(i, 21) = alpha_c(1);
         simdata(i, 22) = alpha(0); 
         simdata(i, 23) = alpha(1); 
-<<<<<<< HEAD
-        simdata(i, 24) = tau_XYN[0];
-        simdata(i, 25) = tau_XYN[1];
-        simdata(i, 26) = tau_XYN[2];
-        simdata(i, 27) = closest.point.pos.x;
-        simdata(i, 28) = closest.point.pos.y;
-        simdata(i, 29) = closest.x_e;
-        simdata(i, 30) = closest.y_e;
-        simdata(i, Eigen::seq(31, 42)) = x_est.transpose();  
-=======
         simdata(i, 24) = tau_XYN_c[0];
         simdata(i, 25) = tau_XYN_c[1];
         simdata(i, 26) = tau_XYN_c[2];
@@ -1541,7 +1294,6 @@ int main() {
         simdata(i, 57) = w_est(1);
         simdata(i, 58) = w_est(2);
 
->>>>>>> 35-pirnn-observer
 
         if (break_flag == true) {
             for (int j = i; j < num_steps; ++j) {
@@ -1550,9 +1302,6 @@ int main() {
             }
             break;
         }
-<<<<<<< HEAD
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
-=======
 
         if (g_stop.load(std::memory_order_relaxed)) {
             interrupted = true;
@@ -1571,7 +1320,6 @@ int main() {
 
         // Exit WITHOUT running static/global destructors (prevents segfaults)
         std::_Exit(130);  // or _exit(130)
->>>>>>> 35-pirnn-observer
     }
 
     std::cout << "Simulation completed" << std::endl;
@@ -1580,24 +1328,14 @@ int main() {
 
     plotter.finalizePlot();
 
-<<<<<<< HEAD
-    plotPropellerSpeeds();
-    plotAlphas();
-=======
     //plotPropellerSpeeds();
     //plotAlphas();
->>>>>>> 35-pirnn-observer
     plotTau();
     if (pathType == 1 || pathType == 2) {
         plotTrajectory(wpt, pathLine);
     } else if (pathType == 3) {
         plotTrajectory(wpt, pathFS);
     }
-<<<<<<< HEAD
-    plotClosestPointErrors();
-    plotStateErrors();
-    plotAngles();
-=======
     //plotClosestPointErrors();
     //plotStateErrors();
     //plotAngles();
@@ -1606,10 +1344,12 @@ int main() {
     plotIMUGyro();
 
     plotStateEstimateErrors();
->>>>>>> 35-pirnn-observer
 
     return 0;
 }
+
+
+
 
 
 
