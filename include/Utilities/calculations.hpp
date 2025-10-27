@@ -4,6 +4,11 @@
 #include <cmath>
 #include <vector>
 #include <Eigen/Dense>
+<<<<<<< HEAD
+=======
+#include <Eigen/Core>
+#include <Eigen/Geometry>
+>>>>>>> 35-pirnn-observer
 
 //----------------------------------------------
 // 2D Vector Class
@@ -81,6 +86,30 @@ double deg2rad(double degrees);
 
 double rad2deg(double radians);
 
+<<<<<<< HEAD
+=======
+using Vec3 = Eigen::Vector3d;
+using Mat3 = Eigen::Matrix3d;
+
+// Skew-symmetric matrix: [a]_x
+Mat3  skew3(const Vec3& a);
+
+// Custom ZYX (yaw from North toward East) BODY→END DCM
+Mat3  RnbFromEuler(double phi, double theta, double psi);
+
+// Custom quaternion→DCM (BODY→END) matching the Euler above
+Mat3  RnbFromQuatCustom(const Eigen::Quaterniond& q_in);
+
+// Marine heading ψ from R_nb (angle from North toward East)
+double yawFromRnb(const Mat3& Rnb);
+
+// Heading from quaternion (uses custom converter)
+double yawFromQuatEND(const Eigen::Quaterniond& q_in);
+
+Eigen::Quaterniond quatFromEulerEND(double phi, double theta, double psi); // ZYX
+
+
+>>>>>>> 35-pirnn-observer
 Waypoints addIntermediateWaypoints(const Waypoints& input, double space);
 
 #endif 

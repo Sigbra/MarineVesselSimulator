@@ -13,6 +13,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if(DEFINED ENV{CONDA_PREFIX})
     set(CONDA_PREFIX $ENV{CONDA_PREFIX})
     message(STATUS "Using conda environment at: ${CONDA_PREFIX}")
+<<<<<<< HEAD
+=======
+
+    # Make CMake search the Conda env first and hint FindGSL
+    set(CMAKE_PREFIX_PATH "${CONDA_PREFIX};${CMAKE_PREFIX_PATH}")
+    set(GSL_ROOT_DIR "${CONDA_PREFIX}")
+>>>>>>> 35-pirnn-observer
 endif()
 
 # -----------------------------------
@@ -56,7 +63,12 @@ find_package(yaml-cpp REQUIRED)
 
 # 6. GSL
 find_package(GSL REQUIRED)
+<<<<<<< HEAD
 message(STATUS "GSL found: ${GSL_INCLUDE_DIRS}")
+=======
+message(STATUS "GSL include dirs: ${GSL_INCLUDE_DIRS}")
+message(STATUS "GSL libraries: ${GSL_LIBRARIES}")
+>>>>>>> 35-pirnn-observer
 
 # 7. CasADi
 find_path(CASADI_INCLUDE_DIR casadi/casadi.hpp HINTS ${CONDA_PREFIX}/include)
@@ -93,7 +105,24 @@ set(SOURCES
     src/Models/model_utilities.cpp
 
     src/Observers/EKF12.cpp
+<<<<<<< HEAD
     src/Observers/EKF18.cpp
+=======
+    src/Observers/EKF13.cpp
+    src/Observers/EKF18.cpp
+    src/Observers/nn_EKF_v1.cpp
+    src/Observers/nn_EKF_v2.cpp
+    src/Observers/nn_EKF_v3.cpp
+    src/Observers/nn_ekf_v4.cpp
+    src/Observers/nn_ekf_v5.cpp
+    src/Observers/nn_ekf_v6.cpp
+    src/Observers/nn_ekf_v7.cpp
+    src/Observers/nn_ekf_v8.cpp
+    src/Observers/nn_ekf_v9.cpp
+    src/Observers/nn_ekf_v10.cpp
+    src/Observers/quatObserver.cpp
+    src/Observers/observer_selector.cpp
+>>>>>>> 35-pirnn-observer
 
     src/Planning/fermat_spiral_planning.cpp
     src/Planning/straight_line_planning.cpp
@@ -144,3 +173,51 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ${GSL_LIBRARIES} m)
 
 # matplotlib-cpp
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/external/matplotlib-cpp)
+<<<<<<< HEAD
+=======
+
+# -------- LibTorch (minimal additions) --------
+# Prefer a user-specified Torch_DIR, else try common locations.
+if(NOT Torch_DIR)
+    # 1) your previous path (kept)
+    if(EXISTS "${CMAKE_SOURCE_DIR}/external/libtorch/share/cmake/Torch/TorchConfig.cmake")
+        set(Torch_DIR "${CMAKE_SOURCE_DIR}/external/libtorch/share/cmake/Torch")
+    # 2) common vendor path
+    elseif(EXISTS "${CMAKE_SOURCE_DIR}/third_party/libtorch/share/cmake/Torch/TorchConfig.cmake")
+        set(Torch_DIR "${CMAKE_SOURCE_DIR}/third_party/libtorch/share/cmake/Torch")
+    # 3) your home install from earlier guidance
+    elseif(EXISTS "$ENV{HOME}/libs/libtorch-cu128-2.9.0/share/cmake/Torch/TorchConfig.cmake")
+        set(Torch_DIR "$ENV{HOME}/libs/libtorch-cu128-2.9.0/share/cmake/Torch")
+    endif()
+endif()
+
+find_package(Torch REQUIRED)
+message(STATUS "LibTorch found. TORCH_LIBRARIES = ${TORCH_LIBRARIES}")
+target_link_libraries(${PROJECT_NAME} PRIVATE "${TORCH_LIBRARIES}")
+
+# Add LibTorch's lib dir to RPATH so runtime finds its .so's without env vars
+# Torch sets TORCH_INSTALL_PREFIX; use it if available, else derive from Torch_DIR.
+if(DEFINED TORCH_INSTALL_PREFIX)
+    set(_TORCH_LIBDIR "${TORCH_INSTALL_PREFIX}/lib")
+elseif(Torch_DIR)
+    get_filename_component(_TORCH_ROOT "${Torch_DIR}" DIRECTORY)     # .../share/cmake
+    get_filename_component(_TORCH_ROOT "${_TORCH_ROOT}" DIRECTORY)   # .../share
+    get_filename_component(_TORCH_ROOT "${_TORCH_ROOT}" DIRECTORY)   # .../
+    set(_TORCH_LIBDIR "${_TORCH_ROOT}/lib")
+endif()
+
+if(_TORCH_LIBDIR)
+    set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY BUILD_RPATH "${_TORCH_LIBDIR}")
+    set_property(TARGET ${PROJECT_NAME} APPEND PROPERTY INSTALL_RPATH "${_TORCH_LIBDIR}")
+endif()
+
+# Provide project root as a compile definition for absolute asset paths
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+    MVS_PROJECT_ROOT="${CMAKE_SOURCE_DIR}"
+)
+
+# GCC<9 needs stdc++fs for <filesystem>
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9)
+    target_link_libraries(${PROJECT_NAME} PRIVATE stdc++fs)
+endif()
+>>>>>>> 35-pirnn-observer

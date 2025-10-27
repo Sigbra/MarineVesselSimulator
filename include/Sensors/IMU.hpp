@@ -37,6 +37,18 @@ IMUData raw_IMU(const Eigen::VectorXd &x,
                 double sigma_acc = 0.01,
                 double sigma_gyro = 0.001);
 
+<<<<<<< HEAD
+=======
+IMUData raw_IMU_v2(const Eigen::VectorXd &x,
+                   const Eigen::VectorXd &x_dot,
+                   std::mt19937 &gen,
+                   Eigen::Vector3d &ba,          // accel bias (updated in-place)
+                   Eigen::Vector3d &bgyro,       // gyro bias (updated in-place)
+                   double dt,                    // <-- sample time [s]
+                   double sigma_acc_nd,          // accel noise density [m/s^2 / sqrt(Hz)]
+                   double sigma_gyro_nd);
+
+>>>>>>> 35-pirnn-observer
 // Remove gravity from raw accelerometer using attitude (φ,θ,ψ)
 Eigen::Vector3d GravityCompensation(const Eigen::Vector3d &accel_raw,
                                     double phi, double theta, double psi);

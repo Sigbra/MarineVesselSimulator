@@ -34,6 +34,11 @@ class RAN {
 
         void update_n(Eigen::Vector2d& n, Eigen::Vector2d n_c, double h);
         void update_alpha(Eigen::Vector2d& alpha, Eigen::Vector2d alpha_c, double h);
+<<<<<<< HEAD
+=======
+
+        Eigen::VectorXd tau_pods(Eigen::Vector2d n, Eigen::Vector2d alpha);
+>>>>>>> 35-pirnn-observer
         
         Eigen::VectorXd get_xdot() const { return xdot; }
         Eigen::MatrixXd get_M() const { return M; }

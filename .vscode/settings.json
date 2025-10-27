@@ -97,6 +97,15 @@
     "stdfloat": "cpp",
     "typeindex": "cpp",
     "valarray": "cpp",
+<<<<<<< HEAD
     "dense": "cpp"
+=======
+    "dense": "cpp",
+    "forward_list": "cpp",
+    "unordered_set": "cpp",
+    "ranges": "cpp",
+    "core": "cpp",
+    "specialfunctions": "cpp"
+>>>>>>> 35-pirnn-observer
 }
 }
