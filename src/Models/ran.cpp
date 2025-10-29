@@ -267,6 +267,16 @@ void RAN::update(const Eigen::VectorXd x, double mp, double V_c, double beta_c,
     // ---------------------------
     Eigen::VectorXd tau_crossflow = crossFlowDrag(L, Beam_pont, T_draft, nu_r);
     
+    //----------------------------
+    // Wave drift disturbances
+    //----------------------------
+    Eigen::VectorXd tau_wave = Eigen::VectorXd::Zero(6); 
+    if (waves_on) {
+        tau_wave(0) = tau_wave_body_cached(0); 
+        tau_wave(1) = tau_wave_body_cached(1); 
+        tau_wave(5) = tau_wave_body_cached(2);  
+    }
+
     // ---------------------------
     // Payload forces and moments
     // ---------------------------
@@ -309,7 +319,7 @@ void RAN::update(const Eigen::VectorXd x, double mp, double V_c, double beta_c,
     //std::cout << "C_sys * nu_r: " << (C_sys * nu_r).transpose() << std::endl;
     //std::cout << "G * eta: " << (G * eta).transpose() << std::endl;
 
-    Eigen::VectorXd force_term = tau + tau_damp + tau_crossflow - C_sys * nu_r - G * eta;
+    Eigen::VectorXd force_term = tau + tau_damp + tau_crossflow + tau_wave - C_sys * nu_r - G * eta;
     //std::cout << "force_term: " << force_term.transpose() << std::endl;
     //std::cout << "force_term dimensions: " << force_term.rows() << "x" << force_term.cols() << std::endl;
 
@@ -518,4 +528,67 @@ void RAN::select_failure_mode() {
             std::cout << "Invalid choice. Please try again.\n";
         }
     }
+}
+
+//----------------Wave environment-----------------------
+
+void RAN::set_wave_params(double _wn_u, double _z_u, double _K_u, double _sigw_u,
+                          double _wn_v, double _z_v, double _K_v, double _sigw_v,
+                          double _wn_r, double _z_r, double _K_r, double _sigw_r,
+                          double _Td,    double _sigw_X, double _sigw_Y, double _sigw_N)
+{
+    wn_u=_wn_u; z_u=_z_u; K_u=_K_u; sigw_u=_sigw_u;
+    wn_v=_wn_v; z_v=_z_v; K_v=_K_v; sigw_v=_sigw_v;
+    wn_r=_wn_r; z_r=_z_r; K_r=_K_r; sigw_r=_sigw_r;
+    Td=_Td; sigw_X=_sigw_X; sigw_Y=_sigw_Y; sigw_N=_sigw_N;
+}
+
+void RAN::wave_step_drift(double dt)
+{
+    if (!waves_on) { d_wave.setZero(); tau_wave_body_cached.setZero(); return; }
+
+    const double inv_sqrt_dt = 1.0 / std::sqrt(std::max(1e-12, dt));
+    const double wX = N01(rng) * sigw_X * inv_sqrt_dt;
+    const double wY = N01(rng) * sigw_Y * inv_sqrt_dt;
+    const double wN = N01(rng) * sigw_N * inv_sqrt_dt;
+
+    // ḋ = -d/Td + w
+    const double invTd = 1.0 / std::max(1e-6, Td);
+    d_wave[0] += dt * (-d_wave[0]*invTd + wX);
+    d_wave[1] += dt * (-d_wave[1]*invTd + wY);
+    d_wave[2] += dt * (-d_wave[2]*invTd + wN);
+
+    tau_wave_body_cached = d_wave; // use this constant over the RK4 substeps
+}
+
+static inline void wf_step_pair(Eigen::Vector2d& x,
+                                double wn, double z, double K, double sigw,
+                                double dt, std::mt19937_64& rng,
+                                std::normal_distribution<double>& N01)
+{
+    const double inv_sqrt_dt = 1.0 / std::sqrt(std::max(1e-12, dt));
+    const double wi = N01(rng) * sigw * inv_sqrt_dt;
+
+    // x = [ξ, η_w],  ξ̇ = η_w
+    const double xi   = x[0];
+    const double etaw = x[1];
+
+    const double xidot   = etaw;
+    const double etawdot = -(wn*wn)*xi - 2.0*z*wn*etaw + K*wi;
+
+    x[0] = xi   + dt * xidot;
+    x[1] = etaw + dt * etawdot;
+}
+
+void RAN::wave_step_WF(double dt)
+{
+    if (!waves_on) { eta_w_EN.setZero(); return; }
+
+    wf_step_pair(xw_u, wn_u, z_u, K_u, sigw_u, dt, rng, N01);
+    wf_step_pair(xw_v, wn_v, z_v, K_v, sigw_v, dt, rng, N01);
+    wf_step_pair(xw_r, wn_r, z_r, K_r, sigw_r, dt, rng, N01);
+
+    // The slide puts η_w into the END (earth) frame in measurement eqn.
+    // Here we directly store [xw, yw, ψw] for you to add to your outputs.
+    eta_w_EN << xw_u[1], xw_v[1], xw_r[1];
 }

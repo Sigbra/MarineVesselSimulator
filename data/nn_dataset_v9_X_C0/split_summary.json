@@ -1,8 +1,8 @@
 {
   "counts": {
-    "train": 215600,
-    "val": 46400,
-    "test": 46400
+    "train": 215000,
+    "val": 46000,
+    "test": 46000
   },
   "fractions": {
     "val_frac": 0.15,
@@ -10,7 +10,7 @@
     "train_frac": 0.7
   },
   "shuffle_windows": true,
-  "seq": 400,
+  "seq": 200,
   "seed": 123,
   "tau_source": "actual"
 }

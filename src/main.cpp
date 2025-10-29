@@ -416,7 +416,7 @@ int main() {
 
     // NN init (make sure norm_stats.json is for v9 (10-dim inputs))
     static nnqekf_v9::NN_v9 nn_v9;
-    bool ok_v9 = nn_v9.init("data/nn_model_v9_ens2_3/ts",
+    bool ok_v9 = nn_v9.init("data/nn_model_v9_ens4_40/ts",
                         "data/nn_dataset_v9_X_C0/norm_stats.json",
                         /*use_cuda=*/true);
     if (!ok_v9) { std::cerr << "[NNv9] init failed; running without NN.\n"; }
@@ -454,7 +454,7 @@ int main() {
 
     // NN init (make sure norm_stats.json is for v9 (10-dim inputs))
     static nnqekf_v10::NN_v10 nn_v10;
-    bool ok_v10 = nn_v10.init("data/nn_model_v9_ens4_21/ts",
+    bool ok_v10 = nn_v10.init("data/nn_model_v9_ens4_40/ts",
                         "data/nn_dataset_v9_X_C0/norm_stats.json",
                         /*use_cuda=*/true);
     if (!ok_v10) { std::cerr << "[NNv10] init failed; running without NN.\n"; }
@@ -486,6 +486,14 @@ int main() {
 
     Eigen::Vector2d n = Eigen::Vector2d::Zero(); // Propeller speeds (rad/s)      
     Eigen::Vector2d alpha = Eigen::Vector2d::Zero(); // Azimuth angles (rad)
+
+    ran_model.set_wave_params(
+        /*surge*/ 1.1, 0.28, 0.30, 0.8,   // wn, z, K, sigw
+        /*sway */ 1.1, 0.28, 0.45, 0.8,
+        /*yaw  */ 1.1, 0.22, 0.025, 0.8,
+        /*drift*/ 180.0, 15.0, 18.0, 150.0  // Td, sigw_X, sigw_Y, sigw_N
+    );
+
 
     // Model est
     RAN ran_model_est;
@@ -603,12 +611,25 @@ int main() {
         Eigen::VectorXd tau_full = ran_model_est.tau_pods(n, alpha);
         tau_XYN = {tau_full(0), tau_full(1), tau_full(5)};
 
-        xdot = ran_model.get_xdot();
+        Eigen::VectorXd x_w = x;                       // start from LF truth
+        const Eigen::Vector3d eta_w   = ran_model.get_wave_eta_EN();   // [xw, yw, ψw]
+        const Eigen::Vector3d etadot_w = ran_model.get_wave_rate_EN(); // [ẋw, ẏw, ψ̇w]
+
+        // x layout assumed [η(0..5); ν(6..11)] with η = [x y z φ θ ψ]   Obs obs !!!!! wrong
+        x_w(0) += eta_w[0];   // east
+        x_w(1) += eta_w[1];   // north
+        x_w(5)  = ssa(x(5) + eta_w[2]);  // yaw + ψ_w, keep wrapping if you have a helper
+
+        xdot = ran_model.get_xdot();                     // LF dynamics
+        imu   = raw_IMU_v2(x, xdot, gen, ba, bgyro, h, acc_nd, gyro_nd);
+        imu.gyro[2] += etadot_w[2];                      // add ψ̇_w to yaw rate
+
         //imu = raw_IMU(x, xdot, gen, ba, bgyro, 0.01, 0.001);
         // imu.accel: Eigen::Vector3d (body z-down)  -> [ax ay az]
         // imu.gyro : Eigen::Vector3d (body z-down)  -> [wx wy wz]
 
         imu = raw_IMU_v2(x, xdot, gen, ba, bgyro, h, acc_nd, gyro_nd);
+        imu.gyro[2] += etadot_w[2];                      // add ψ̇_w to yaw rate
 
         have_gnss_now = false;
         gnss_time += h;
@@ -616,8 +637,8 @@ int main() {
             do { gnss_time -= 0.5; } while (gnss_time >= 0.5);
 
             // Simulate raw GNSS measurements for both antennas
-            ant1_meas = raw_GNSS(x, lever_arm_port_body, gen, 0.02);
-            ant2_meas = raw_GNSS(x, lever_arm_stbd_body, gen, 0.02);
+            ant1_meas = raw_GNSS(x_w, lever_arm_port_body, gen, 0.02);
+            ant2_meas = raw_GNSS(x_w, lever_arm_stbd_body, gen, 0.02);
 
             // Transform raw_GNSS position to origin position.
             nav_pos_1 = origin_from_raw_GNSS(x_est, ant1_meas, lever_arm_port_body);
@@ -629,34 +650,34 @@ int main() {
             if (!have_gnss_now) {
             std::cerr << "NaN psi_gnss at i=" << i << ", t=" << t[i] << "s\n";
             }
-            // ---- DEBUG: Baseline (port->stbd) vs body axes alignment ----
-            if (have_gnss_now) {
-                // END baseline from port->stbd:
-                Eigen::Vector3d b_nav = ant2_meas - ant1_meas;
-                double psi_baseline = std::atan2(b_nav.x(), b_nav.y()); // atan2(E, N)
-                double psi_true     = x(11);                            // truth yaw (END)
+            // // ---- DEBUG: Baseline (port->stbd) vs body axes alignment ----
+            // if (have_gnss_now) {
+            //     // END baseline from port->stbd:
+            //     Eigen::Vector3d b_nav = ant2_meas - ant1_meas;
+            //     double psi_baseline = std::atan2(b_nav.x(), b_nav.y()); // atan2(E, N)
+            //     double psi_true     = x(11);                            // truth yaw (END)
 
-                // columns of R_nb are nav directions of body axes
-                // xB_EN = R_nb.col(0) ~ heading; yB_EN = R_nb.col(1) ~ starboard
-                Eigen::Matrix3d Rnb_dbg = RnbFromQuatCustom(quatFromEulerEND(x(9), x(10), x(11)));
-                Eigen::Vector2d xB_EN = Rnb_dbg.block<2,1>(0,0);
-                Eigen::Vector2d yB_EN = Rnb_dbg.block<2,1>(0,1);
+            //     // columns of R_nb are nav directions of body axes
+            //     // xB_EN = R_nb.col(0) ~ heading; yB_EN = R_nb.col(1) ~ starboard
+            //     Eigen::Matrix3d Rnb_dbg = RnbFromQuatCustom(quatFromEulerEND(x(9), x(10), x(11)));
+            //     Eigen::Vector2d xB_EN = Rnb_dbg.block<2,1>(0,0);
+            //     Eigen::Vector2d yB_EN = Rnb_dbg.block<2,1>(0,1);
 
-                // unit EN projection of baseline:
-                Eigen::Vector2d b_EN = b_nav.head<2>();
-                double b_norm = b_EN.norm();
-                if (b_norm > 1e-9) b_EN /= b_norm;
+            //     // unit EN projection of baseline:
+            //     Eigen::Vector2d b_EN = b_nav.head<2>();
+            //     double b_norm = b_EN.norm();
+            //     if (b_norm > 1e-9) b_EN /= b_norm;
 
-                // alignment cosines:
-                double cos_b_xB = b_EN.dot(xB_EN); // should be ~0 if baseline is y-axis
-                double cos_b_yB = b_EN.dot(yB_EN); // should be ~+1 for port->stbd
+            //     // alignment cosines:
+            //     double cos_b_xB = b_EN.dot(xB_EN); // should be ~0 if baseline is y-axis
+            //     double cos_b_yB = b_EN.dot(yB_EN); // should be ~+1 for port->stbd
 
-                std::cerr << std::fixed << std::setprecision(2)
-                  << "[baseline] bearing=" << rad2deg(psi_baseline)
-                  << "deg,  psi_true=" << rad2deg(psi_true)
-                  << "deg,  dot(b,xB)=" << cos_b_xB
-                  << ",  dot(b,yB)=" << cos_b_yB << "\n";
-            }
+            //     std::cerr << std::fixed << std::setprecision(2)
+            //       << "[baseline] bearing=" << rad2deg(psi_baseline)
+            //       << "deg,  psi_true=" << rad2deg(psi_true)
+            //       << "deg,  dot(b,xB)=" << cos_b_xB
+            //       << ",  dot(b,yB)=" << cos_b_yB << "\n";
+            // }
         }
 
         // 1) External attitude (q-Obs)
@@ -958,10 +979,10 @@ int main() {
                 ekf_v10.propagate(imu.gyro, imu.accel, h);
 
                 // 3) NN giving pseudo correction for velocity estimates)
-                ekf_v10.feedNN(imu.accel, q_nb_can, tau_XYN[0], tau_XYN[1], tau_XYN[2]);
+                //ekf_v10.feedNN(imu.accel, q_nb_can, tau_XYN[0], tau_XYN[1], tau_XYN[2]);
 
                 // 4) GNSS position giving position and velocity corrections 
-                //have_gnss_now=false; //Testing deadreconing
+                have_gnss_now=false; //Testing deadreconing
                 if (have_gnss_now) {
                     Eigen::Matrix3d Rpos_port = Eigen::Matrix3d::Identity() * std::pow(0.5, 2); 
                     Eigen::Matrix3d Rpos_stbd = Eigen::Matrix3d::Identity() * std::pow(0.5, 2);
@@ -1162,7 +1183,10 @@ int main() {
 
         // Marine Craft Model, update states: x
         ran_model.rk4(x, mp, V_c, beta_c, h, n, alpha);
-        x(11) = ssa(x(11)); //makes plotting look bad       
+        x(11) = ssa(x(11)); //makes plotting look bad    
+        
+        // Advance WF filters once and cache END measurement disturbance
+        ran_model.wave_step_WF(h);
         
         // Pod model, update states: n and alpha
         ran_model.update_n(n, n_c, h);
