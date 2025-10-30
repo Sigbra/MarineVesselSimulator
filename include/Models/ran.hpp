@@ -3,6 +3,8 @@
 #define RAN_HPP
 
 #include <Eigen/Dense>
+#include <random>
+#include <vector>  // minimal add: needed for std::vector<bool> in API
 
 //-------------------------------------------------------------------
 // The ran() function
@@ -52,6 +54,22 @@ class RAN {
         
         void select_failure_mode();
         std::vector<bool> check_failstate();
+
+        // --- Wave API (public so your sim/IO can read & tune) ---
+        void enable_waves(bool on) { waves_on = on; }
+        void set_wave_params(      // quick bulk setter
+            double wn_u, double z_u, double K_u, double sigw_u,
+            double wn_v, double z_v, double K_v, double sigw_v,
+            double wn_r, double z_r, double K_r, double sigw_r,
+            double Td_drift, double sigw_X, double sigw_Y, double sigw_N);
+        Eigen::Vector3d get_wave_eta_EN() const { return eta_w_EN; }   // [xw,yw,psw]
+        Eigen::Vector3d get_wave_body_drift() const { return d_wave; } // [X,Y,N]
+
+        // minimal add: you use this in main to get wave rates
+        Eigen::Vector3d get_wave_rate_EN() const { return etadot_w_EN; } // [ẋw,ẏw,ψ̇w]
+
+        // minimal change: make WF step public so main can call ran_model.wave_step_WF(h)
+        void wave_step_WF(double dt);      // updates xw_* and eta_w_EN (+ etadot_w_EN)
 
     private:
 
@@ -129,6 +147,37 @@ class RAN {
         bool n2_fail;
 
         Eigen::VectorXd thrust_coeffs;
+
+        // ---- Wave parameters ----
+        bool   waves_on{true};
+        // WF natural freqs, damping, gains, and driving intensities
+        double wn_u{0.8}, z_u{0.25}, K_u{0.5}, sigw_u{1.0};
+        double wn_v{0.8}, z_v{0.25}, K_v{0.6}, sigw_v{1.0};
+        double wn_r{0.8}, z_r{0.20}, K_r{0.03}, sigw_r{1.0};
+        // Drift: time constant and white-noise intensities (per axis)
+        double Td{120.0}, sigw_X{40.0}, sigw_Y{40.0}, sigw_N{400.0};
+
+        // ---- Outputs cached this step ----
+        Eigen::Vector3d eta_w_EN{Eigen::Vector3d::Zero()};   // measurement offsets
+        Eigen::Vector3d tau_wave_body_cached{Eigen::Vector3d::Zero()}; // body forces for update()
+        // minimal add: rate of wave outputs (used by your IMU yaw-rate addition)
+        Eigen::Vector3d etadot_w_EN{Eigen::Vector3d::Zero()}; // [ẋw,ẏw,ψ̇w]
+
+        // minimal add: internal WF states per DOF (needed by wave_step_WF impl)
+        Eigen::Vector2d xw_u{Eigen::Vector2d::Zero()}; // [ξ, ηw] surge
+        Eigen::Vector2d xw_v{Eigen::Vector2d::Zero()}; // [ξ, ηw] sway
+        Eigen::Vector2d xw_r{Eigen::Vector2d::Zero()}; // [ξ, ηw] yaw
+
+        // minimal add: BODY drift state (used by get_wave_body_drift)
+        Eigen::Vector3d d_wave{Eigen::Vector3d::Zero()}; // [X_d, Y_d, N_d]
+
+        // ---- RNG (repeatable unless reseeded) ----
+        std::mt19937_64 rng{1234567ULL};
+        std::normal_distribution<double> N01{0.0,1.0};
+
+        // ---- Internal wave helpers (called from rk4) ----
+        void wave_step_drift(double dt);   // updates d_wave and tau_wave_body_cached
+        // wave_step_WF(dt) is declared public above (no duplicate here)
 };
                 
 #endif // RAN_HPP

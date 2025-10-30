@@ -27,7 +27,7 @@ python3 scripts/nn_observer_v9.py \
   --val   data/nn_dataset_v9_X_C0/val.csv \
   --test  data/nn_dataset_v9_X_C0/test.csv \
   --out   data/nn_model_v9_ens4 \
-  --seq 300 --epochs 200 --gpu --ensemble 4 \
+  --seq 300 --epochs 2000 --gpu --ensemble 4 \
   --norm_json data/nn_dataset_v9_X_C0/norm_stats.json
 """
 
@@ -60,52 +60,155 @@ from ran_model_loss import ran_translational_loss_v9
 
 # ==================== GRU model (inputs 10 -> outputs 3) ====================
 
+# class VelNetV9(nn.Module):
+#     """
+#     Regular GRU over full input:
+#       x[t] = [ax, ay, az, qw, qx, qy, qz, tau_x, tau_y, tau_n]  (10-D)
+#     Output per step: [vE, vN, vD]
+#     """
+#     def __init__(self,
+#                  hidden: int = 64,
+#                  num_layers: int = 3,
+#                  dropout_p: float = 0.2,
+#                  use_layernorm: bool = True,
+#                  leaky: float = 0.01):
+#         super().__init__()
+#         self.input_dim   = 10
+#         self.hidden_GRU  = hidden
+#         self.hidden_head = (3 * hidden) // 4
+#         self.num_layers  = num_layers
+
+#         self.gru = nn.GRU(
+#             input_size=self.input_dim,
+#             hidden_size=self.hidden_GRU,
+#             num_layers=self.num_layers,
+#             batch_first=True
+#         )
+
+#         self.post_gru_norm = nn.LayerNorm(self.hidden_GRU) if use_layernorm else nn.Identity()
+#         self.act = nn.LeakyReLU(leaky, inplace=True) if leaky > 0.0 else nn.ReLU(inplace=True)
+
+#         self.head = nn.Sequential(
+#             nn.Linear(self.hidden_GRU, self.hidden_head),
+#             nn.ReLU(inplace=True),
+#             nn.Dropout(p=dropout_p),
+#             nn.Linear(self.hidden_head, 3),
+#         )
+
+#     def __repr__(self) -> str:
+#         return (f"{self.__class__.__name__}(GRU in=10, hidden_GRU={self.hidden_GRU}, "
+#                 f"hidden_head={self.hidden_head}, layers={self.num_layers}) -> 3")
+
+#     def forward(self, x_bt10: torch.Tensor) -> torch.Tensor:
+#         z, _ = self.gru(x_bt10)      # [B,T,H]
+#         z = self.post_gru_norm(z)
+#         z = self.act(z)
+#         y = self.head(z)             # [B,T,3] -> [vE,vN,vD]
+#         return y
+
+# class VelNetV9(nn.Module):
+#     """
+#     Regular GRU over full input:
+#       x[t] = [ax, ay, az, qw, qx, qy, qz, tau_x, tau_y, tau_n]  (10-D)
+#     Output per step: [vE, vN, vD]
+#     """
+#     def __init__(self,
+#                  hidden: int = 64,
+#                  num_layers: int = 3,
+#                  dropout_p: float = 0.2,
+#                  use_layernorm: bool = True,
+#                  leaky: float = 0.01):  # kept for backward-compat, unused
+#         super().__init__()
+#         self.input_dim   = 10
+#         self.hidden_GRU  = hidden
+#         self.num_layers  = num_layers
+#         self.dropout_p   = dropout_p
+
+#         self.gru = nn.GRU(
+#             input_size=self.input_dim,
+#             hidden_size=self.hidden_GRU,
+#             num_layers=self.num_layers,
+#             batch_first=True
+#         )
+
+#         # Optional post-GRU normalization
+#         self.post_gru_norm = nn.LayerNorm(self.hidden_GRU) if use_layernorm else nn.Identity()
+
+#         # Minimal head: Dropout -> Linear(3)
+#         self.dropout = nn.Dropout(p=dropout_p)
+#         self.out = nn.Linear(self.hidden_GRU, 3)
+
+#     def __repr__(self) -> str:
+#         return (f"{self.__class__.__name__}(GRU in=10, hidden_GRU={self.hidden_GRU}, "
+#                 f"layers={self.num_layers}, dropout_p={self.dropout_p}) -> 3")
+
+#     def forward(self, x_bt10: torch.Tensor) -> torch.Tensor:
+#         z, _ = self.gru(x_bt10)      # [B, T, H]
+#         z = self.post_gru_norm(z)
+#         z = self.dropout(z)
+#         z, _ = self.gru(x_bt10)      # [B, T, H]
+#         z = self.post_gru_norm(z)
+#         z = self.dropout(z)
+#         y = self.out(z)              # [B, T, 3] -> [vE, vN, vD]
+#         return y
+
 class VelNetV9(nn.Module):
     """
-    Regular GRU over full input:
+    Two-stage GRU over full input:
       x[t] = [ax, ay, az, qw, qx, qy, qz, tau_x, tau_y, tau_n]  (10-D)
     Output per step: [vE, vN, vD]
     """
     def __init__(self,
                  hidden: int = 64,
-                 num_layers: int = 3,
+                 num_layers: int = 3,  
                  dropout_p: float = 0.2,
                  use_layernorm: bool = True,
-                 leaky: float = 0.01):
+                 leaky: float = 0.01):  # kept for backward-compat, unused
         super().__init__()
         self.input_dim   = 10
         self.hidden_GRU  = hidden
-        self.hidden_head = (3 * hidden) // 4
+        self.dropout_p   = dropout_p
         self.num_layers  = num_layers
 
-        self.gru = nn.GRU(
-            input_size=self.input_dim,
-            hidden_size=self.hidden_GRU,
-            num_layers=self.num_layers,
-            batch_first=True
-        )
+        # Explicit 2-layer stack so we can put LN/Dropout between layers
+        self.gru1 = nn.GRU(input_size=self.input_dim,
+                           hidden_size=self.hidden_GRU,
+                           num_layers=self.num_layers,
+                           batch_first=True)
+        self.gru2 = nn.GRU(input_size=self.hidden_GRU,
+                           hidden_size=self.hidden_GRU,
+                           num_layers=self.num_layers,
+                           batch_first=True)
 
-        self.post_gru_norm = nn.LayerNorm(self.hidden_GRU) if use_layernorm else nn.Identity()
-        self.act = nn.LeakyReLU(leaky, inplace=True) if leaky > 0.0 else nn.ReLU(inplace=True)
+        # Optional normalization per stage
+        self.ln1 = nn.LayerNorm(self.hidden_GRU) if use_layernorm else nn.Identity()
+        self.ln2 = nn.LayerNorm(self.hidden_GRU) if use_layernorm else nn.Identity()
 
-        self.head = nn.Sequential(
-            nn.Linear(self.hidden_GRU, self.hidden_head),
-            nn.ReLU(inplace=True),
-            nn.Dropout(p=dropout_p),
-            nn.Linear(self.hidden_head, 3),
-        )
+        # Dropout between stages and before head
+        self.do1 = nn.Dropout(p=dropout_p)
+        self.do2 = nn.Dropout(p=dropout_p)
+
+        # Minimal head
+        self.out = nn.Linear(self.hidden_GRU, 3)
 
     def __repr__(self) -> str:
-        return (f"{self.__class__.__name__}(GRU in=10, hidden_GRU={self.hidden_GRU}, "
-                f"hidden_head={self.hidden_head}, layers={self.num_layers}) -> 3")
+        return (f"{self.__class__.__name__}(GRU2 in=10, hidden={self.hidden_GRU}, "
+                f"dropout_p={self.dropout_p}) -> 3")
 
     def forward(self, x_bt10: torch.Tensor) -> torch.Tensor:
-        z, _ = self.gru(x_bt10)      # [B,T,H]
-        z = self.post_gru_norm(z)
-        z = self.act(z)
-        y = self.head(z)             # [B,T,3] -> [vE,vN,vD]
-        return y
+        # Stage 1
+        z, _ = self.gru1(x_bt10)   # [B, T, H]
+        z = self.ln1(z)
+        z = self.do1(z)
 
+        # Stage 2
+        #z, _ = self.gru2(z)        # [B, T, H]
+        #z = self.ln2(z)
+        #z = self.do2(z)
+
+        # Head
+        y = self.out(z)            # [B, T, 3] -> [vE, vN, vD]
+        return y
 
 # ==================== Losses ====================
 
@@ -136,7 +239,7 @@ def total_loss(pred_bt3: torch.Tensor,
     x_raw = x_norm_bt10 * x_std_t + x_mean_t  # [B,T,10] real units
 
     # physics term (τ in BODY, custom R_nb, uses ω_b)
-    L_phys = ran_translational_loss_v9(pred_bt3, x_raw, dt, w_est_bt3)
+    L_phys = ran_translational_loss_v9(pred_bt3, x_raw, dt, w_est_bt3) 
 
     L = w.mse * L_mse + w.trans * L_phys
     return L, {
@@ -160,6 +263,7 @@ class TrainCfg:
     loss_w: "LossWeights" = field(default_factory=LossWeights)
     x_mean: torch.Tensor = None  # [1,1,10]
     x_std:  torch.Tensor = None  # [1,1,10]
+    print_period: int = 100
 
 class SeqDataset(torch.utils.data.Dataset):
     """Return (x_bt10, y_bt3, w_bt3) per item."""
@@ -245,8 +349,9 @@ def train_one_model(model: nn.Module,
             best_val = val_total
             best_state = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
 
-        print(f"[{epoch+1:03d}/{cfg.epochs}] train_total={train_total:.6g}  "
-              f"val_total={val_total:.6g}  (val MSE v={hist['val_mse_v'][-1]:.6g})")
+        if (epoch + 1) % cfg.print_period == 0:
+            print(f"[{epoch+1:03d}/{cfg.epochs}] train_total={train_total:.6g}  "
+                f"val_total={val_total:.6g}  (val MSE v={hist['val_mse_v'][-1]:.6g})")
 
     if best_state is not None:
         model.load_state_dict(best_state, strict=True)
@@ -506,9 +611,12 @@ def compute_metrics(y_pred: np.ndarray, y_gt: np.ndarray) -> Dict[str, float]:
         "MSE_vE": float(mse[0]), "MSE_vN": float(mse[1]), "MSE_vD": float(mse[2]),
         "RMSE_vE": float(rmse[0]), "RMSE_vN": float(rmse[1]), "RMSE_vD": float(rmse[2]),
         "MAE_vE": float(mae[0]), "MAE_vN": float(mae[1]), "MAE_vD": float(mae[2]),
-        "MSE_total": float(np.mean(mse)),
-        "RMSE_total": float(np.sqrt(np.mean(mse))),
-        "MAE_total": float(np.mean(mae)),
+        "MSE_mean": float(np.mean(mse)),
+        "RMSE_mean": float(np.sqrt(np.mean(mse))),
+        "MAE_mean": float(np.mean(mae)),
+        "MSE_total":  float(np.sum(mse)),
+        "RMSE_total": float(np.sqrt(np.sum(mse))),
+        "MAE_total":  float(np.sum(mae)),
     }
     return out
 
@@ -553,21 +661,22 @@ def main():
     parser = argparse.ArgumentParser(description="Train velocity-only NN (no gyro) with RAN-based physics-informed loss (GRU).")
     parser.add_argument("--train", required=True, help="Path to training CSV")
     parser.add_argument("--val",   required=True, help="Path to validation CSV")
-    parser.add_argument("--test",  required=True, help="Path to test CSV")  # NEW
+    parser.add_argument("--test",  required=True, help="Path to test CSV")  
     parser.add_argument("--out",   required=True, help="Output directory (models, plots)")
-    parser.add_argument("--seq",   type=int, default=400, help="Sequence length T")
+    parser.add_argument("--seq",   type=int, default=200, help="Sequence length T")
     parser.add_argument("--epochs",type=int, default=10000, help="Training epochs")
-    parser.add_argument("--batch", type=int, default=256,  help="Batch size")
-    parser.add_argument("--lr",    type=float, default=2e-4, help="Learning rate")
-    parser.add_argument("--wd",    type=float, default=0.0, help="Weight decay")
+    parser.add_argument("--batch", type=int, default=512,  help="Batch size") 
+    parser.add_argument("--lr",    type=float, default=1e-4, help="Learning rate")
+    parser.add_argument("--wd",    type=float, default=1e-3, help="Weight decay") 
     parser.add_argument("--gpu",   action="store_true", help="Use CUDA if available")
-    parser.add_argument("--ensemble", type=int, default=1, help="Number of models to train")
-    parser.add_argument("--dropout",  type=float, default=0.1, help="GRU inter-layer dropout p")
+    parser.add_argument("--ensemble", type=int, default=4, help="Number of models to train")
+    parser.add_argument("--dropout",  type=float, default=0.0, help="GRU inter-layer dropout p") #0.05
     parser.add_argument("--qwidth",   type=int, default=128, help="GRU hidden size")
     parser.add_argument("--dt",       type=float, default=0.01, help="Sample period (s)")
     parser.add_argument("--norm_json", type=str, default="", help="Normalization JSON path")
     parser.add_argument("--seed",     type=int, default=42, help="Random seed (member 0). Members use seed+i")
     parser.add_argument("--w_phys",   type=float, default=1.0, help="Physics loss weight")
+    parser.add_argument("--print_period", type=int, default=100, help="Print every N epochs")
     args = parser.parse_args()
 
     os.makedirs(args.out, exist_ok=True)
@@ -630,9 +739,10 @@ def main():
 
         model = VelNetV9(hidden=args.qwidth, num_layers=3, dropout_p=args.dropout).to(device)
         cfg = TrainCfg(epochs=args.epochs, lr=args.lr, weight_decay=args.wd,
-                       dt=args.dt, dropout_p=args.dropout, qwidth=args.qwidth,
-                       device=device, loss_w=LossWeights(mse=1.0, trans=args.w_phys),
-                       x_mean=x_mean_t, x_std=x_std_t)
+               dt=args.dt, dropout_p=args.dropout, qwidth=args.qwidth,
+               device=device, loss_w=LossWeights(mse=1.0, trans=args.w_phys),
+               x_mean=x_mean_t, x_std=x_std_t,
+               print_period=args.print_period)
 
         member_dir = os.path.join(args.out, f"member_{m:02d}")
         os.makedirs(member_dir, exist_ok=True)
