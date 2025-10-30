@@ -1,0 +1,16 @@
+{
+  "counts": {
+    "train": 124029,
+    "val": 26577,
+    "test": 26577
+  },
+  "fractions": {
+    "val_frac": 0.15,
+    "test_frac": 0.15,
+    "train_frac": 0.7
+  },
+  "dt": 0.01,
+  "indices": [
+    1
+  ]
+}

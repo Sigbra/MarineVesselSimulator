@@ -46,6 +46,7 @@ class RAN {
 
         double getT_n() const { return T_n; }
         double getT_alpha() const { return T_alpha; }
+        Eigen::VectorXd getThrustCoeffs() const {return thrust_coeffs; }
 
         void fail_state_n1() { n1_fail = true; }
         void fail_state_n2() { n2_fail = true; }
