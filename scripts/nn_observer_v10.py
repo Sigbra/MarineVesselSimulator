@@ -245,7 +245,7 @@ def total_loss(pred_bt3: torch.Tensor,
     # physics term (τ in BODY, custom R_nb, uses ω_b)
     L_phys = ran_translational_loss_v9(pred_bt3, x_raw, dt, w_est_bt3) 
 
-    L =  w.trans * L_phys # w.mse * L_mse +
+    L = w.mse * L_mse + w.trans * L_phys 
     return L, {
         "total": float(L.detach().cpu()),
         "mse_v": float(L_mse.detach().cpu()),
@@ -670,16 +670,16 @@ def main():
     parser.add_argument("--seq",   type=int, default=200, help="Sequence length T")
     parser.add_argument("--epochs",type=int, default=10000, help="Training epochs")
     parser.add_argument("--batch", type=int, default=512,  help="Batch size") 
-    parser.add_argument("--lr",    type=float, default=1e-3, help="Learning rate")
+    parser.add_argument("--lr",    type=float, default=1e-4, help="Learning rate")
     parser.add_argument("--wd",    type=float, default=1e-3, help="Weight decay") 
     parser.add_argument("--gpu",   action="store_true", help="Use CUDA if available")
     parser.add_argument("--ensemble", type=int, default=4, help="Number of models to train")
-    parser.add_argument("--dropout",  type=float, default=0.4, help="linear-layer dropout p")
-    parser.add_argument("--qwidth",   type=int, default=128, help="GRU hidden size")
+    parser.add_argument("--dropout",  type=float, default=0.2, help="linear-layer dropout p")
+    parser.add_argument("--qwidth",   type=int, default=64, help="GRU hidden size")
     parser.add_argument("--dt",       type=float, default=0.01, help="Sample period (s)")
     parser.add_argument("--norm_json", type=str, default="", help="Normalization JSON path")
     parser.add_argument("--seed",     type=int, default=42, help="Random seed (member 0). Members use seed+i")
-    parser.add_argument("--w_phys",   type=float, default=10000.0, help="Physics loss weight")
+    parser.add_argument("--w_phys",   type=float, default=1.0, help="Physics loss weight")
     parser.add_argument("--print_period", type=int, default=100, help="Print every N epochs")
     args = parser.parse_args()
 

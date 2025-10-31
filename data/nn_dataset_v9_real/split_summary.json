@@ -1,8 +1,8 @@
 {
   "counts": {
-    "train": 123800,
-    "val": 26600,
-    "test": 26600
+    "train": 281800,
+    "val": 60400,
+    "test": 60400
   },
   "fractions": {
     "val_frac": 0.15,
@@ -11,7 +11,11 @@
   },
   "dt": 0.01,
   "indices": [
-    1
+    1,
+    2,
+    3,
+    4,
+    5
   ],
   "seq": 200,
   "shuffle_windows": true,

@@ -457,7 +457,7 @@ int main() {
     // bool ok_v10 = nn_v10.init("data/nn_model_v9_ens4/ts",
     //                     "data/nn_dataset_v9_X_C0/norm_stats.json",
     //                     /*use_cuda=*/true);
-    bool ok_v10 = nn_v10.init("data/nn_model_v9_ens4_real3/ts",
+    bool ok_v10 = nn_v10.init("data/nn_model_v9_ens4_real6/ts",
                         "data/nn_dataset_v9_real/norm_stats.json",
                         /*use_cuda=*/true);
     if (!ok_v10) { std::cerr << "[NNv10] init failed; running without NN.\n"; }
