@@ -1,0 +1,36 @@
+{
+  "counts": {
+    "train": 281800,
+    "val": 60400,
+    "test": 60400
+  },
+  "fractions": {
+    "val_frac": 0.15,
+    "test_frac": 0.15,
+    "train_frac": 0.7
+  },
+  "dt": 0.01,
+  "indices": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "seq": 200,
+  "shuffle_windows": true,
+  "fix_q_sign": true,
+  "observer": {
+    "k1": 1.0,
+    "k2": 0.5,
+    "Ki": 0.001,
+    "accel_min_norm": 0.001
+  },
+  "tau_coeffs_desc": [
+    -312.547,
+    8.87016,
+    413.598,
+    46.922,
+    45.6015
+  ]
+}

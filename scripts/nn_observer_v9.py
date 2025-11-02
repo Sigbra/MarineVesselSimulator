@@ -23,12 +23,16 @@ IMPORTANT:
 
 Run example:
 python3 scripts/nn_observer_v9.py \
-  --train data/nn_dataset_v9_X_C0/train.csv \
-  --val   data/nn_dataset_v9_X_C0/val.csv \
-  --test  data/nn_dataset_v9_X_C0/test.csv \
-  --out   data/nn_model_v9_ens4 \
-  --seq 300 --epochs 2000 --gpu --ensemble 4 \
-  --norm_json data/nn_dataset_v9_X_C0/norm_stats.json
+--train data/nn_dataset_v9_X_C0/train.csv \
+--val   data/nn_dataset_v9_X_C0/val.csv \
+--test  data/nn_dataset_v9_X_C0/test.csv \
+--out   data/nn_model_v9_ens4_40 \
+--seq 200 \
+--epochs 10000 \
+--gpu \
+--ensemble 4 \
+--norm_json data/nn_dataset_v9_X_C0/norm_stats.json
+
 """
 
 import os

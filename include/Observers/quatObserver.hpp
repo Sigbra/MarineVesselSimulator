@@ -34,7 +34,7 @@ class QuatObserver {
 public:
   explicit QuatObserver(const Config& cfg = Config());
 
-  // State access
+  // State access 
   const Vec3& w_est()              const { return w_est_; } // BODY
   const Eigen::Quaterniond& quat() const { return q_nb_; }  // BODY→NAV
   const Vec3& bias_gyro()          const { return b_ars_; } // BODY

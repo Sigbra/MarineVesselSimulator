@@ -416,7 +416,7 @@ int main() {
 
     // NN init (make sure norm_stats.json is for v9 (10-dim inputs))
     static nnqekf_v9::NN_v9 nn_v9;
-    bool ok_v9 = nn_v9.init("data/nn_model_v9_ens4_40/ts",
+    bool ok_v9 = nn_v9.init("data/nn_model_v9_ens4/ts",
                         "data/nn_dataset_v9_X_C0/norm_stats.json",
                         /*use_cuda=*/true);
     if (!ok_v9) { std::cerr << "[NNv9] init failed; running without NN.\n"; }
@@ -454,8 +454,11 @@ int main() {
 
     // NN init (make sure norm_stats.json is for v9 (10-dim inputs))
     static nnqekf_v10::NN_v10 nn_v10;
-    bool ok_v10 = nn_v10.init("data/nn_model_v9_ens4_40/ts",
-                        "data/nn_dataset_v9_X_C0/norm_stats.json",
+    // bool ok_v10 = nn_v10.init("data/nn_model_v9_ens4/ts",
+    //                     "data/nn_dataset_v9_X_C0/norm_stats.json",
+    //                     /*use_cuda=*/true);
+    bool ok_v10 = nn_v10.init("data/nn_model_v9_ens4_real6/ts",
+                        "data/nn_dataset_v9_real/norm_stats.json",
                         /*use_cuda=*/true);
     if (!ok_v10) { std::cerr << "[NNv10] init failed; running without NN.\n"; }
     ekf_v10.setNN(&nn_v10, /*seq_len=*/200, /*stride=*/1);
@@ -483,6 +486,11 @@ int main() {
 
     ran_model.select_failure_mode();
     std::vector<bool> failstate = ran_model.check_failstate();
+
+    Eigen::VectorXd thrustCoeffs = ran_model.getThrustCoeffs();
+    std::cout << "Thrust Coefficients (" << thrustCoeffs.size() << "): "
+          << thrustCoeffs.transpose() << '\n';
+
 
     Eigen::Vector2d n = Eigen::Vector2d::Zero(); // Propeller speeds (rad/s)      
     Eigen::Vector2d alpha = Eigen::Vector2d::Zero(); // Azimuth angles (rad)
@@ -979,7 +987,7 @@ int main() {
                 ekf_v10.propagate(imu.gyro, imu.accel, h);
 
                 // 3) NN giving pseudo correction for velocity estimates)
-                //ekf_v10.feedNN(imu.accel, q_nb_can, tau_XYN[0], tau_XYN[1], tau_XYN[2]);
+                ekf_v10.feedNN(imu.accel, q_nb_can, tau_XYN[0], tau_XYN[1], tau_XYN[2]);
 
                 // 4) GNSS position giving position and velocity corrections 
                 have_gnss_now=false; //Testing deadreconing
