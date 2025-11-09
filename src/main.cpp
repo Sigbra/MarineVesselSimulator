@@ -95,6 +95,26 @@ static void graceful_shutdown() {
     std::fflush(nullptr); // flush all C stdio streams
 }
 
+static double surgeTauSchedule(int wpt_index) {
+    if (wpt_index <= 7)   return 25.0;
+    if (wpt_index <= 14)  return 50.0;
+    if (wpt_index <= 21)  return 100.0;
+    if (wpt_index <= 28)  return 150.0;
+    if (wpt_index <= 35)  return 200.0;
+
+    // Waypoints 36–43 (8 waypoints total): alternate 25 and 100, switching every 2 waypoints
+    if (wpt_index <= 43) {
+        int block = (wpt_index - 36) / 2;        // 0 for 36–37, 1 for 38–39, 2 for 40–41, 3 for 42–43
+        return (block % 2 == 0) ? 25.0 : 100.0;  // 36–37:25, 38–39:100, 40–41:25, 42–43:100
+    }
+
+    // From waypoint 44 onward: alternate 50 and 150, switching every 2 waypoints
+    {
+        int block = (wpt_index - 44) / 2;        // 0 for 44–45, 1 for 46–47, ...
+        return (block % 2 == 0) ? 50.0 : 150.0;  // 44–45:50, 46–47:150, 48–49:50, ...
+    }
+}
+
 int main() {
     install_signal_handlers();
     bool interrupted = false;
@@ -333,65 +353,65 @@ int main() {
     Eigen::Quaterniond q_nb = q_nb0;
     Vec3 w_est{0.0, 0.0, 0.0};
 
-    // --------------EKF observer v7---------------
-    nnqekf::Config cfg_v7;
-    cfg_v7.g = 9.81;
-    cfg_v7.sigma_a = 0.05;
-    cfg_v7.sigma_ba_rw = 1e-3;
-    cfg_v7.chi2_gate_pos3 = 16.27; // ~95% for 3D
-    cfg_v7.chi2_gate_vec3 = -1.0;  // (no vector gating yet)
+    // // --------------EKF observer v7---------------
+    // nnqekf::Config cfg_v7;
+    // cfg_v7.g = 9.81;
+    // cfg_v7.sigma_a = 0.05;
+    // cfg_v7.sigma_ba_rw = 1e-3;
+    // cfg_v7.chi2_gate_pos3 = 16.27; // ~95% for 3D
+    // cfg_v7.chi2_gate_vec3 = -1.0;  // (no vector gating yet)
 
-    nnqekf::NN_qObs_Aided_EKF ekf_v7(cfg_v7);
-    ekf_v7.setRotationNavFromBody(R_nb0);       // same initial attitude
+    // nnqekf::NN_qObs_Aided_EKF ekf_v7(cfg_v7);
+    // ekf_v7.setRotationNavFromBody(R_nb0);       // same initial attitude
 
-    nnqekf::State9 x0_v7;
-    x0_v7.p = Eigen::Vector3d(Xn0, Yn0, Zn0);
-    x0_v7.v.setZero();
-    x0_v7.b_a.setZero();
-    Eigen::Matrix<double,9,9> P0_v7 = Eigen::Matrix<double,9,9>::Identity();
-    P0_v7.block<3,3>(0,0) *= 1.0;   // pos var ~ 1 m^2
-    P0_v7.block<3,3>(3,3) *= 1.0;   // vel var ~ (1 m/s)^2
-    P0_v7.block<3,3>(6,6) *= 0.01;  // bias var ~ (0.1 m/s^2)^2
-    ekf_v7.setState(x0_v7, P0_v7);
+    // nnqekf::State9 x0_v7;
+    // x0_v7.p = Eigen::Vector3d(Xn0, Yn0, Zn0);
+    // x0_v7.v.setZero();
+    // x0_v7.b_a.setZero();
+    // Eigen::Matrix<double,9,9> P0_v7 = Eigen::Matrix<double,9,9>::Identity();
+    // P0_v7.block<3,3>(0,0) *= 1.0;   // pos var ~ 1 m^2
+    // P0_v7.block<3,3>(3,3) *= 1.0;   // vel var ~ (1 m/s)^2
+    // P0_v7.block<3,3>(6,6) *= 0.01;  // bias var ~ (0.1 m/s^2)^2
+    // ekf_v7.setState(x0_v7, P0_v7);
 
-    // --------------NN Vel aiding v7-----------------
-    static nnqekf::NN_v7 nn_v7;  // your TS-based implementation
-    bool ok_v7 = nn_v7.init("data/nn_model_v7_ens4/ts",
-                        "data/nn_dataset_v7_X_C0/norm_stats.json",
-                        /*use_cuda=*/true);
+    // // --------------NN Vel aiding v7-----------------
+    // static nnqekf::NN_v7 nn_v7;  // your TS-based implementation
+    // bool ok_v7 = nn_v7.init("data/nn_model_v7_ens4/ts",
+    //                     "data/nn_dataset_v7_X_C0/norm_stats.json",
+    //                     /*use_cuda=*/true);
 
-    if (!ok_v7) { std::cerr << "[NNv7] init failed; running without NN.\n"; }
-    ekf_v7.setNN(&nn_v7, /*seq_len=*/200, /*stride=*/1);
+    // if (!ok_v7) { std::cerr << "[NNv7] init failed; running without NN.\n"; }
+    // ekf_v7.setNN(&nn_v7, /*seq_len=*/200, /*stride=*/1);
 
-    // --------------EKF observer v8---------------
-    nnqekf_v8::Config_v8 cfg_v8;
-    cfg_v8.g = 9.81;
-    cfg_v8.sigma_a = 0.05;
-    cfg_v8.sigma_ba_rw = 1e-3;
-    cfg_v8.chi2_gate_pos3 = 16.27; // ~95% for 3D
-    cfg_v8.chi2_gate_vec3 = -1.0;  // (no vector gating yet)
+    // // --------------EKF observer v8---------------
+    // nnqekf_v8::Config_v8 cfg_v8;
+    // cfg_v8.g = 9.81;
+    // cfg_v8.sigma_a = 0.05;
+    // cfg_v8.sigma_ba_rw = 1e-3;
+    // cfg_v8.chi2_gate_pos3 = 16.27; // ~95% for 3D
+    // cfg_v8.chi2_gate_vec3 = -1.0;  // (no vector gating yet)
 
-    nnqekf_v8::NN_qObs_Aided_EKF_v8 ekf_v8(cfg_v8);
-    ekf_v8.setRotationNavFromBody(R_nb0);       // same initial attitude
+    // nnqekf_v8::NN_qObs_Aided_EKF_v8 ekf_v8(cfg_v8);
+    // ekf_v8.setRotationNavFromBody(R_nb0);       // same initial attitude
 
-    nnqekf_v8::State9_v8 x0_v8;
-    x0_v8.p = Eigen::Vector3d(Xn0, Yn0, Zn0);
-    x0_v8.v.setZero();
-    x0_v8.b_a.setZero();
-    Eigen::Matrix<double,9,9> P0_v8 = Eigen::Matrix<double,9,9>::Identity();
-    P0_v8.block<3,3>(0,0) *= 1.0;   // pos var ~ 1 m^2
-    P0_v8.block<3,3>(3,3) *= 1.0;   // vel var ~ (1 m/s)^2
-    P0_v8.block<3,3>(6,6) *= 0.01;  // bias var ~ (0.1 m/s^2)^2
-    ekf_v8.setState(x0_v8, P0_v8);
+    // nnqekf_v8::State9_v8 x0_v8;
+    // x0_v8.p = Eigen::Vector3d(Xn0, Yn0, Zn0);
+    // x0_v8.v.setZero();
+    // x0_v8.b_a.setZero();
+    // Eigen::Matrix<double,9,9> P0_v8 = Eigen::Matrix<double,9,9>::Identity();
+    // P0_v8.block<3,3>(0,0) *= 1.0;   // pos var ~ 1 m^2
+    // P0_v8.block<3,3>(3,3) *= 1.0;   // vel var ~ (1 m/s)^2
+    // P0_v8.block<3,3>(6,6) *= 0.01;  // bias var ~ (0.1 m/s^2)^2
+    // ekf_v8.setState(x0_v8, P0_v8);
 
-    // --------------NN Vel aiding v8-----------------
-    static nnqekf_v8::NN_v8 nn_v8;  // your TS-based implementation
-    bool ok_v8 = nn_v8.init("data/nn_model_v8_ens4_1/ts",
-                        "data/nn_dataset_v8_X_C0/norm_stats.json",
-                        /*use_cuda=*/true);
+    // // --------------NN Vel aiding v8-----------------
+    // static nnqekf_v8::NN_v8 nn_v8;  // your TS-based implementation
+    // bool ok_v8 = nn_v8.init("data/nn_model_v8_ens4_1/ts",
+    //                     "data/nn_dataset_v8_X_C0/norm_stats.json",
+    //                     /*use_cuda=*/true);
 
-    if (!ok_v8) { std::cerr << "[NNv8] init failed; running without NN.\n"; }
-    ekf_v8.setNN(&nn_v8, /*seq_len=*/200, /*stride=*/1);
+    // if (!ok_v8) { std::cerr << "[NNv8] init failed; running without NN.\n"; }
+    // ekf_v8.setNN(&nn_v8, /*seq_len=*/200, /*stride=*/1);
 
     // --------------EKF observer v9---------------
     nnqekf_v9::Config_v9 cfg_v9;
@@ -911,49 +931,49 @@ int main() {
                 break;
             }
             case ObserverKind::nn_EKF_v7: {
-                ekf_v7.setRotationFromQuat(q_nb);
+                // ekf_v7.setRotationFromQuat(q_nb);
 
-                //ekf_v7.feedNN(imu.accel, q_nb);
-                ekf_v7.propagate(imu.gyro, imu.accel, h);
+                // //ekf_v7.feedNN(imu.accel, q_nb);
+                // ekf_v7.propagate(imu.gyro, imu.accel, h);
 
-                // 3) Correct with Gnss position/velocity
-                //have_gnss_now=false; //Testing deadreconing
-                if (have_gnss_now) {
-                    Eigen::Matrix3d Rpos_port = Eigen::Matrix3d::Identity() * std::pow(0.5, 2);
-                    Eigen::Matrix3d Rpos_stbd = Eigen::Matrix3d::Identity() * std::pow(0.5, 2);
-                    ekf_v7.updateGnssPos(ant1_meas, Rpos_port, lever_arm_port_body, 2);
-                    ekf_v7.updateGnssPos(ant2_meas, Rpos_stbd, lever_arm_stbd_body, 2);
-                    // If later you have Doppler velocity, also call:
-                    // ekf_v7.updateGnssVel(ant1_vel_nav, Rvel1, lever_arm_port_body, imu.gyro);
-                    // ekf_v7.updateGnssVel(ant2_vel_nav, Rvel2, lever_arm_stbd_body, imu.gyro);
-                }
+                // // 3) Correct with Gnss position/velocity
+                // //have_gnss_now=false; //Testing deadreconing
+                // if (have_gnss_now) {
+                //     Eigen::Matrix3d Rpos_port = Eigen::Matrix3d::Identity() * std::pow(0.5, 2);
+                //     Eigen::Matrix3d Rpos_stbd = Eigen::Matrix3d::Identity() * std::pow(0.5, 2);
+                //     ekf_v7.updateGnssPos(ant1_meas, Rpos_port, lever_arm_port_body, 2);
+                //     ekf_v7.updateGnssPos(ant2_meas, Rpos_stbd, lever_arm_stbd_body, 2);
+                //     // If later you have Doppler velocity, also call:
+                //     // ekf_v7.updateGnssVel(ant1_vel_nav, Rvel1, lever_arm_port_body, imu.gyro);
+                //     // ekf_v7.updateGnssVel(ant2_vel_nav, Rvel2, lever_arm_stbd_body, imu.gyro);
+                // }
 
-                auto x9 = ekf_v7.getState9(); // [p; v; b_a]
-                //Combine with q_nb_hat to get (orientation) all 12 states in total. => x_est
-                Eigen::Vector3d b_gyro_hat = quatObs.bias_gyro();
-                x_est = ekf_v7.getState12(b_gyro_hat);
+                // auto x9 = ekf_v7.getState9(); // [p; v; b_a]
+                // //Combine with q_nb_hat to get (orientation) all 12 states in total. => x_est
+                // Eigen::Vector3d b_gyro_hat = quatObs.bias_gyro();
+                // x_est = ekf_v7.getState12(b_gyro_hat);
                 break;
             }
             case ObserverKind::nn_EKF_v8: {
 
-                ekf_v8.setRotationFromQuat(q_nb);
+                // ekf_v8.setRotationFromQuat(q_nb);
 
-                //ekf_v8.feedNN(imu.accel, q_nb);
-                ekf_v8.propagate(imu.gyro, imu.accel, h);
+                // //ekf_v8.feedNN(imu.accel, q_nb);
+                // ekf_v8.propagate(imu.gyro, imu.accel, h);
 
-                // 3) Correct with Gnss position/velocity
-                //have_gnss_now=false; //Testing deadreconing
-                if (have_gnss_now) {
-                    Eigen::Matrix3d Rpos_port = Eigen::Matrix3d::Identity() * std::pow(0.5, 2);
-                    Eigen::Matrix3d Rpos_stbd = Eigen::Matrix3d::Identity() * std::pow(0.5, 2);
-                    ekf_v8.updateGnssPos(ant1_meas, Rpos_port, lever_arm_port_body, 2);
-                    ekf_v8.updateGnssPos(ant2_meas, Rpos_stbd, lever_arm_stbd_body, 2);
-                }
+                // // 3) Correct with Gnss position/velocity
+                // //have_gnss_now=false; //Testing deadreconing
+                // if (have_gnss_now) {
+                //     Eigen::Matrix3d Rpos_port = Eigen::Matrix3d::Identity() * std::pow(0.5, 2);
+                //     Eigen::Matrix3d Rpos_stbd = Eigen::Matrix3d::Identity() * std::pow(0.5, 2);
+                //     ekf_v8.updateGnssPos(ant1_meas, Rpos_port, lever_arm_port_body, 2);
+                //     ekf_v8.updateGnssPos(ant2_meas, Rpos_stbd, lever_arm_stbd_body, 2);
+                // }
 
-                auto x9 = ekf_v8.getState9(); // [p; v; b_a]
-                //Combine with q_nb_hat to get (orientation) all 12 states in total. => x_est
-                Eigen::Vector3d b_gyro_hat = quatObs.bias_gyro();
-                x_est = ekf_v8.getState12(b_gyro_hat);
+                // auto x9 = ekf_v8.getState9(); // [p; v; b_a]
+                // //Combine with q_nb_hat to get (orientation) all 12 states in total. => x_est
+                // Eigen::Vector3d b_gyro_hat = quatObs.bias_gyro();
+                // x_est = ekf_v8.getState12(b_gyro_hat);
                 break;
             }
             case ObserverKind::nn_EKF_v9: {
@@ -1148,7 +1168,7 @@ int main() {
             } 
             // - Motion Control: Path following: 
             else if (GuidanceFlag==2 || GuidanceFlag==3) { 
-                tau_XYN_c[0] = 150;
+                tau_XYN_c[0] = surgeTauSchedule(wpt_index);
                 tau_XYN_c[1] = 0;
                 tau_XYN_c[2] = headPID.update(h, M_est, psi, psi_d, r, r_d, a_d);
             }
