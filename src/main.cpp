@@ -477,8 +477,8 @@ int main() {
     // bool ok_v10 = nn_v10.init("data/nn_model_v9_ens4/ts",
     //                     "data/nn_dataset_v9_X_C0/norm_stats.json",
     //                     /*use_cuda=*/true);
-    bool ok_v10 = nn_v10.init("data/nn_model_v9_ens4_real6/ts",
-                        "data/nn_dataset_v9_real/norm_stats.json",
+    bool ok_v10 = nn_v10.init("data/nn_model_v9_ens4_4_0/ts",
+                        "data/nn_dataset_v9_X_C1/norm_stats.json",
                         /*use_cuda=*/true);
     if (!ok_v10) { std::cerr << "[NNv10] init failed; running without NN.\n"; }
     ekf_v10.setNN(&nn_v10, /*seq_len=*/200, /*stride=*/1);
@@ -985,7 +985,7 @@ int main() {
                 ekf_v9.propagate(imu.gyro, imu.accel, h);
 
                 // 3) Correct with Gnss position/velocity
-                //have_gnss_now=false; //Testing deadreconing
+                have_gnss_now=false; //Testing deadreconing
                 if (have_gnss_now) {
                     Eigen::Matrix3d Rpos_port = Eigen::Matrix3d::Identity() * std::pow(0.5, 2);
                     Eigen::Matrix3d Rpos_stbd = Eigen::Matrix3d::Identity() * std::pow(0.5, 2);

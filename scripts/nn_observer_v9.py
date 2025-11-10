@@ -669,12 +669,12 @@ def main():
     parser.add_argument("--out",   required=True, help="Output directory (models, plots)")
     parser.add_argument("--seq",   type=int, default=200, help="Sequence length T")
     parser.add_argument("--epochs",type=int, default=10000, help="Training epochs")
-    parser.add_argument("--batch", type=int, default=512,  help="Batch size") 
+    parser.add_argument("--batch", type=int, default=256,  help="Batch size") 
     parser.add_argument("--lr",    type=float, default=1e-4, help="Learning rate")
     parser.add_argument("--wd",    type=float, default=1e-3, help="Weight decay") 
     parser.add_argument("--gpu",   action="store_true", help="Use CUDA if available")
     parser.add_argument("--ensemble", type=int, default=4, help="Number of models to train")
-    parser.add_argument("--dropout",  type=float, default=0.0, help="GRU inter-layer dropout p") #0.05
+    parser.add_argument("--dropout",  type=float, default=0.01, help="GRU inter-layer dropout p") #0.05
     parser.add_argument("--qwidth",   type=int, default=128, help="GRU hidden size")
     parser.add_argument("--dt",       type=float, default=0.01, help="Sample period (s)")
     parser.add_argument("--norm_json", type=str, default="", help="Normalization JSON path")
