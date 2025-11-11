@@ -4,7 +4,7 @@
 
 ObserverSelector::ObserverSelector()
 : options_({"True states (observer bypass)", "EKF13", "EKF18", "NN EKF V1", "NN EKF V2",
-   "NN EKF V3", "NN EKF V4", "NN EKF V5", "NN EKF V6", "NN EKF V7", "NN EKF V8", "NN EKF V9", "NN EKF V10"})
+   "NN EKF V3", "NN EKF V4", "NN EKF V5", "NN EKF V6", "NN EKF V7", "NN EKF V8", "NN EKF V9", "NN EKF V10", "NN EKF V11"})
 {}
 
 ObserverKind ObserverSelector::select() const {
@@ -43,6 +43,7 @@ ObserverKind ObserverSelector::select() const {
     case 11: return ObserverKind::nn_EKF_v8;
     case 12: return ObserverKind::nn_EKF_v9;
     case 13: return ObserverKind::nn_EKF_v10;
+    case 14: return ObserverKind::nn_EKF_v11;
     default: return ObserverKind::TrueState;
   }
 }

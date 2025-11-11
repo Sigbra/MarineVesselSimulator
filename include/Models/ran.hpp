@@ -58,19 +58,39 @@ class RAN {
 
         // --- Wave API (public so your sim/IO can read & tune) ---
         void enable_waves(bool on) { waves_on = on; }
+
         void set_wave_params(      // quick bulk setter
             double wn_u, double z_u, double K_u, double sigw_u,
             double wn_v, double z_v, double K_v, double sigw_v,
             double wn_r, double z_r, double K_r, double sigw_r,
             double Td_drift, double sigw_X, double sigw_Y, double sigw_N);
-        Eigen::Vector3d get_wave_eta_EN() const { return eta_w_EN; }   // [xw,yw,psw]
-        Eigen::Vector3d get_wave_body_drift() const { return d_wave; } // [X,Y,N]
 
-        // minimal add: you use this in main to get wave rates
-        Eigen::Vector3d get_wave_rate_EN() const { return etadot_w_EN; } // [ẋw,ẏw,ψ̇w]
+        // NEW: 6-DOF setter (x,y,z,φ,θ,ψ) + drift
+        void set_wave_params6(
+            double wn_x, double z_x, double K_x, double sigw_x,     // x (surge)
+            double wn_y, double z_y, double K_y, double sigw_y,     // y (sway)
+            double wn_z, double z_z, double K_z, double sigw_z,     // z (heave)
+            double wn_phi, double z_phi, double K_phi, double sigw_phi,   // roll
+            double wn_theta, double z_theta, double K_theta, double sigw_theta, // pitch
+            double wn_psi, double z_psi, double K_psi, double sigw_psi,   // yaw
+            double Td_drift, double sigw_X, double sigw_Y, double sigw_N);
+            
+        // Wave outputs (END frame), full 6-DOF
+        const Eigen::Matrix<double,6,1>& get_wave_eta6()  const { return eta_w_6; }   // [x y z φ θ ψ]
+        const Eigen::Matrix<double,6,1>& get_wave_rate6() const { return etadot_w_6; }
+        const Eigen::Matrix<double,6,1>& get_wave_acc6()  const { return etaddot_w_6; }
 
-        // minimal change: make WF step public so main can call ran_model.wave_step_WF(h)
-        void wave_step_WF(double dt);      // updates xw_* and eta_w_EN (+ etadot_w_EN)
+        // Back-compat 3-vector getters commonly used in your code
+        const Eigen::Vector3d& get_wave_eta_EN()  const { return eta_w_EN; }     // [x y ψ]
+        const Eigen::Vector3d& get_wave_rate_EN() const { return etadot_w_EN; }  // [ẋ ẏ ψ̇]
+        const Eigen::Vector3d& get_wave_acc_EN()  const { return etaddot_w_EN; } // [ẍ ÿ ψ̈]
+
+        // Drift (BODY frame) forces: [X, Y, N]
+        const Eigen::Vector3d& get_wave_body_drift() const { return d_wave; }
+
+        // Advance wave filters (call once per loop *before* reading the getters)
+        void wave_step_WF(double dt);     // WF motions (6-DOF, END frame)
+        void wave_step_drift(double dt);  // Drift forces (BODY frame)
 
     private:
 
@@ -149,36 +169,44 @@ class RAN {
 
         Eigen::VectorXd thrust_coeffs;
 
-        // ---- Wave parameters ----
-        bool   waves_on{true};
-        // WF natural freqs, damping, gains, and driving intensities
-        double wn_u{0.8}, z_u{0.25}, K_u{0.5}, sigw_u{1.0};
-        double wn_v{0.8}, z_v{0.25}, K_v{0.6}, sigw_v{1.0};
-        double wn_r{0.8}, z_r{0.20}, K_r{0.03}, sigw_r{1.0};
-        // Drift: time constant and white-noise intensities (per axis)
-        double Td{120.0}, sigw_X{40.0}, sigw_Y{40.0}, sigw_N{400.0};
+        // -------------------- Wave parameters --------------------
+        bool waves_on{true};
 
-        // ---- Outputs cached this step ----
-        Eigen::Vector3d eta_w_EN{Eigen::Vector3d::Zero()};   // measurement offsets
-        Eigen::Vector3d tau_wave_body_cached{Eigen::Vector3d::Zero()}; // body forces for update()
-        // minimal add: rate of wave outputs (used by your IMU yaw-rate addition)
-        Eigen::Vector3d etadot_w_EN{Eigen::Vector3d::Zero()}; // [ẋw,ẏw,ψ̇w]
+        // 6-DOF WF parameters (one per DOF: x,y,z,φ,θ,ψ)
+        std::array<double,6> wn  {{0.8, 0.8, 1.0, 0.8, 0.8, 0.8}};
+        std::array<double,6> zeta{{0.25,0.25,0.40,0.20,0.20,0.20}};
+        std::array<double,6> Kg  {{0.50,0.60,0.40,0.03,0.03,0.03}};
+        std::array<double,6> sig{{1.0, 1.0, 1.0, 1.0, 1.0, 1.0}};
 
-        // minimal add: internal WF states per DOF (needed by wave_step_WF impl)
-        Eigen::Vector2d xw_u{Eigen::Vector2d::Zero()}; // [ξ, ηw] surge
-        Eigen::Vector2d xw_v{Eigen::Vector2d::Zero()}; // [ξ, ηw] sway
-        Eigen::Vector2d xw_r{Eigen::Vector2d::Zero()}; // [ξ, ηw] yaw
+        // Drift: time constant and white-noise intensities (BODY frame)
+        double Td{120.0};
+        double sigw_X{40.0}, sigw_Y{40.0}, sigw_N{400.0};
 
-        // minimal add: BODY drift state (used by get_wave_body_drift)
-        Eigen::Vector3d d_wave{Eigen::Vector3d::Zero()}; // [X_d, Y_d, N_d]
+        // --------------- Wave outputs (cached this step) ---------------
+        // Full 6-DOF (END frame)
+        Eigen::Matrix<double,6,1> eta_w_6     = Eigen::Matrix<double,6,1>::Zero();
+        Eigen::Matrix<double,6,1> etadot_w_6  = Eigen::Matrix<double,6,1>::Zero();
+        Eigen::Matrix<double,6,1> etaddot_w_6 = Eigen::Matrix<double,6,1>::Zero();
+
+        // Back-compat 3-vectors used elsewhere: [x y ψ]
+        Eigen::Vector3d eta_w_EN    {Eigen::Vector3d::Zero()};
+        Eigen::Vector3d etadot_w_EN {Eigen::Vector3d::Zero()};
+        Eigen::Vector3d etaddot_w_EN{Eigen::Vector3d::Zero()};
+
+        // Drift (BODY frame)
+        Eigen::Vector3d d_wave{Eigen::Vector3d::Zero()};               // [X_d, Y_d, N_d]
+        Eigen::Vector3d tau_wave_body_cached{Eigen::Vector3d::Zero()};  // same for this step
+
+        // Internal WF states: one (ξ, ξ̇) pair per DOF
+        std::array<Eigen::Vector2d,6> xw{
+            Eigen::Vector2d::Zero(), Eigen::Vector2d::Zero(), Eigen::Vector2d::Zero(),
+            Eigen::Vector2d::Zero(), Eigen::Vector2d::Zero(), Eigen::Vector2d::Zero()
+        };
 
         // ---- RNG (repeatable unless reseeded) ----
         std::mt19937_64 rng{1234567ULL};
         std::normal_distribution<double> N01{0.0,1.0};
 
-        // ---- Internal wave helpers (called from rk4) ----
-        void wave_step_drift(double dt);   // updates d_wave and tau_wave_body_cached
-        // wave_step_WF(dt) is declared public above (no duplicate here)
 };
                 
 #endif // RAN_HPP
