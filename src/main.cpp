@@ -517,7 +517,7 @@ int main() {
     // NN init (use the streaming one-step **stateful** members)
     static nnqekf_v11::NN_v11 nn_v11;
     bool ok_v11 = nn_v11.init(
-        "data/nn_model_v11_ens4_13/ts",              // <-- stateful files live here
+        "data/nn_model_v11_ens4_14/ts",              // <-- stateful files live here
         "data/nn_dataset_v11_X_C7/norm_stats.json",         // <-- the same norm used in training
         /*use_cuda=*/true);
     if (!ok_v11) { std::cerr << "[NNv11] init failed; running without NN.\n"; }
@@ -855,8 +855,8 @@ int main() {
                 ekf_v11.feedNN(imu.accel, q_nb, tau_XYN[0], tau_XYN[1], tau_XYN[2]);
 
                 // 4) GNSS position giving position and velocity corrections 
-                //have_gnss_now=false; //Testing deadreconing
-                if (have_gnss_now) {
+                have_gnss_now=false; //Testing deadreconing
+                if (have_gnss_now || (t[i]<60)) {
                     Eigen::Matrix3d Rpos_port = Eigen::Matrix3d::Identity() * std::pow(0.2, 2); 
                     Eigen::Matrix3d Rpos_stbd = Eigen::Matrix3d::Identity() * std::pow(0.2, 2);
                     ekf_v11.updateGnssPos(ant1_meas, Rpos_port, lever_arm_port_body, 4.0);
