@@ -827,6 +827,111 @@ void plotIMUGyro()
     plt::show();
 }
 
+void plotQuaternionQnb()
+{
+    using std::size_t;
+
+    std::filesystem::path filepath = std::filesystem::path(getRepositoryPath()) / "data" / "simdata.csv";
+    if (!std::filesystem::exists(filepath)) {
+        std::cerr << "File does not exist: " << filepath << std::endl;
+        return;
+    }
+    std::ifstream file(filepath);
+    if (!file.is_open()) {
+        std::cerr << "Error: Unable to open " << filepath << std::endl;
+        return;
+    }
+
+    std::vector<double> t, qw, qx, qy, qz;
+    std::string line;
+    while (std::getline(file, line)) {
+        std::stringstream ss(line);
+        std::vector<double> v; v.reserve(60);
+        std::string cell;
+        while (std::getline(ss, cell, ',')) {
+            try { v.push_back(std::stod(cell)); }
+            catch (const std::invalid_argument&) { /* skip non-numerics */ }
+        }
+        // need cols 0 and 52..55
+        if (v.size() >= 56) {
+            t .push_back(v[0]);
+            qw.push_back(v[52]);
+            qx.push_back(v[53]);
+            qy.push_back(v[54]);
+            qz.push_back(v[55]);
+        }
+    }
+    file.close();
+
+    if (t.empty()) {
+        std::cerr << "Error: No valid quaternion data found in " << filepath << std::endl;
+        return;
+    }
+
+    // --- Local decimator: keeps at most max_pts samples (t + 4 series) ---
+    auto decimate_t4 = [](std::vector<double>& tt,
+                          std::vector<double>& s1,
+                          std::vector<double>& s2,
+                          std::vector<double>& s3,
+                          std::vector<double>& s4,
+                          size_t max_pts = 20000)
+    {
+        const size_t N = tt.size();
+        if (N == 0 || N <= max_pts) return;
+
+        const double step = static_cast<double>(N) / static_cast<double>(max_pts);
+        std::vector<size_t> keep;
+        keep.reserve(max_pts);
+        for (size_t k = 0; k < max_pts; ++k) {
+            size_t idx = static_cast<size_t>(std::floor(k * step));
+            if (idx >= N) idx = N - 1;
+            if (!keep.empty() && idx == keep.back()) continue; // avoid duplicates
+            keep.push_back(idx);
+        }
+
+        auto apply = [&](std::vector<double>& v) {
+            std::vector<double> out; out.reserve(keep.size());
+            for (size_t idx : keep) out.push_back(v[idx]);
+            v.swap(out);
+        };
+
+        apply(tt);
+        apply(s1);
+        apply(s2);
+        apply(s3);
+        apply(s4);
+    };
+
+    // Keep plots responsive for long runs
+    decimate_t4(t, qw, qx, qy, qz, 20000);
+
+    // Optional: waypoint change markers (safe if function is absent/throws)
+    std::vector<double> wpt_change_times;
+    try { wpt_change_times = loadWaypointChangeTimes(); } catch (...) {}
+
+    plt::figure_size(2400, 600);
+
+    // Draw waypoint lines (light gray)
+    for (double tt : wpt_change_times) {
+        std::vector<double> xl = {tt, tt};
+        std::vector<double> yl = {-1.2, 1.2};
+        plt::plot(xl, yl, {{"color","0.7"},{"linestyle","--"},{"linewidth","1"}});
+    }
+
+    plt::named_plot("qw", t, qw, "k-");  // black
+    plt::named_plot("qx", t, qx, "r-");
+    plt::named_plot("qy", t, qy, "g-");
+    plt::named_plot("qz", t, qz, "b-");
+
+    plt::xlabel("Time [s]");
+    plt::ylabel("Quaternion components (q_nb)");
+    plt::title("Attitude Quaternion q_nb Components vs Time");
+    plt::grid(true);
+    plt::legend();
+    plt::show();
+}
+
+
 void plotStateEstimateErrors() {
     std::filesystem::path filepath = std::filesystem::path(getRepositoryPath()) / "data" / "simdata.csv";
     if (!std::filesystem::exists(filepath)) {
