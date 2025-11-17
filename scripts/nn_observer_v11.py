@@ -26,12 +26,12 @@ Outputs (3):  [vE, vN, vD]
 Example
 -------
 python3 -u scripts/nn_observer_v11.py \
-  --train data/nn_dataset_v11_X_C6/train.csv \
-  --val   data/nn_dataset_v11_X_C6/val.csv \
-  --test  data/nn_dataset_v11_X_C6/test.csv \
-  --out   data/nn_model_v11_ens4_13 \
+  --train data/nn_dataset_v11_X_C7/train.csv \
+  --val   data/nn_dataset_v11_X_C7/val.csv \
+  --test  data/nn_dataset_v11_X_C7/test.csv \
+  --out   data/nn_model_v11_ens4_15 \
   --epochs 1000 --gpu --ensemble 4 \
-  --norm_json data/nn_dataset_v11_X_C6/norm_stats.json \
+  --norm_json data/nn_dataset_v11_X_C7/norm_stats.json \
   --warmup_epochs 5 --warmup_init_factor 0.05
 """
 
@@ -190,7 +190,7 @@ class VelNetV11(nn.Module):
     forward accepts [B,T,10] or [B,1,10]  → returns (y:[B,T,3], h_next)
     """
     def __init__(self,
-                 hidden: int = 64,
+                 hidden: int = 128,
                  num_layers: int = 3,
                  dropout_p: float = 0.1,
                  use_layernorm: bool = True):
@@ -609,7 +609,7 @@ def main():
     parser.add_argument("--epochs",      type=int, default=1000, help="Training epochs")
     parser.add_argument("--lr",          type=float, default=1e-3, help="Learning rate")
     parser.add_argument("--wd",          type=float, default=1e-3, help="Weight decay")
-    parser.add_argument("--qwidth",      type=int, default=128, help="GRU hidden size")
+    parser.add_argument("--qwidth",      type=int, default=256, help="GRU hidden size")
     parser.add_argument("--dropout",     type=float, default=0.1, help="GRU dropout p")
 
     # Device / perf

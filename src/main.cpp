@@ -564,14 +564,24 @@ int main() {
     // Wave setup
     ran_model.enable_waves(true);
 
+    // ran_model.set_wave_params(
+    //     /*surge*/ 0.9, 0.7, 0.35, 0.030,  // T≈7.0 s, a touch larger
+    //     /*sway */ 0.9, 0.7, 0.35, 0.030,
+    //     /*yaw  */ 1.2, 0.5, 0.025, 0.010, // still restrained yaw
+    //     /*drift*/ 400.0,   // slow, slightly stronger than calm
+    //             0.80,
+    //             1.00,
+    //             6.0
+    // );
+    
     ran_model.set_wave_params(
-        /*surge*/ 0.9, 0.7, 0.35, 0.030,  // T≈7.0 s, a touch larger
-        /*sway */ 0.9, 0.7, 0.35, 0.030,
-        /*yaw  */ 1.2, 0.5, 0.025, 0.010, // still restrained yaw
-        /*drift*/ 400.0,   // slow, slightly stronger than calm
-                0.80,
-                1.00,
-                6.0
+    /* surge (u) */  8.0,  0.25, 0.70, 0.10,   // T_roll ≈ 1.0 s (through roll defaults)
+    /* sway  (v) */  8.0,  0.25, 0.70, 0.10,
+    /* yaw   (r) */  0.9,  0.60, 0.020, 0.008, // very gentle yaw compared to roll/pitch
+    /* drift      */ 300.0,   // slow drift – barely changes on a 5 s window
+                    0.8,      // X-drift intensity
+                    0.8,      // Y-drift intensity
+                    4.0       // N-drift intensity (keeps gyro_z small but not dead flat)
     );
 
 
@@ -698,24 +708,24 @@ int main() {
 
         // Truth + wave displacement for measurement synthesis
         Eigen::VectorXd x_w = x;           // start from rigid-body truth
-        x_w(6)  += eta6[0];                // East  += x_waves
-        x_w(7)  += eta6[1];                // North += y_waves
+        //x_w(6)  += eta6[0];                // East  += x_waves
+        //x_w(7)  += eta6[1];                // North += y_waves
         // If you simulate altitude/heave sensors, also add:
-        // x_w(8)  += eta6[2];             // Down  += z_waves
-        x_w(11)  = ssa(x(11) + eta6[5]);   // Yaw   += ψ_waves (wrapped)
+        //// x_w(8)  += eta6[2];             // Down  += z_waves
+        //x_w(11)  = ssa(x(11) + eta6[5]);   // Yaw   += ψ_waves (wrapped)
 
         // IMU from rigid-body truth, then add wave contributions
         imu = raw_IMU_v2(x, xdot, gen, ba, bgyro, h, acc_nd, gyro_nd);
 
         // Gyro: add only yaw wave-rate (robust default)
         // (Optionally add roll/pitch rates too: imu.gyro[0]+=rate6[3]; imu.gyro[1]+=rate6[4];)
-        imu.gyro[2] += rate6[5];
+        //imu.gyro[2] += rate6[5];
 
-        // Accelerometer: add wave linear acceleration in BODY (XYZ bumps)
-        const Eigen::Matrix3d R_nb = Rzyx(x(9), x(10), x(11));       // BODY→NAV (END)
-        const Eigen::Vector3d a_wave_nav(acc6[0], acc6[1], acc6[2]);
-        const Eigen::Vector3d a_wave_body = R_nb.transpose() * a_wave_nav; // NAV→BODY
-        imu.accel += a_wave_body;
+        // // Accelerometer: add wave linear acceleration in BODY (XYZ bumps)
+        // const Eigen::Matrix3d R_nb = Rzyx(x(9), x(10), x(11));       // BODY→NAV (END)
+        // const Eigen::Vector3d a_wave_nav(acc6[0], acc6[1], acc6[2]);
+        // const Eigen::Vector3d a_wave_body = R_nb.transpose() * a_wave_nav; // NAV→BODY
+        // imu.accel += a_wave_body;
 
         have_gnss_now = false;
         gnss_time += h;
@@ -737,6 +747,8 @@ int main() {
             std::cerr << "NaN psi_gnss at i=" << i << ", t=" << t[i] << "s\n";
             }
         }
+
+        have_gnss_now=false; //Testing deadreconing
 
         // 1) External attitude (q-Obs)
         if (have_gnss_now) {
@@ -855,7 +867,6 @@ int main() {
                 ekf_v11.feedNN(imu.accel, q_nb, tau_XYN[0], tau_XYN[1], tau_XYN[2]);
 
                 // 4) GNSS position giving position and velocity corrections 
-                have_gnss_now=false; //Testing deadreconing
                 if (have_gnss_now || (t[i]<60)) {
                     Eigen::Matrix3d Rpos_port = Eigen::Matrix3d::Identity() * std::pow(0.2, 2); 
                     Eigen::Matrix3d Rpos_stbd = Eigen::Matrix3d::Identity() * std::pow(0.2, 2);
