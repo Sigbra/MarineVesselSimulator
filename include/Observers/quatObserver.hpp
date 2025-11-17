@@ -1,75 +1,56 @@
-#ifndef QUAT_OBSERVER_HPP
-#define QUAT_OBSERVER_HPP
-
-
 #pragma once
-// QuatObserver.hpp — Quaternion observer (Grip et al., 2013) with gyro-bias estimation
-// Frames: BODY (x fwd, y starboard, z down), NAV/END (E, N, D; Down +).
-// Quaternion maps BODY→NAV and uses Eigen ordering (w, x, y, z).
 
-#include <Eigen/Core>
-#include <Eigen/Geometry>
-#include "Utilities/calculations.hpp"
+#include "Utilities/calculations.hpp"   // brings ::Quat, ::Vec3, ::Mat3, RnbFromQuatCustom, yawFromQuatEND, ssa
 
 namespace qobs {
 
-using Vec3 = Eigen::Vector3d;
-using Mat3 = Eigen::Matrix3d;
+// Reuse the shared math aliases and quaternion type
+using ::Vec3;   // Eigen::Vector3d
+using ::Mat3;   // Eigen::Matrix3d
+using ::Quat;   // non-Eigen quaternion {w,x,y,z}
 
+//--------------------------------------------------------------------
+// Configuration
+//--------------------------------------------------------------------
 struct Config {
-  // Gains
-  Mat3  Ki  = Mat3::Identity() * 1e-3; // integral gain for gyro-bias (diag)
-  double k1 = 1.0;                     // accel vector injection gain
-  double k2 = 0.5;                     // mag/heading injection gain
-
-  // Robustness guards
-  double accel_min_norm = 1e-3;        // [m/s^2] minimum |f| for normalization
-  double mag_min_norm   = 1e-6;        // [arb]    minimum |m| for normalization
-
-  // Reference magnetic field in NAV (set from site/calibration)
-  Vec3 m_ref_nav = Vec3(1, 0, 0);      // default points East; replace as needed
+  Mat3   Ki             = Mat3::Identity() * 1e-3; // gyro-bias integral gain
+  double k1             = 0.9;                     // accel vector gain
+  double k2             = 1.2;                     // heading (compass/GNSS) gain
+  double accel_min_norm = 0.5;                     // guard against near-zero |f|
+  double mag_min_norm   = 1e-6;                    // guard for magnetometer use
 };
 
+//--------------------------------------------------------------------
+// Quaternion Observer (BODY -> END convention)
+//--------------------------------------------------------------------
 class QuatObserver {
 public:
-  explicit QuatObserver(const Config& cfg = Config());
+  explicit QuatObserver(const Config& cfg);
 
-  // State access 
-  const Vec3& w_est()              const { return w_est_; } // BODY
-  const Eigen::Quaterniond& quat() const { return q_nb_; }  // BODY→NAV
-  const Vec3& bias_gyro()          const { return b_ars_; } // BODY
-  Mat3 Rnb() const { return RnbFromQuatCustom(q_nb_); }     // custom END DCM
+  // Setters / getters
+  void setQuat(const Quat& q);
+  void setBiasGyro(const Vec3& b);
+  const Vec3& bias_gyro() const { return b_g_; }
+  Vec3 w_est() const { return w_est_; }
 
-  void setQuat(const Eigen::Quaterniond& q_nb) { q_nb_ = q_nb.normalized(); }
-  void setBiasGyro(const Vec3& b)             { b_ars_ = b; }
-  void setMagRefNav(const Vec3& m_ref)        { cfg_.m_ref_nav = m_ref; }
+  Quat quat() const { return q_nb_; }                              // BODY→END quaternion
+  Mat3 Rnb()  const { return RnbFromQuatCustom(q_nb_); }           // BODY→END DCM
 
-  // 9-DOF step: accel, gyro, mag in BODY
-  void step9DOF(double h, const Vec3& f_imu_b, const Vec3& w_imu_b, const Vec3& m_imu_b);
-
-  // 7-DOF step (compass heading): pass psi [rad] or (cospsi, sinpsi)
-  void step7DOF(double h, const Vec3& f_imu_b, const Vec3& w_imu_b, double psi);
-
-  // 6-DOF step: accel and gyro only (prediction, sigma = 0)
-  void step6DOF(double h, const Vec3& /*f_imu_b*/, const Vec3& w_imu_b);
-
-  // Config access
-  const Config& cfg() const { return cfg_; }
-  void setConfig(const Config& c) { cfg_ = c; }
+  // Update steps
+  void step6DOF(double dt, const Vec3& accel_b, const Vec3& gyro_b);
+  void step7DOF(double dt, const Vec3& accel_b, const Vec3& gyro_b, double psi_meas_end);
+  void step9DOF(double dt, const Vec3& accel_b, const Vec3& gyro_b, const Vec3& mag_b);
 
 private:
-  static Eigen::Quaterniond quatExp(const Vec3& phi);  // exp on SO(3) via quaternion
-
-  // Core update given an injection sigma (in BODY)
-  void integrate(double h, const Vec3& w_imu_b, const Vec3& sigma);
+  // Helpers
+  static void normalize_canonical(Quat& q);                        // normalize + deterministic hemisphere
+  static Quat integrate_body_rates(const Quat& q, const Vec3& omega_b, double dt);
 
 private:
-  Config cfg_{};
-  Vec3   w_est_{0.0, 0.0, 0.0};
-  Eigen::Quaterniond q_nb_ = Eigen::Quaterniond::Identity(); // BODY→NAV
-  Vec3 b_ars_ = Vec3::Zero();                                 // gyro bias (BODY)
+  Config cfg_;
+  Quat   q_nb_;     // BODY -> END attitude
+  Vec3   b_g_;      // gyro bias estimate (BODY)
+  Vec3   w_est_;    // estimated body rates used to integrate q
 };
 
 } // namespace qobs
-
-#endif

@@ -41,6 +41,8 @@ void plotIMUAccel();
 
 void plotIMUGyro();
 
+void plotQuaternionQnb();
+
 void plotStateEstimateErrors();
 
 //void addWaypointChangeLines(const std::vector<double>& change_times);

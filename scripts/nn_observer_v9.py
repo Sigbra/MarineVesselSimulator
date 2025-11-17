@@ -23,15 +23,15 @@ IMPORTANT:
 
 Run example:
 python3 scripts/nn_observer_v9.py \
---train data/nn_dataset_v9_X_C0/train.csv \
---val   data/nn_dataset_v9_X_C0/val.csv \
---test  data/nn_dataset_v9_X_C0/test.csv \
---out   data/nn_model_v9_ens4_40 \
---seq 200 \
+--train data/nn_dataset_v9_X_C6/train.csv \
+--val   data/nn_dataset_v9_X_C6/val.csv \
+--test  data/nn_dataset_v9_X_C6/test.csv \
+--out   data/nn_model_v9_ens4_1 \
+--seq 100 \
 --epochs 10000 \
 --gpu \
 --ensemble 4 \
---norm_json data/nn_dataset_v9_X_C0/norm_stats.json
+--norm_json data/nn_dataset_v9_X_C6/norm_stats.json
 
 """
 
@@ -163,7 +163,7 @@ class VelNetV9(nn.Module):
     Output per step: [vE, vN, vD]
     """
     def __init__(self,
-                 hidden: int = 64,
+                 hidden: int = 42, #64
                  num_layers: int = 3,  
                  dropout_p: float = 0.2,
                  use_layernorm: bool = True,
@@ -260,7 +260,7 @@ class TrainCfg:
     epochs: int = 50
     lr: float = 1e-3
     weight_decay: float = 0.0
-    dt: float = 0.01
+    dt: float = 0.05
     dropout_p: float = 0.2
     qwidth: int = 64
     device: str = "cuda"
@@ -667,16 +667,16 @@ def main():
     parser.add_argument("--val",   required=True, help="Path to validation CSV")
     parser.add_argument("--test",  required=True, help="Path to test CSV")  
     parser.add_argument("--out",   required=True, help="Output directory (models, plots)")
-    parser.add_argument("--seq",   type=int, default=200, help="Sequence length T")
+    parser.add_argument("--seq",   type=int, default=100, help="Sequence length T")
     parser.add_argument("--epochs",type=int, default=10000, help="Training epochs")
-    parser.add_argument("--batch", type=int, default=512,  help="Batch size") 
+    parser.add_argument("--batch", type=int, default=256,  help="Batch size") 
     parser.add_argument("--lr",    type=float, default=1e-4, help="Learning rate")
     parser.add_argument("--wd",    type=float, default=1e-3, help="Weight decay") 
     parser.add_argument("--gpu",   action="store_true", help="Use CUDA if available")
     parser.add_argument("--ensemble", type=int, default=4, help="Number of models to train")
-    parser.add_argument("--dropout",  type=float, default=0.0, help="GRU inter-layer dropout p") #0.05
-    parser.add_argument("--qwidth",   type=int, default=128, help="GRU hidden size")
-    parser.add_argument("--dt",       type=float, default=0.01, help="Sample period (s)")
+    parser.add_argument("--dropout",  type=float, default=0.01, help="GRU inter-layer dropout p") 
+    parser.add_argument("--qwidth",   type=int, default=64, help="GRU hidden size") #128
+    parser.add_argument("--dt",       type=float, default=0.05, help="Sample period (s)") #0.01
     parser.add_argument("--norm_json", type=str, default="", help="Normalization JSON path")
     parser.add_argument("--seed",     type=int, default=42, help="Random seed (member 0). Members use seed+i")
     parser.add_argument("--w_phys",   type=float, default=1.0, help="Physics loss weight")

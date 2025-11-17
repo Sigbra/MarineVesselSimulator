@@ -28,11 +28,11 @@ Example
 -------
 python3 scripts/make_nn_dataset_v9.py \
   --in data/simdata.csv \
-  --out_dir data/nn_dataset_v9_X_C0 \
+  --out_dir data/nn_dataset_v9_X_C6 \
   --val_frac 0.15 --test_frac 0.15 \
   --header none \
   --trim_tail \
-  --seq 400 --shuffle_windows --seed 123 \
+  --seq 100 --shuffle_windows --seed 123 \
   --fix_q_sign
 """
 
