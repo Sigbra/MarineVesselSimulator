@@ -721,13 +721,18 @@ def main():
     ts_collect_dir = os.path.join(args.out, "ts")
     os.makedirs(ts_collect_dir, exist_ok=True)
 
+    # ---------------- NEW: collect per-member test predictions for ensemble scoring ----------------
+    preds_phy_members: List[np.ndarray] = []
+    gts_phy_ref: np.ndarray | None = None
+    # ------------------------------------------------------------------------------------------------
+
     for m in range(args.ensemble):
         print("=" * 90)
         print(f"Ensemble member {m + 1}/{args.ensemble}")
         print("=" * 90)
         set_seed(args.seed + m)
 
-        model = VelNetV12(input_dim=9, hidden=args.qwidth, num_layers=2, dropout_p=args.dropout).to(device)
+        model = VelNetV12(input_dim=9, hidden=args.qwidth, num_layers=3, dropout_p=args.dropout).to(device)
 
         cfg = TrainCfg(
             epochs=args.epochs, lr=args.lr, weight_decay=args.wd,
@@ -787,7 +792,9 @@ def main():
 
         # ==== Per-member TEST evaluation (STREAMING) ====
         print("[test] Evaluating member on test set…")
-        preds_norm_m, gts_norm_m = evaluate_on_loader_streaming(model.eval().to(device), test_loader_stream, device=device)
+        preds_norm_m, gts_norm_m = evaluate_on_loader_streaming(
+            model.eval().to(device), test_loader_stream, device=device
+        )
 
         # Denormalize to physical units (if y stats provided)
         if norm.y_std is None:
@@ -800,7 +807,257 @@ def main():
         metrics_m = compute_metrics(preds_phy_m, gts_phy_m)
         save_test_outputs(member_dir, preds_phy_m, gts_phy_m, metrics_m)
 
-    print("\nAll ensemble members trained, exported (from BEST), and evaluated.\n")
+        # ---------------- NEW: stash for ensemble evaluation ----------------
+        preds_phy_members.append(preds_phy_m)
+        if gts_phy_ref is None:
+            gts_phy_ref = gts_phy_m
+        else:
+            # ensure alignment (same ordering/length); tolerate float noise
+            if gts_phy_ref.shape != gts_phy_m.shape or not np.allclose(gts_phy_ref, gts_phy_m, atol=1e-6, rtol=1e-6):
+                raise RuntimeError("Test ground-truth mismatch across members; check test loader determinism/order.")
+        # --------------------------------------------------------------------
+
+    # ================= NEW: Evaluate the FULL ENSEMBLE on the test set =================
+    print("\n" + "=" * 90)
+    print("[test] Evaluating COMPLETE ENSEMBLE on test set (mean across members)…")
+    print("=" * 90)
+
+    if len(preds_phy_members) == 0:
+        raise RuntimeError("No member predictions collected; ensemble evaluation cannot run.")
+    if gts_phy_ref is None:
+        raise RuntimeError("No ground truth collected; ensemble evaluation cannot run.")
+
+    preds_stack = np.stack(preds_phy_members, axis=0)  # [M, N, 3]
+    preds_ens_mean = np.mean(preds_stack, axis=0)      # [N, 3]
+    preds_ens_std  = np.std(preds_stack, axis=0)       # [N, 3] (uncertainty proxy)
+
+    metrics_ens = compute_metrics(preds_ens_mean, gts_phy_ref)
+
+    ensemble_dir = os.path.join(args.out, "ensemble")
+    os.makedirs(ensemble_dir, exist_ok=True)
+
+    # Save mean-pred performance in same format as members
+    save_test_outputs(ensemble_dir, preds_ens_mean, gts_phy_ref, metrics_ens)
+
+    # Also save std (uncertainty proxy) alongside mean predictions
+    df_ens = pd.DataFrame({
+        "vE_gt": gts_phy_ref[:, 0], "vN_gt": gts_phy_ref[:, 1], "vD_gt": gts_phy_ref[:, 2],
+        "vE_pred_mean": preds_ens_mean[:, 0], "vN_pred_mean": preds_ens_mean[:, 1], "vD_pred_mean": preds_ens_mean[:, 2],
+        "vE_pred_std":  preds_ens_std[:, 0],  "vN_pred_std":  preds_ens_std[:, 1],  "vD_pred_std":  preds_ens_std[:, 2],
+    })
+    df_ens_path = os.path.join(ensemble_dir, "test_predictions_with_std.csv")
+    df_ens.to_csv(df_ens_path, index=False)
+    print(f"[test] wrote ensemble predictions w/ std: {df_ens_path}")
+
+    print("\nAll ensemble members trained, exported (from BEST), and evaluated (including full-ensemble test metrics).\n")
+
+
+# def main():
+#     parser = argparse.ArgumentParser(
+#         description="Train velocity-only NN (MSE only) with fast GPU chunked GRU (Euler-only inputs, angles wrapped)."
+#     )
+#     parser.add_argument("--train", required=True, help="Path to training CSV")
+#     parser.add_argument("--val", required=True, help="Path to validation CSV")
+#     parser.add_argument("--test", required=True, help="Path to test CSV")
+#     parser.add_argument("--out", required=True, help="Output directory (models, plots)")
+
+#     # Training shape / chunking
+#     parser.add_argument("--chunk_len", type=int, default=256, help="Window length T")
+#     parser.add_argument("--chunk_batch", type=int, default=128, help="Windows per batch B")
+#     parser.add_argument("--tbptt", type=int, default=256, help="Kept for parity; unused in chunked mode")
+
+#     parser.add_argument("--epochs", type=int, default=1000, help="Training epochs")
+#     parser.add_argument("--lr", type=float, default=1e-3, help="Learning rate")
+#     parser.add_argument("--wd", type=float, default=1e-3, help="Weight decay")
+#     parser.add_argument("--qwidth", type=int, default=128, help="GRU hidden size")
+#     parser.add_argument("--dropout", type=float, default=0.05, help="GRU dropout p")
+
+#     # Device / perf
+#     parser.add_argument("--gpu", action="store_true", help="Use CUDA if available")
+#     parser.add_argument("--workers", type=int, default=4, help="DataLoader workers")
+#     parser.add_argument("--prefetch", type=int, default=4, help="DataLoader prefetch factor (per worker)")
+#     parser.add_argument("--amp", type=str, default="bf16", choices=["off", "fp16", "bf16"], help="AMP dtype")
+#     parser.add_argument("--tf32", action="store_true", help="Enable TF32 on CUDA")
+#     parser.add_argument("--compile", action="store_true", help="Enable torch.compile")
+#     parser.add_argument("--progress_every", type=int, default=1, help="Print every N batches")
+
+#     # Ensemble/normalization
+#     parser.add_argument("--ensemble", type=int, default=4, help="Number of models to train")
+#     parser.add_argument("--norm_json", type=str, default="", help="Normalization JSON path")
+#     parser.add_argument("--seed", type=int, default=42, help="Random seed (member 0). Members use seed+i")
+
+#     # Warmup
+#     parser.add_argument("--warmup_epochs", type=int, default=0,
+#                         help="Number of warmup epochs (linear ramp). 0 disables warmup.")
+#     parser.add_argument("--warmup_init_factor", type=float, default=0.1,
+#                         help="LR multiplier at first warmup epoch (e.g., 0.1 → 10% of --lr).")
+
+#     args = parser.parse_args()
+
+#     # Multiprocessing start method (for workers>0)
+#     try:
+#         mp.set_start_method("spawn", force=True)
+#         print("[mp] start method set to 'spawn'")
+#     except RuntimeError:
+#         pass
+
+#     os.makedirs(args.out, exist_ok=True)
+#     set_seed(args.seed)
+
+#     device = "cuda" if (args.gpu and torch.cuda.is_available()) else "cpu"
+#     if device == "cuda":
+#         torch.backends.cudnn.benchmark = True
+#         print(f"Device: CUDA ({torch.cuda.get_device_name(0)})")
+#         if args.tf32:
+#             try:
+#                 torch.backends.cuda.matmul.fp32_precision = "tf32"
+#             except Exception:
+#                 pass
+#             try:
+#                 torch.backends.cudnn.conv.fp32_precision = "tf32"
+#             except Exception:
+#                 pass
+#     else:
+#         print("Device: CPU")
+
+#     amp_map = {"off": torch.float32, "fp16": torch.float16, "bf16": torch.bfloat16}
+#     amp_dtype = amp_map[args.amp]
+
+#     # Sanity-check header has Euler cols
+#     header_cols = list(pd.read_csv(args.train, nrows=0).columns)
+#     need = set(IN_COLS_EULER)
+#     miss = sorted(list(need - set(header_cols)))
+#     if miss:
+#         raise ValueError(f"Training CSV missing required Euler input columns: {miss}")
+
+#     input_dim = 9
+#     print(f"[inputs] Euler-only → D={input_dim} cols={IN_COLS_EULER}")
+#     print("[angles] wrapping phi/theta/psi to [-pi, +pi) (±180°) at load time")
+
+#     # Load once to compute/fallback norms
+#     x_tmp, y_tmp = read_csv_columns(args.train, in_cols=IN_COLS_EULER)
+#     norm = load_norm(args.norm_json, x_tmp, y_tmp)
+
+#     # Fail fast if norm dims mismatch
+#     if norm.x_mean.shape[0] != input_dim or norm.x_std.shape[0] != input_dim:
+#         raise ValueError(
+#             f"Normalization dims do not match Euler inputs. "
+#             f"norm has {norm.x_mean.shape[0]} but inputs have {input_dim}. "
+#             f"Use the matching norm_stats.json for this dataset."
+#         )
+
+#     with open(os.path.join(args.out, "norm_used.json"), "w") as f:
+#         json.dump({
+#             "x_mean": norm.x_mean.tolist(),
+#             "x_std": norm.x_std.tolist(),
+#             "y_mean": norm.y_mean.tolist() if norm.y_mean is not None else None,
+#             "y_std": norm.y_std.tolist() if norm.y_std is not None else None,
+#             "input_dim": input_dim,
+#             "input_cols": IN_COLS_EULER,
+#             "angle_wrap": "[-pi, +pi) (±180°)"
+#         }, f, indent=2)
+
+#     # Data loaders
+#     train_loader, n_windows = build_chunked_loader(
+#         args.train, norm,
+#         T=args.chunk_len, batch=args.chunk_batch,
+#         workers=args.workers, prefetch=args.prefetch,
+#         device_is_cuda=(device == "cuda")
+#     )
+#     val_loader_stream = build_streaming_loader(args.val, norm, device_is_cuda=(device == "cuda"))
+#     test_loader_stream = build_streaming_loader(args.test, norm, device_is_cuda=(device == "cuda"))
+
+#     batches_per_epoch = len(train_loader)
+#     print("\n" + "=" * 90)
+#     print(f"Training config: B={args.chunk_batch}, T={args.chunk_len}, D={input_dim}, amp={args.amp}, "
+#           f"tf32={args.tf32}, workers={args.workers}, prefetch={args.prefetch}, compile={args.compile}")
+#     print(f"Dataset windows: {n_windows}  (each T={args.chunk_len})  → batches/epoch ≈ {batches_per_epoch}")
+#     print("=" * 90 + "\n")
+
+#     # Train ensemble
+#     ts_collect_dir = os.path.join(args.out, "ts")
+#     os.makedirs(ts_collect_dir, exist_ok=True)
+
+#     for m in range(args.ensemble):
+#         print("=" * 90)
+#         print(f"Ensemble member {m + 1}/{args.ensemble}")
+#         print("=" * 90)
+#         set_seed(args.seed + m)
+
+#         model = VelNetV12(input_dim=9, hidden=args.qwidth, num_layers=3, dropout_p=args.dropout).to(device)
+
+#         cfg = TrainCfg(
+#             epochs=args.epochs, lr=args.lr, weight_decay=args.wd,
+#             dt=0.05, dropout_p=args.dropout, qwidth=args.qwidth,
+#             device=device, loss_w=LossWeights(mse=1.0),
+#             x_mean=None, x_std=None,
+#             print_period=max(1, min(args.epochs, 5)),
+#             tbptt=args.tbptt,
+#             amp_dtype=amp_dtype,
+#             use_compile=args.compile,
+#             progress_every=args.progress_every,
+#             warmup_epochs=args.warmup_epochs,
+#             warmup_init_factor=args.warmup_init_factor
+#         )
+
+#         member_dir = os.path.join(args.out, f"member_{m:02d}")
+#         os.makedirs(member_dir, exist_ok=True)
+#         with open(os.path.join(member_dir, "config.json"), "w") as f:
+#             json.dump({
+#                 "epochs": cfg.epochs, "lr": cfg.lr, "weight_decay": cfg.weight_decay,
+#                 "dropout_p": cfg.dropout_p, "hidden": cfg.qwidth,
+#                 "device": cfg.device, "seed": args.seed + m,
+#                 "amp": args.amp, "tf32": args.tf32, "compile": args.compile,
+#                 "chunk_len": args.chunk_len, "chunk_batch": args.chunk_batch,
+#                 "warmup_epochs": cfg.warmup_epochs, "warmup_init_factor": cfg.warmup_init_factor,
+#                 "input_dim": 9, "input_cols": IN_COLS_EULER,
+#                 "angle_wrap": "[-pi, +pi) (±180°)"
+#             }, f, indent=2)
+
+#         best_path = os.path.join(member_dir, "model_best.pth")
+#         last_path = os.path.join(member_dir, "model_last.pth")
+
+#         hist = train_one_model_chunked(
+#             model, train_loader, val_loader_stream, cfg,
+#             save_best_path=best_path, save_last_path=last_path
+#         )
+
+#         with open(os.path.join(member_dir, "history.json"), "w") as f:
+#             json.dump(hist, f, indent=2)
+#         plot_training_curves(hist, out_dir=member_dir)
+
+#         # ---- Load BEST before exporting & testing ----
+#         ckpt = torch.load(best_path, map_location=device)
+#         state = ckpt["state_dict"]
+#         if any(k.startswith("_orig_mod.") for k in state.keys()):
+#             state = {k.replace("_orig_mod.", ""): v for k, v in state.items()}
+#         model.load_state_dict(state)
+
+#         # ---- Export TorchScript (trace only; stateless & stateful) ----
+#         stateless_path = os.path.join(member_dir, "ts", f"member_{m:02d}_onestep.pt")
+#         stateful_path = os.path.join(member_dir, "ts", f"member_{m:02d}_onestep_stateful.pt")
+#         _export_torchscript_stateless_one_step(model, stateless_path)
+#         _export_torchscript_stateful_one_step(model, stateful_path)
+
+#         shutil.copyfile(stateless_path, os.path.join(ts_collect_dir, f"member_{m:02d}_onestep.pt"))
+#         shutil.copyfile(stateful_path, os.path.join(ts_collect_dir, f"member_{m:02d}_onestep_stateful.pt"))
+
+#         # ==== Per-member TEST evaluation (STREAMING) ====
+#         print("[test] Evaluating member on test set…")
+#         preds_norm_m, gts_norm_m = evaluate_on_loader_streaming(model.eval().to(device), test_loader_stream, device=device)
+
+#         # Denormalize to physical units (if y stats provided)
+#         if norm.y_std is None:
+#             preds_phy_m = preds_norm_m
+#             gts_phy_m = gts_norm_m
+#         else:
+#             preds_phy_m = preds_norm_m * norm.y_std.reshape(1, 3) + norm.y_mean.reshape(1, 3)
+#             gts_phy_m   = gts_norm_m   * norm.y_std.reshape(1, 3) + norm.y_mean.reshape(1, 3)
+
+#         metrics_m = compute_metrics(preds_phy_m, gts_phy_m)
+#         save_test_outputs(member_dir, preds_phy_m, gts_phy_m, metrics_m)
+
+#     print("\nAll ensemble members trained, exported (from BEST), and evaluated.\n")
 
 
 if __name__ == "__main__":

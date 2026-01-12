@@ -114,7 +114,7 @@ void plotPath(const Waypoints& wpt, const Waypoints& path) {
         plt::figure();
         plt::plot(x, y, "b-");  
         plt::plot(wx, wy, "ro");  
-        plt::title("Fermat Spiral Path");
+        plt::title("Path");
         plt::xlabel("x [m]");
         plt::ylabel("y [m]");
         plt::grid(true);

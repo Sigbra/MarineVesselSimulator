@@ -26,7 +26,7 @@ Example
 -------
 python3 scripts/make_nn_dataset_v11.py \
   --in data/simdata.csv \
-  --out_dir data/nn_dataset_v11_X_C7_test_final2 \
+  --out_dir data/nn_dataset_v11_X_C7_test_final_no_bias \
   --val_frac 0.15 --test_frac 0.15 \
   --header none \
   --trim_tail \

@@ -42,7 +42,7 @@ Tail trimming (v11-style):
 
   python3 scripts/make_nn_dataset_v12.py \
   --in data/simdata_final_dataset.csv \
-  --out_dir data/nn_dataset_v12_final \
+  --out_dir data/nn_dataset_v12_final_no_bias \
   --val_frac 0.15 --test_frac 0.15 \
   --header none \
   --trim_tail \

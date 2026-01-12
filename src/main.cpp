@@ -115,7 +115,7 @@ static double oceanCurrentV(double V_c, double dt, std::mt19937& gen)
     if (!(dt > 0.0)) return V_c;
 
     const double sigmaV = 1e-4; // (m/s)/sqrt(s)
-    const double kV     = 1e-5; // 1/s (weak pull toward 0)
+    const double kV     = 2e-5; // 1/s (weak pull toward 0)
 
     return V_c + (-kV * V_c) * dt + sigmaV * std::sqrt(dt) * N(gen);
 }
@@ -567,20 +567,19 @@ int main() {
 
         // 1) External attitude (q-Obs)
         if (have_gnss_now) {
-            quatObs.step7DOF(h, imu.accel, imu.gyro, psi_gnss);
+            quatObs.step7DOF(h, imu.accel, imu.gyro, psi_gnss); //add accel bias
         } else {
-            quatObs.step6DOF(h, imu.accel, imu.gyro);
+            quatObs.step6DOF(h, imu.accel, imu.gyro); //add accel bias
         }
         q_nb =  quatObs.quat();
         w_est = quatObs.w_est();   
-        
-        // auto canonicalize = [](Eigen::Quaterniond q){
-        //     q.normalize();
-        //     if (q.w() < 0.0 || (std::abs(q.w()) <= 1e-12 && q.z() < 0.0)) q.coeffs() *= -1.0;
-        //     return q;
-        // };
-        // Eigen::Quaterniond q_nb_can = canonicalize(q_nb);
 
+        // Dataset Making
+        // if (!use_gnss){
+        //     have_gnss_now = false;
+        //     ekf_v11.zeroAccelBias();
+        //     ekf_v12.zeroAccelBias();
+        // }
 
         // ------------------ Switch between observers ------------------
         switch (observer_type) {
@@ -645,10 +644,10 @@ int main() {
                 // u, v, w (body)
                 x_est_local.segment<3>(0) = xhat.segment<3>(0);
 
-                // p, q, r from gyro (optionally bias-corrected)
+                // p, q, r from gyro 
                 acc_bias_est = xhat.segment<3>(9);
-                gyro_bias_est = xhat.segment<3>(12);          // estimated gyro bias
-                Eigen::Vector3d pqr = imu.gyro - gyro_bias_est;         // bias-corrected
+                gyro_bias_est = xhat.segment<3>(12);         
+                Eigen::Vector3d pqr = imu.gyro - gyro_bias_est;         
                 x_est_local.segment<3>(3) = pqr;
 
                 // x, y, z (END)
@@ -659,7 +658,7 @@ int main() {
                 x_est_local(10) = xhat(7);
                 x_est_local(11) = xhat(8);
 
-                x_est = x_est_local;  // your existing variable
+                x_est = x_est_local;  
 
                 break;
             }
@@ -907,7 +906,7 @@ int main() {
         // Marine Craft Model, update states: x
         ran_model.wave_step_drift(h);
         ran_model.rk4(x, mp, V_c, beta_c, h, n, alpha);
-        //x(11) = ssa(x(11)); //makes plotting look bad    
+        x(11) = ssa(x(11)); //makes plotting look bad    
         
         // Pod model, update states: n and alpha
         ran_model.update_n(n, n_c, h);
