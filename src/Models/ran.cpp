@@ -468,7 +468,6 @@ Eigen::VectorXd RAN::tau_pods(Eigen::Vector2d n, Eigen::Vector2d alpha){
 
 void RAN::rk4(Eigen::VectorXd& x, double mp, double V_c, double beta_c, double h, Eigen::Vector2d n, Eigen::Vector2d alpha)
 {
-   wave_step_drift(h);
 
    propagate = false;
    
@@ -533,75 +532,93 @@ void RAN::select_failure_mode() {
 }
 
 //----------------Wave environment-----------------------
+//
+// Method 3 (slide deck): per DOF
+//   x1dot = x2
+//   x2dot = -wn^2 x1 - 2*z*wn x2 + K*w
+//   eta_w = x2
+// with unit white noise w (no extra "sigw" tuning knob).
+//
+// Drift: Method 3 uses a Wiener process (random walk); no Td tuning knob.
+//
 
 // Back-compat setter: surge, sway, yaw + drift.
 // Heave/roll/pitch get reasonable defaults derived from surge/sway.
-void RAN::set_wave_params(double wn_u, double z_u, double K_u, double sigw_u,
-                          double wn_v, double z_v, double K_v, double sigw_v,
-                          double wn_r, double z_r, double K_r, double sigw_r,
-                          double Td_drift, double sigw_X_in, double sigw_Y_in, double sigw_N_in)
+void RAN::set_wave_params(double wn_u, double z_u, double K_u,
+                          double wn_v, double z_v, double K_v,
+                          double wn_r, double z_r, double K_r,
+                          double sigma_drift_X_in, double sigma_drift_Y_in, double sigma_drift_N_in)
 {
     // Map to 6-DOF arrays
-    wn[0]=wn_u;  zeta[0]=z_u;  Kg[0]=K_u;  sig[0]=sigw_u;   // x
-    wn[1]=wn_v;  zeta[1]=z_v;  Kg[1]=K_v;  sig[1]=sigw_v;   // y
+    wn[0]  = wn_u;  zeta[0] = z_u;  Kg[0] = K_u;   // x (surge-like WF)
+    wn[1]  = wn_v;  zeta[1] = z_v;  Kg[1] = K_v;   // y (sway-like WF)
 
     // Heave default: slightly stiffer & more damped than surge
-    wn[2]=std::max(1.0, 0.9*wn_u);
-    zeta[2]=std::max(0.35, z_u+0.10);
-    Kg[2]=0.5* (K_u+K_v);
-    sig[2]=0.8* (sigw_u+sigw_v)/2.0;
+    wn[2]  = std::max(1.0, 0.9 * wn_u);
+    zeta[2]= std::max(0.35, z_u + 0.10);
+    Kg[2]  = 0.5 * (K_u + K_v);
 
     // Roll/pitch defaults: small amplitude
-    wn[3]=std::max(0.8, 0.8*wn_u); zeta[3]=0.25; Kg[3]=0.03; sig[3]=0.5;
-    wn[4]=std::max(0.8, 0.8*wn_v); zeta[4]=0.25; Kg[4]=0.03; sig[4]=0.5;
+    wn[3]  = std::max(0.8, 0.8 * wn_u);  zeta[3] = 0.25;  Kg[3] = 0.03; // φ
+    wn[4]  = std::max(0.8, 0.8 * wn_v);  zeta[4] = 0.25;  Kg[4] = 0.03; // θ
 
     // Yaw from inputs
-    wn[5]=wn_r; zeta[5]=z_r; Kg[5]=K_r; sig[5]=sigw_r;
+    wn[5]  = wn_r;  zeta[5] = z_r;  Kg[5] = K_r;   // ψ
 
-    Td     = Td_drift;
-    sigw_X = sigw_X_in;
-    sigw_Y = sigw_Y_in;
-    sigw_N = sigw_N_in;
+    // Drift intensities (BODY frame) for Wiener process
+    sigma_drift_X = sigma_drift_X_in;
+    sigma_drift_Y = sigma_drift_Y_in;
+    sigma_drift_N = sigma_drift_N_in;
 }
 
 // Full 6-DOF setter. Use this if you want explicit control of z, φ, θ too.
 void RAN::set_wave_params6(
-    double wn_x, double z_x, double K_x, double sigw_x,
-    double wn_y, double z_y, double K_y, double sigw_y,
-    double wn_z, double z_z, double K_z, double sigw_z,
-    double wn_phi, double z_phi, double K_phi, double sigw_phi,
-    double wn_theta, double z_theta, double K_theta, double sigw_theta,
-    double wn_psi, double z_psi, double K_psi, double sigw_psi,
-    double Td_drift, double sigw_X_in, double sigw_Y_in, double sigw_N_in)
+    double wn_x,     double z_x,     double K_x,
+    double wn_y,     double z_y,     double K_y,
+    double wn_z,     double z_z,     double K_z,
+    double wn_phi,   double z_phi,   double K_phi,
+    double wn_theta, double z_theta, double K_theta,
+    double wn_psi,   double z_psi,   double K_psi,
+    double sigma_drift_X_in, double sigma_drift_Y_in, double sigma_drift_N_in)
 {
-    wn  = {wn_x, wn_y, wn_z, wn_phi, wn_theta, wn_psi};
-    zeta= {z_x , z_y , z_z , z_phi , z_theta , z_psi };
-    Kg  = {K_x , K_y , K_z , K_phi , K_theta , K_psi };
-    sig = {sigw_x, sigw_y, sigw_z, sigw_phi, sigw_theta, sigw_psi};
-    Td     = Td_drift;
-    sigw_X = sigw_X_in;
-    sigw_Y = sigw_Y_in;
-    sigw_N = sigw_N_in;
+    wn   = {wn_x, wn_y, wn_z, wn_phi, wn_theta, wn_psi};
+    zeta = {z_x , z_y , z_z , z_phi , z_theta , z_psi };
+    Kg   = {K_x , K_y , K_z , K_phi , K_theta , K_psi };
+
+    sigma_drift_X = sigma_drift_X_in;
+    sigma_drift_Y = sigma_drift_Y_in;
+    sigma_drift_N = sigma_drift_N_in;
 }
 
-// 2nd-order WF integrator for a single DOF. Outputs acceleration (ξ̈).
+// 2nd-order WF integrator for a single DOF (Method 3). Outputs eta_dot (x2dot) in xddot_out.
+// State meaning (internal):
+//   x[0] = x1 (auxiliary)
+//   x[1] = x2 = eta_w
 static inline void wf_step_pair(Eigen::Vector2d& x,
-                                double wn, double z, double K, double sigw,
+                                double wn, double z, double K,
                                 double dt, std::mt19937_64& rng,
                                 std::normal_distribution<double>& N01,
                                 double& xddot_out)
 {
-    const double inv_sqrt_dt = 1.0 / std::sqrt(std::max(1e-12, dt));
-    const double wi = N01(rng) * sigw * inv_sqrt_dt;
+    const double dt_safe     = std::max(1e-12, dt);
+    const double inv_sqrt_dt = 1.0 / std::sqrt(dt_safe);
 
-    const double xi    = x[0];
-    const double xidot = x[1];
+    // Unit-intensity white noise (continuous-time approximation)
+    const double w = N01(rng) * inv_sqrt_dt;
 
-    const double xddot = -(wn*wn)*xi - 2.0*z*wn*xidot + K*wi;
-    xddot_out = xddot;
+    const double x1 = x[0];
+    const double x2 = x[1]; // x2 = eta_w
 
-    x[0] = xi    + dt * xidot;
-    x[1] = xidot + dt * xddot;
+    // Method 3 state derivatives
+    const double x1dot = x2;
+    const double x2dot = -(wn * wn) * x1 - 2.0 * z * wn * x2 + K * w;
+
+    // Keep output variable for interface: now returns eta_dot = x2dot
+    xddot_out = x2dot;
+
+    // Forward Euler step
+    x[0] = x1 + dt_safe * x1dot;
+    x[1] = x2 + dt_safe * x2dot;
 }
 
 void RAN::wave_step_WF(double dt)
@@ -617,49 +634,48 @@ void RAN::wave_step_WF(double dt)
         return;
     }
 
+    const double dt_safe = std::max(1e-12, dt);
+
     // Advance 6 DOFs: x, y, z, φ, θ, ψ
     for (int i = 0; i < 6; ++i) {
-        double acc_i = 0.0;
-        wf_step_pair(xw[i], wn[i], zeta[i], Kg[i], sig[i], dt, rng, N01, acc_i);
-        eta_w_6[i]     = xw[i][0];
-        etadot_w_6[i]  = xw[i][1];
-        etaddot_w_6[i] = acc_i;
+        double eta_dot_i = 0.0;
+
+        // Method 3 step: eta_dot_i gets x2dot (since eta_w = x2)
+        wf_step_pair(xw[i], wn[i], zeta[i], Kg[i], dt_safe, rng, N01, eta_dot_i);
+
+        // Method 3 output mapping: eta_w = x2
+        eta_w_6[i]    = xw[i][1];
+        etadot_w_6[i] = eta_dot_i;
+
+        // Numeric estimate (optional; inherently noisy with white-noise-driven models)
+        etaddot_w_6[i] = (etadot_w_6[i] - etadot_w_prev[i]) / dt_safe;
+        etadot_w_prev[i] = etadot_w_6[i];
     }
 
-    // Back-compat 3-vectors used in your code: [x y ψ] and their derivatives
-    eta_w_EN    << eta_w_6[0],    eta_w_6[1],    eta_w_6[5];
-    etadot_w_EN << etadot_w_6[0], etadot_w_6[1], etadot_w_6[5];
-    etaddot_w_EN<< etaddot_w_6[0],etaddot_w_6[1],etaddot_w_6[5];
+    // Back-compat 3-vectors: [x y ψ]
+    eta_w_EN     << eta_w_6[0],     eta_w_6[1],     eta_w_6[5];
+    etadot_w_EN  << etadot_w_6[0],  etadot_w_6[1],  etadot_w_6[5];
+    etaddot_w_EN << etaddot_w_6[0], etaddot_w_6[1], etaddot_w_6[5];
 }
 
-// Drift: OU or Random Walk if Td<=0 or inf. BODY frame.
+// Drift: Method 3 (Wiener / random walk). BODY frame.
 void RAN::wave_step_drift(double dt)
 {
     if (!waves_on) { d_wave.setZero(); tau_wave_body_cached.setZero(); return; }
 
-    const double inv_sqrt_dt = 1.0 / std::sqrt(std::max(1e-12, dt));
-    const double sdt         = std::sqrt(std::max(1e-12, dt));
+    const double dt_safe = std::max(1e-12, dt);
+    const double sdt     = std::sqrt(dt_safe);
 
-    // draws
-    const double nX = N01(rng), nY = N01(rng), nN = N01(rng);
+    // Wiener increments: dW ~ N(0, dt)
+    const double dWX = sdt * N01(rng);
+    const double dWY = sdt * N01(rng);
+    const double dWN = sdt * N01(rng);
 
-    if (!std::isfinite(Td) || Td <= 0.0) {
-        // Random walk: d_{k+1} = d_k + sqrt(dt)*sigma*N(0,1)
-        d_wave[0] += sdt * sigw_X * nX;
-        d_wave[1] += sdt * sigw_Y * nY;
-        d_wave[2] += sdt * sigw_N * nN;
-    } else {
-        // OU(1): ḋ = -d/Td + w
-        const double wX = sigw_X * inv_sqrt_dt * nX;
-        const double wY = sigw_Y * inv_sqrt_dt * nY;
-        const double wN = sigw_N * inv_sqrt_dt * nN;
+    // Random walk: d_{k+1} = d_k + sigma * dW
+    d_wave[0] += sigma_drift_X * dWX;
+    d_wave[1] += sigma_drift_Y * dWY;
+    d_wave[2] += sigma_drift_N * dWN;
 
-        const double invTd = 1.0 / std::max(1e-6, Td);
-        d_wave[0] += dt * (-d_wave[0]*invTd + wX);
-        d_wave[1] += dt * (-d_wave[1]*invTd + wY);
-        d_wave[2] += dt * (-d_wave[2]*invTd + wN);
-    }
-
-    // Use constant drift over RK4 sub-steps
+    // Cached constant drift over RK4 sub-steps
     tau_wave_body_cached = d_wave; // [X, Y, N] BODY
 }

@@ -26,12 +26,12 @@ Outputs (3):  [vE, vN, vD]
 Example
 -------
 python3 -u scripts/nn_observer_v11.py \
-  --train data/nn_dataset_v11_X_C7/train.csv \
-  --val   data/nn_dataset_v11_X_C7/val.csv \
-  --test  data/nn_dataset_v11_X_C7/test.csv \
-  --out   data/nn_model_v11_ens4_15 \
-  --epochs 1000 --gpu --ensemble 4 \
-  --norm_json data/nn_dataset_v11_X_C7/norm_stats.json \
+  --train data/nn_dataset_v11_X_C7_test_final2/train.csv \
+  --val   data/nn_dataset_v11_X_C7_test_final2/val.csv \
+  --test  data/nn_dataset_v11_X_C7_test_final2/test.csv \
+  --out   data/nn_model_v11_ens4_14_test_final3 \
+  --epochs 1000 --gpu --ensemble 8 \
+  --norm_json data/nn_dataset_v11_X_C7_test_final2/norm_stats.json \
   --warmup_epochs 5 --warmup_init_factor 0.05
 """
 
@@ -458,7 +458,7 @@ def plot_training_curves(hist: Dict[str, List[float]], out_dir: str = "."):
     plt.plot(epochs, hist["val_total"], label="val total")
     plt.xlabel("epoch"); plt.ylabel("total loss"); plt.title("Total Loss")
     plt.legend(); plt.grid(True, alpha=0.3)
-    plt.tight_layout(); plt.savefig(f"{out_dir}/loss_total_linear.png"); plt.close()
+    plt.tight_layout(); plt.savefig(f"{out_dir}/loss_total_linear.svg"); plt.close()
 
     plt.figure()
     plt.plot(epochs, hist["train_total"], label="train total")
@@ -466,7 +466,7 @@ def plot_training_curves(hist: Dict[str, List[float]], out_dir: str = "."):
     plt.yscale("log")
     plt.xlabel("epoch"); plt.ylabel("total loss (log)"); plt.title("Total Loss (log)")
     plt.legend(); plt.grid(True, which="both", alpha=0.3)
-    plt.tight_layout(); plt.savefig(f"{out_dir}/loss_total_log.png"); plt.close()
+    plt.tight_layout(); plt.savefig(f"{out_dir}/loss_total_log.svg"); plt.close()
 
     names = ["vE", "vN", "vD"]
     plt.figure()
@@ -475,7 +475,7 @@ def plot_training_curves(hist: Dict[str, List[float]], out_dir: str = "."):
     plt.yscale("log")
     plt.xlabel("epoch"); plt.ylabel("val MSE per output"); plt.title("Validation MSE per output (log)")
     plt.legend(); plt.grid(True, which="both", alpha=0.3)
-    plt.tight_layout(); plt.savefig(f"{out_dir}/val_mse_per_output.png"); plt.close()
+    plt.tight_layout(); plt.savefig(f"{out_dir}/val_mse_per_output.svg"); plt.close()
 
     plt.figure()
     for i in range(3):
@@ -483,7 +483,7 @@ def plot_training_curves(hist: Dict[str, List[float]], out_dir: str = "."):
     plt.yscale("log")
     plt.xlabel("epoch"); plt.ylabel("val TOTAL per output"); plt.title("Validation TOTAL per output (log)")
     plt.legend(); plt.grid(True, which="both", alpha=0.3)
-    plt.tight_layout(); plt.savefig(f"{out_dir}/val_total_per_output.png"); plt.close()
+    plt.tight_layout(); plt.savefig(f"{out_dir}/val_total_per_output.svg"); plt.close()
 
 
 def compute_metrics(y_pred: np.ndarray, y_gt: np.ndarray) -> Dict[str, float]:
@@ -603,14 +603,14 @@ def main():
 
     # Training shape / chunking
     parser.add_argument("--chunk_len",   type=int, default=256, help="Window length T")
-    parser.add_argument("--chunk_batch", type=int, default=64,  help="Windows per batch B")
+    parser.add_argument("--chunk_batch", type=int, default=128,  help="Windows per batch B")
     parser.add_argument("--tbptt",       type=int, default=256, help="Kept for parity; unused in chunked mode")
 
     parser.add_argument("--epochs",      type=int, default=1000, help="Training epochs")
     parser.add_argument("--lr",          type=float, default=1e-3, help="Learning rate")
     parser.add_argument("--wd",          type=float, default=1e-3, help="Weight decay")
-    parser.add_argument("--qwidth",      type=int, default=256, help="GRU hidden size")
-    parser.add_argument("--dropout",     type=float, default=0.1, help="GRU dropout p")
+    parser.add_argument("--qwidth",      type=int, default=256, help="GRU hidden size") #128 -> final2, 256 -> final3
+    parser.add_argument("--dropout",     type=float, default=0.05, help="GRU dropout p")
 
     # Device / perf
     parser.add_argument("--gpu",         action="store_true", help="Use CUDA if available")
@@ -1605,4 +1605,3 @@ if __name__ == "__main__":
 #     except RuntimeError:
 #         pass
 #     main()
-

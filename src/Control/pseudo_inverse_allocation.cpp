@@ -69,4 +69,3 @@ std::vector<double> pseudo_inverse_allocation(
     // 8) Return in the order {n1, alpha1, n2, alpha2}
     return { n1, alpha1, n2, alpha2 };
 }
-
