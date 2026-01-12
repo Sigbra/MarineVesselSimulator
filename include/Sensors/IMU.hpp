@@ -30,14 +30,6 @@ struct IMUData {
  * @return IMUData    Noisy IMU measurements (accel includes gravity)
  */
 IMUData raw_IMU(const Eigen::VectorXd &x,
-                const Eigen::VectorXd &xdot,
-                std::mt19937 &gen,
-                Eigen::Vector3d &ba,
-                Eigen::Vector3d &bgyro,
-                double sigma_acc = 0.01,
-                double sigma_gyro = 0.001);
-
-IMUData raw_IMU_v2(const Eigen::VectorXd &x,
                    const Eigen::VectorXd &x_dot,
                    std::mt19937 &gen,
                    Eigen::Vector3d &ba,          // accel bias (updated in-place)
@@ -45,10 +37,5 @@ IMUData raw_IMU_v2(const Eigen::VectorXd &x,
                    double dt,                    // <-- sample time [s]
                    double sigma_acc_nd,          // accel noise density [m/s^2 / sqrt(Hz)]
                    double sigma_gyro_nd);
-
-
-// Remove gravity from raw accelerometer using attitude (φ,θ,ψ)
-Eigen::Vector3d GravityCompensation(const Eigen::Vector3d &accel_raw,
-                                    double phi, double theta, double psi);
 
 #endif // IMU_HPP

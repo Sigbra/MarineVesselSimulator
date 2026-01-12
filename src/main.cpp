@@ -216,16 +216,11 @@ int main() {
     double psi_gnss = gnss_heading_from_two_antennas(ant1_meas, ant2_meas);
     bool have_gnss_now = false;
 
-    //Eigen::Vector3d ba(0.0, 0.0, 0.0);      // Initial Accelerometer bias
-    //Eigen::Vector3d bgyro(0.0, 0.0, 0.0);   // Initial Gyroscope bias
-    //IMUData imu = raw_IMU(x, xdot, gen, ba, bgyro, 0.0, 0.00);
-    //imu.accel = GravityCompensation(imu.accel, x(9), x(10), x(11));
-
     Eigen::Vector3d ba = Eigen::Vector3d::Constant(0);//1e-4);     // accel bias state (m/s^2)
     Eigen::Vector3d bgyro = Eigen::Vector3d::Constant(0);//1e-5);  // gyro  bias state (rad/s)
     const double acc_nd  = 1e-4;  // 1.2e-3 m/s^2 / sqrt(Hz)  (~122 µg/√Hz)
     const double gyro_nd = 1e-6;  // 7.0e-5 rad/s  / sqrt(Hz) (~0.24 °/√hr)
-    IMUData imu = raw_IMU_v2(x, xdot, gen, ba, bgyro, h, acc_nd, gyro_nd);
+    IMUData imu = raw_IMU(x, xdot, gen, ba, bgyro, h, acc_nd, gyro_nd);
 
     Eigen::Vector3d acc_bias_est = Eigen::Vector3d::Zero();
     Eigen::Vector3d gyro_bias_est = Eigen::Vector3d::Zero();
@@ -531,7 +526,7 @@ int main() {
 
         ran_model.wave_step_WF(h);
 
-        imu = raw_IMU_v2(x, xdot, gen, ba, bgyro, h, acc_nd, gyro_nd);
+        imu = raw_IMU(x, xdot, gen, ba, bgyro, h, acc_nd, gyro_nd);
 
         have_gnss_now = false;
         gnss_time += h;
@@ -678,7 +673,7 @@ int main() {
                 ekf_v11.feedNN(imu.accel, q_nb, tau_XYN[0], tau_XYN[1], tau_XYN[2]);
                 
                 // 4) GNSS position giving position and velocity corrections 
-                if (have_gnss_now || (t[i]<30)) {
+                if (have_gnss_now || (t[i]<5)) {
                     Eigen::Matrix3d Rpos_port = Eigen::Matrix3d::Identity() * std::pow(0.5, 2); 
                     Eigen::Matrix3d Rpos_stbd = Eigen::Matrix3d::Identity() * std::pow(0.5, 2);
                     ekf_v11.updateGnssPos(ant1_meas, Rpos_port, lever_arm_port_body, 1);
