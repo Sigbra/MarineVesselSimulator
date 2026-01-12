@@ -99,18 +99,10 @@ set(SOURCES
 
     src/Observers/EKF12.cpp
     src/Observers/EKF13.cpp
+    src/Observers/EKF15.cpp
     src/Observers/EKF18.cpp
-    #src/Observers/nn_EKF_v1.cpp
-    #src/Observers/nn_EKF_v2.cpp
-    #src/Observers/nn_EKF_v3.cpp
-    #src/Observers/nn_ekf_v4.cpp
-    #src/Observers/nn_ekf_v5.cpp
-    #src/Observers/nn_ekf_v6.cpp
-    #src/Observers/nn_ekf_v7.cpp
-    #src/Observers/nn_ekf_v8.cpp
-    #src/Observers/nn_ekf_v9.cpp
-    #src/Observers/nn_ekf_v10.cpp
     src/Observers/nn_ekf_v11.cpp
+    src/Observers/nn_ekf_v12.cpp
     src/Observers/quatObserver.cpp
     src/Observers/observer_selector.cpp
 

@@ -253,58 +253,176 @@ struct NN_v11::Impl {
     return true;
   }
 
+  // bool infer(const std::vector<Eigen::Matrix<double,IN_DIM,1>>& window,
+  //            Vec3& v_nav_mean,
+  //            Mat3& Rv_nav)
+  // {
+  //   if (members_.empty() || window.empty()) return false;
+
+  //   torch::NoGradGuard ng;
+
+  //   // -----------------------------
+  //   // Lazy init per-member hidden states [L,1,H]
+  //   // -----------------------------
+  //   if (h_.size() != members_.size()) {
+  //     h_.resize(members_.size());
+  //     for (size_t m = 0; m < members_.size(); ++m) {
+  //       try {
+  //         // stateful wrapper must implement init_state(batch:int)
+  //         h_[m] = members_[m].run_method("init_state", 1).toTensor().to(device_);
+  //       } catch (const c10::Error& e) {
+  //         std::cerr << "[NN_v11] init_state() missing on member " << m
+  //                   << " (" << e.what() << ")\n"
+  //                   << "          Did you load the *stateful* export (…_onestep_stateful.pt)?\n";
+  //         return false;
+  //       }
+  //     }
+  //   }
+
+  //   // -----------------------------
+  //   // Use ONLY the last input (one-step stateful), build x:[1,1,IN_DIM]
+  //   // -----------------------------
+  //   const auto& r = window.back();
+
+  //   torch::Tensor x = torch::empty({1, 1, IN_DIM},
+  //       torch::TensorOptions().dtype(torch::kDouble).device(device_));
+  //   {
+  //     auto xa = x.accessor<double,3>();
+  //     for (int j = 0; j < IN_DIM; ++j) xa[0][0][j] = r(j);
+  //   }
+
+  //   // Normalize: (x - mean) / std
+  //   x = (x - x_mean_t_.view({1,1,IN_DIM})) / x_std_t_.view({1,1,IN_DIM});
+  //   torch::Tensor xf = x.to(torch::kFloat);
+
+  //   // -----------------------------
+  //   // Forward each ensemble member with its persistent hidden state
+  //   // -----------------------------
+  //   const int M = static_cast<int>(members_.size());
+  //   std::vector<Vec3> preds; preds.reserve(M);
+
+  //   for (int m = 0; m < M; ++m) {
+  //     c10::IValue out_iv;
+  //     try {
+  //       // forward(x:[1,1,10], h:[L,1,H]) -> (y:[1,1,3], h_next)
+  //       out_iv = members_[m].forward({ xf, h_[m] });
+  //     } catch (const c10::Error& e) {
+  //       std::cerr << "[NN_v11] forward() failed on member " << (m+1)
+  //                 << " : " << e.what() << "\n";
+  //       return false;
+  //     }
+
+  //     c10::intrusive_ptr<c10::ivalue::Tuple> tup = out_iv.toTuple();
+  //     const auto& elems = tup->elements();
+  //     if (elems.size() != 2 || !elems[0].isTensor() || !elems[1].isTensor()) {
+  //       std::cerr << "[NN_v11] forward() did not return (Tensor, Tensor) on member " << m << "\n";
+  //       return false;
+  //     }
+
+  //     torch::Tensor y     = elems[0].toTensor();  // [1,1,3]
+  //     torch::Tensor hnext = elems[1].toTensor();  // [L,1,H]
+  //     h_[m] = hnext;                              // persist hidden state
+
+  //     if (y.dim() != 3 || y.size(0) != 1 || y.size(1) != 1 || y.size(2) != 3) {
+  //       std::cerr << "[NN_v11] Bad output shape from member " << m << ": " << y.sizes() << "\n";
+  //       return false;
+  //     }
+
+  //     // De-normalize on CPU double
+  //     torch::Tensor y3 = y.index({0,0}).to(torch::kDouble).to(torch::kCPU); // [3]
+  //     double vv[3]; std::memcpy(vv, y3.data_ptr<double>(), 3*sizeof(double));
+
+  //     Vec3 v;
+  //     for (int k = 0; k < 3; ++k) v(k) = vv[k]*y_std_[k] + y_mean_[k]; // END: [vE,vN,vD]
+  //     preds.push_back(v);
+  //   }
+
+  //   // -----------------------------
+  //   // Ensemble mean and covariance in END
+  //   // -----------------------------
+  //   v_nav_mean.setZero();
+  //   for (const auto& v : preds) v_nav_mean += v;
+  //   v_nav_mean /= std::max(1, M);
+
+  //   Eigen::Matrix<double,3,Eigen::Dynamic> D(3, M);
+  //   for (int i = 0; i < M; ++i) D.col(i) = preds[i] - v_nav_mean;
+
+  //   if (M >= 2) {
+  //     Rv_nav = (D * D.transpose()) / static_cast<double>(M - 1);
+  //   } else {
+  //     Rv_nav = Mat3::Zero();
+  //   }
+  //   Rv_nav += 1e-6 * Mat3::Identity(); // small numerical floor
+
+  //   return true;
+  // }
+
   bool infer(const std::vector<Eigen::Matrix<double,IN_DIM,1>>& window,
-             Vec3& v_nav_mean,
-             Mat3& Rv_nav)
-  {
-    if (members_.empty() || window.empty()) return false;
+           Vec3& v_nav_mean,
+           Mat3& Rv_nav)
+{
+  if (members_.empty() || window.empty()) return false;
 
-    torch::NoGradGuard ng;
+  torch::NoGradGuard ng;
 
-    // -----------------------------
-    // Lazy init per-member hidden states [L,1,H]
-    // -----------------------------
-    if (h_.size() != members_.size()) {
-      h_.resize(members_.size());
-      for (size_t m = 0; m < members_.size(); ++m) {
-        try {
-          // stateful wrapper must implement init_state(batch:int)
-          h_[m] = members_[m].run_method("init_state", 1).toTensor().to(device_);
-        } catch (const c10::Error& e) {
-          std::cerr << "[NN_v11] init_state() missing on member " << m
-                    << " (" << e.what() << ")\n"
-                    << "          Did you load the *stateful* export (…_onestep_stateful.pt)?\n";
-          return false;
-        }
+  // -----------------------------
+  // Lazy init per-member hidden states [L,1,H]
+  // If we initialize here, we warm-start through the full window once.
+  // -----------------------------
+  bool need_warm_start = false;
+
+  if (h_.size() != members_.size()) {
+    h_.resize(members_.size());
+    for (size_t m = 0; m < members_.size(); ++m) {
+      try {
+        // stateful wrapper must implement init_state(batch:int)
+        h_[m] = members_[m].run_method("init_state", 1).toTensor().to(device_);
+      } catch (const c10::Error& e) {
+        std::cerr << "[NN_v11] init_state() missing on member " << m
+                  << " (" << e.what() << ")\n"
+                  << "          Did you load the *stateful* export (…_onestep_stateful.pt)?\n";
+        return false;
       }
     }
+    need_warm_start = true;
+  }
 
-    // -----------------------------
-    // Use ONLY the last input (one-step stateful), build x:[1,1,IN_DIM]
-    // -----------------------------
-    const auto& r = window.back();
+  // Warm-start: feed 0..T-1. Steady-state: feed only last sample.
+  const int T = static_cast<int>(window.size());
+  const int start_idx = (need_warm_start ? 0 : (T - 1));
 
-    torch::Tensor x = torch::empty({1, 1, IN_DIM},
-        torch::TensorOptions().dtype(torch::kDouble).device(device_));
-    {
-      auto xa = x.accessor<double,3>();
-      for (int j = 0; j < IN_DIM; ++j) xa[0][0][j] = r(j);
-    }
+  // Pre-allocate tensor [1,1,IN_DIM] (double for normalization, then cast to float)
+  torch::Tensor x = torch::empty({1, 1, IN_DIM},
+      torch::TensorOptions().dtype(torch::kDouble).device(device_));
 
-    // Normalize: (x - mean) / std
-    x = (x - x_mean_t_.view({1,1,IN_DIM})) / x_std_t_.view({1,1,IN_DIM});
-    torch::Tensor xf = x.to(torch::kFloat);
+  // -----------------------------
+  // Forward each ensemble member with its persistent hidden state
+  // -----------------------------
+  const int M = static_cast<int>(members_.size());
+  std::vector<Vec3> preds; preds.reserve(M);
 
-    // -----------------------------
-    // Forward each ensemble member with its persistent hidden state
-    // -----------------------------
-    const int M = static_cast<int>(members_.size());
-    std::vector<Vec3> preds; preds.reserve(M);
+  for (int m = 0; m < M; ++m) {
 
-    for (int m = 0; m < M; ++m) {
+    torch::Tensor y_last;  // [1,1,3]
+
+    // Step through required part of the window to update h_[m]
+    for (int i = start_idx; i < T; ++i) {
+      const auto& r = window[i];
+
+      // Fill x from canonical row r (IN_DIM = 10 for v11)
+      {
+        auto xa = x.accessor<double,3>();
+        for (int j = 0; j < IN_DIM; ++j) xa[0][0][j] = r(j);
+      }
+
+      // Normalize: (x - mean) / std
+      torch::Tensor x_norm =
+        (x - x_mean_t_.view({1,1,IN_DIM})) / x_std_t_.view({1,1,IN_DIM});
+      torch::Tensor xf = x_norm.to(torch::kFloat);
+
       c10::IValue out_iv;
       try {
-        // forward(x:[1,1,10], h:[L,1,H]) -> (y:[1,1,3], h_next)
+        // forward(x:[1,1,IN_DIM], h:[L,1,H]) -> (y:[1,1,3], h_next)
         out_iv = members_[m].forward({ xf, h_[m] });
       } catch (const c10::Error& e) {
         std::cerr << "[NN_v11] forward() failed on member " << (m+1)
@@ -319,43 +437,46 @@ struct NN_v11::Impl {
         return false;
       }
 
-      torch::Tensor y     = elems[0].toTensor();  // [1,1,3]
-      torch::Tensor hnext = elems[1].toTensor();  // [L,1,H]
-      h_[m] = hnext;                              // persist hidden state
-
-      if (y.dim() != 3 || y.size(0) != 1 || y.size(1) != 1 || y.size(2) != 3) {
-        std::cerr << "[NN_v11] Bad output shape from member " << m << ": " << y.sizes() << "\n";
-        return false;
-      }
-
-      // De-normalize on CPU double
-      torch::Tensor y3 = y.index({0,0}).to(torch::kDouble).to(torch::kCPU); // [3]
-      double vv[3]; std::memcpy(vv, y3.data_ptr<double>(), 3*sizeof(double));
-
-      Vec3 v;
-      for (int k = 0; k < 3; ++k) v(k) = vv[k]*y_std_[k] + y_mean_[k]; // END: [vE,vN,vD]
-      preds.push_back(v);
+      y_last = elems[0].toTensor();      // [1,1,3]
+      torch::Tensor hnext = elems[1].toTensor(); // [L,1,H]
+      h_[m] = hnext;                     // persist hidden state (updated each step)
     }
 
-    // -----------------------------
-    // Ensemble mean and covariance in END
-    // -----------------------------
-    v_nav_mean.setZero();
-    for (const auto& v : preds) v_nav_mean += v;
-    v_nav_mean /= std::max(1, M);
-
-    Eigen::Matrix<double,3,Eigen::Dynamic> D(3, M);
-    for (int i = 0; i < M; ++i) D.col(i) = preds[i] - v_nav_mean;
-
-    if (M >= 2) {
-      Rv_nav = (D * D.transpose()) / static_cast<double>(M - 1);
-    } else {
-      Rv_nav = Mat3::Zero();
+    // Validate output shape (after final step)
+    if (y_last.dim() != 3 || y_last.size(0) != 1 || y_last.size(1) != 1 || y_last.size(2) != 3) {
+      std::cerr << "[NN_v11] Bad output shape from member " << m << ": " << y_last.sizes() << "\n";
+      return false;
     }
-    Rv_nav += 1e-6 * Mat3::Identity(); // small numerical floor
 
-    return true;
+    // De-normalize on CPU double
+    torch::Tensor y3 = y_last.index({0,0}).to(torch::kDouble).to(torch::kCPU); // [3]
+    double vv[3]; std::memcpy(vv, y3.data_ptr<double>(), 3*sizeof(double));
+
+    Vec3 v;
+    for (int k = 0; k < 3; ++k) v(k) = vv[k]*y_std_[k] + y_mean_[k]; // END: [vE,vN,vD]
+    preds.push_back(v);
   }
+
+  // -----------------------------
+  // Ensemble mean and covariance in END
+  // -----------------------------
+  v_nav_mean.setZero();
+  for (const auto& v : preds) v_nav_mean += v;
+  v_nav_mean /= std::max(1, M);
+
+  Eigen::Matrix<double,3,Eigen::Dynamic> D(3, M);
+  for (int i = 0; i < M; ++i) D.col(i) = preds[i] - v_nav_mean;
+
+  if (M >= 2) {
+    Rv_nav = (D * D.transpose()) / static_cast<double>(M - 1);
+  } else {
+    Rv_nav = Mat3::Zero();
+  }
+  Rv_nav += 1e-6 * Mat3::Identity(); // small numerical floor
+
+  return true;
+}
+
 }; // <-- close Impl
 
 // --------------------- NN_v11 public wrapper ---------------------
@@ -390,7 +511,7 @@ NN_qObs_Aided_EKF_v11::NN_qObs_Aided_EKF_v11(const Config_v11& cfg) : cfg_(cfg) 
   const double Beam_pont  = 0.50;     // single pontoon beam
   const double Cw_pont    = 0.80;     // waterplane coefficient
   const double m          = 850.0;    // mass (kg) — RAN nominal
-  const double zeta       = 0.30;     // damping ratio (for heave)
+  const double zeta       = 0.50;     // damping ratio (for heave)
 
   const double Aw_pont = Cw_pont * L * Beam_pont;
   const double K_h     = rho * cfg_.g * (2.0 * Aw_pont);          // N/m
@@ -438,11 +559,69 @@ void NN_qObs_Aided_EKF_v11::nn_prune_() {
 }
 
 // Feed one sample to NN buffer; accel and tau are scalars, quaternion is canonicalized.
+// void NN_qObs_Aided_EKF_v11::feedNN(const Vec3& accel_b,
+//                                    const Quat& q_nb,
+//                                    double tau_x,
+//                                    double tau_y,
+//                                    double tau_n)
+// {
+//   if (!nn_ || nn_seq_len_ <= 0) return;
+
+//   // 1) Normalize input quaternion (defensive)
+//   Quat q = q_nb;
+//   {
+//     const double n2 = q.w*q.w + q.x*q.x + q.y*q.y + q.z*q.z;
+//     if (n2 > 0.0) {
+//       const double invn = 1.0 / std::sqrt(n2);
+//       q.w *= invn; q.x *= invn; q.y *= invn; q.z *= invn;
+//     } else {
+//       // fallback to identity if someone passes a zero quaternion
+//       q.w = 1.0; q.x = q.y = q.z = 0.0;
+//     }
+//   }
+
+//   // 2) Keep NN input quaternion continuous across calls (avoid ±q flip)
+//   static bool has_prev_nn = false;
+//   static Quat q_prev_nn; // default constructed (all zeros)
+//   if (!has_prev_nn) {
+//     q_prev_nn.w = 1.0; q_prev_nn.x = 0.0; q_prev_nn.y = 0.0; q_prev_nn.z = 0.0;
+//     has_prev_nn = true;
+//   }
+//   const double dot = q.w*q_prev_nn.w + q.x*q_prev_nn.x + q.y*q_prev_nn.y + q.z*q_prev_nn.z;
+//   if (dot < 0.0) { q.w = -q.w; q.x = -q.x; q.y = -q.y; q.z = -q.z; }
+//   q_prev_nn = q;
+
+//   // 3) Buffer one-step NN input row: [ax ay az qw qx qy qz tau_x tau_y tau_n]
+//   Eigen::Matrix<double,10,1> row;
+//   row << accel_b.x(), accel_b.y(), accel_b.z(),
+//          q.w, q.x, q.y, q.z,
+//          tau_x, tau_y, tau_n;
+
+//   nn_buf_.push_back(row);
+//   nn_prune_();
+
+//   // 4) Trigger inference when ready
+//   nn_count_++;
+//   if ((int)nn_buf_.size() < nn_seq_len_) return;
+//   if ((nn_count_ % nn_stride_) != 0)     return;
+
+//   std::vector<Eigen::Matrix<double,10,1>> window;
+//   window.reserve(nn_seq_len_);
+//   auto it = nn_buf_.end();
+//   for (int i = 0; i < nn_seq_len_; ++i) --it;
+//   for (int i = 0; i < nn_seq_len_; ++i, ++it) window.push_back(*it);
+
+//   Vec3 v_nav_mean;   // [vE, vN, vD]
+//   Mat3 Rv_nav;
+//   if (!nn_->infer(window, v_nav_mean, Rv_nav)) return;
+
+//   (void)updateNNVelNav(v_nav_mean, Rv_nav, /*w=*/1);
+// }
 void NN_qObs_Aided_EKF_v11::feedNN(const Vec3& accel_b,
-                                   const Quat& q_nb,
-                                   double tau_x,
-                                   double tau_y,
-                                   double tau_n)
+                                  const Quat& q_nb,
+                                  double tau_x,
+                                  double tau_y,
+                                  double tau_n)
 {
   if (!nn_ || nn_seq_len_ <= 0) return;
 
@@ -479,22 +658,56 @@ void NN_qObs_Aided_EKF_v11::feedNN(const Vec3& accel_b,
   nn_buf_.push_back(row);
   nn_prune_();
 
-  // 4) Trigger inference when ready
   nn_count_++;
-  if ((int)nn_buf_.size() < nn_seq_len_) return;
-  if ((nn_count_ % nn_stride_) != 0)     return;
 
-  std::vector<Eigen::Matrix<double,10,1>> window;
-  window.reserve(nn_seq_len_);
-  auto it = nn_buf_.end();
-  for (int i = 0; i < nn_seq_len_; ++i) --it;
-  for (int i = 0; i < nn_seq_len_; ++i, ++it) window.push_back(*it);
+  // If we do not yet have enough samples for a proper warm-start, do nothing.
+  // IMPORTANT: do NOT call infer() before we have nn_seq_len_ samples, otherwise
+  // the GRU hidden state gets initialized on too-short history.
+  if ((int)nn_buf_.size() < nn_seq_len_) {
+    nn_warmed_ = false;
+    return;
+  }
 
   Vec3 v_nav_mean;   // [vE, vN, vD]
   Mat3 Rv_nav;
-  if (!nn_->infer(window, v_nav_mean, Rv_nav)) return;
 
-  (void)updateNNVelNav(v_nav_mean, Rv_nav, /*w=*/1.0);
+  // ------------------------------------------------------------------
+  // 1) Warm-start once: feed the last nn_seq_len_ samples sequentially
+  // ------------------------------------------------------------------
+  if (!nn_warmed_) {
+    std::vector<Eigen::Matrix<double,10,1>> window;
+    window.reserve(nn_seq_len_);
+
+    auto it = nn_buf_.end();
+    for (int i = 0; i < nn_seq_len_; ++i) --it;
+    for (int i = 0; i < nn_seq_len_; ++i, ++it) window.push_back(*it);
+
+    if (!nn_->infer(window, v_nav_mean, Rv_nav)) return;
+
+    nn_warmed_ = true;
+
+    // Only apply EKF update on stride, but we still did the warm-start state fill.
+    if ((nn_count_ % nn_stride_) == 0) {
+      (void)updateNNVelNav(v_nav_mean, Rv_nav, /*w=*/1);
+    }
+    return; // avoid double-feeding the last sample this tick
+  }
+
+  // ------------------------------------------------------------------
+  // 2) Steady-state: step the GRU every tick with the newest sample only
+  // ------------------------------------------------------------------
+  {
+    std::vector<Eigen::Matrix<double,10,1>> one;
+    one.reserve(1);
+    one.push_back(row);
+
+    if (!nn_->infer(one, v_nav_mean, Rv_nav)) return;
+  }
+
+  // Apply EKF update only on stride
+  if ((nn_count_ % nn_stride_) != 0) return;
+
+  (void)updateNNVelNav(v_nav_mean, Rv_nav, /*w=*/1);
 }
 
 
@@ -578,7 +791,7 @@ void NN_qObs_Aided_EKF_v11::propagate(const Vec3& omega_b_meas,
   Vec3 a_n = R_nb_ * f_b + g_n_;               // g_n_ ~ [0,0,+9.81]
 
   // Optional heave spring–damper (Down axis)
-  a_n.z() += -k_z_ * (x_.p.z() - z0_) - c_z_ * x_.v.z();
+  //a_n.z() += -k_z_ * (x_.p.z() - z0_) - c_z_ * x_.v.z();
 
   // ---------- Nominal propagation ----------
   const Vec3 dp = x_.v * dt + 0.5 * a_n * dt * dt;
@@ -591,9 +804,10 @@ void NN_qObs_Aided_EKF_v11::propagate(const Vec3& omega_b_meas,
   Mat99 A = Mat99::Zero();
   A.block<3,3>(0,3).setIdentity(); // δṗ = δv
   A.block<3,3>(3,6) = -R_nb_;      // ∂(v̇)/∂b_a = -R_nb_ (since use accel - b_a)
-  A(5,2) += -k_z_;
-  A(5,5) += -c_z_;
+  //A(5,2) += -k_z_;
+  //A(5,5) += -c_z_;
   if (cfg_.tau_ba > 0.0) {
+    x_.b_a += (-(1.0 / cfg_.tau_ba) * x_.b_a) * dt;
     A.block<3,3>(6,6) = -(1.0 / cfg_.tau_ba) * Mat3::Identity();
   }
 
@@ -653,8 +867,8 @@ bool NN_qObs_Aided_EKF_v11::updateGnssPos(const Vec3& z_nav_ant, const Mat3& Rpo
   const double wt = (std::isfinite(w) && w>0.0) ? w : 1.0;
 
   const Mat3 R = Rpos / wt;
-  const Mat3 S = (H * P_ * H.transpose()) + R;
-  const Eigen::Matrix<double,9,3> K  = P_ * H.transpose() * S.inverse();
+  Eigen::Matrix3d S = (H * P_ * H.transpose()) + R;
+  Eigen::Matrix<double,9,3> K = P_ * H.transpose() * S.ldlt().solve(Eigen::Matrix3d::Identity());
   const Eigen::Matrix<double,9,1> dx = K * res;
 
 #ifdef EKF_DEBUG

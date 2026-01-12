@@ -41,4 +41,3 @@ double HeadingPIDController::update(double h, const Eigen::MatrixXd& M,
 void HeadingPIDController::reset() {
     z_psi_ = 0.0;
 }
-

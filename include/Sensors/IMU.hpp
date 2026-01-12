@@ -46,6 +46,7 @@ IMUData raw_IMU_v2(const Eigen::VectorXd &x,
                    double sigma_acc_nd,          // accel noise density [m/s^2 / sqrt(Hz)]
                    double sigma_gyro_nd);
 
+
 // Remove gravity from raw accelerometer using attitude (φ,θ,ψ)
 Eigen::Vector3d GravityCompensation(const Eigen::Vector3d &accel_raw,
                                     double phi, double theta, double psi);

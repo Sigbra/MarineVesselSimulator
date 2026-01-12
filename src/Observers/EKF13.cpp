@@ -219,5 +219,3 @@ Eigen::VectorXd EKF13::getState12() const {
 
   return z;
 }
-
-

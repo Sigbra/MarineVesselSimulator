@@ -45,6 +45,12 @@ void plotQuaternionQnb();
 
 void plotStateEstimateErrors();
 
+void plotIMUAccelBiasCompare();
+
+void plotIMUGyroBiasCompare();
+
+void plotOceanCurrent();
+
 //void addWaypointChangeLines(const std::vector<double>& change_times);
 
 class RealTimePlotter {

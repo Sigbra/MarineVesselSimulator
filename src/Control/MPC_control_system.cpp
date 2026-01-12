@@ -388,4 +388,3 @@ Eigen::VectorXd MPC_Control_System::get_alpha_opt() {
     return alpha_opt;
 }
 
-

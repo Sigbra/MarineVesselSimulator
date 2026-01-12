@@ -26,11 +26,11 @@ Example
 -------
 python3 scripts/make_nn_dataset_v11.py \
   --in data/simdata.csv \
-  --out_dir data/nn_dataset_v11_X_C6 \
+  --out_dir data/nn_dataset_v11_X_C7_test_final2 \
   --val_frac 0.15 --test_frac 0.15 \
   --header none \
   --trim_tail \
-  --seq 100 --shuffle_windows --seed 123
+  --seq 256 --shuffle_windows --seed 123
 """
 
 import os
@@ -257,7 +257,7 @@ def main():
                     help="Seed for window shuffling")
     ap.add_argument("--header", choices=["none","infer"], default="none",
                     help="CSV header: none (default) or infer")
-    ap.add_argument("--seq", type=int, default=0,
+    ap.add_argument("--seq", type=int, default=256,
                     help="Window length for safe shuffling (e.g., 200). 0=disable windowing.")
     ap.add_argument("--shuffle_windows", action="store_true",
                     help="Shuffle **windows** of length --seq before split (window-safe).")

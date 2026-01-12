@@ -1,0 +1,29 @@
+{
+  "epochs": 250,
+  "lr": 0.001,
+  "weight_decay": 0.001,
+  "dropout_p": 0.4,
+  "hidden": 256,
+  "device": "cuda",
+  "seed": 43,
+  "amp": "bf16",
+  "tf32": false,
+  "compile": false,
+  "chunk_len": 150,
+  "chunk_batch": 128,
+  "warmup_epochs": 5,
+  "warmup_init_factor": 0.05,
+  "input_dim": 9,
+  "input_cols": [
+    "ax",
+    "ay",
+    "az",
+    "phi",
+    "theta",
+    "psi",
+    "tau_x",
+    "tau_y",
+    "tau_n"
+  ],
+  "angle_wrap": "[-pi, +pi) (\u00b1180\u00b0)"
+}

@@ -120,8 +120,8 @@ IMUData raw_IMU_v2(const Eigen::VectorXd &x,
     imu.gyro  = wB + bgyro + ng;
 
     // ---- Bias random walks (intensities are units / sqrt(s)) ----
-    constexpr double SIG_RW_BA = 3e-7; // 3e-6 m/s^2 / sqrt(s)  (~10–40 µg over ~1 h)
-    constexpr double SIG_RW_BG = 6e-8; // 6e-7 rad/s  / sqrt(s)  (~5–10 °/h bias)
+    constexpr double SIG_RW_BA = 1e-6; // 3e-6 m/s^2 / sqrt(s)  (~10–40 µg over ~1 h)
+    constexpr double SIG_RW_BG = 1e-7; // 6e-7 rad/s  / sqrt(s)  (~5–10 °/h bias)
     const double sdt = (dt > 0.0) ? std::sqrt(dt) : 0.0;
     ba    += SIG_RW_BA * sdt * Eigen::Vector3d(N01(gen), N01(gen), N01(gen));
     bgyro += SIG_RW_BG * sdt * Eigen::Vector3d(N01(gen), N01(gen), N01(gen));

@@ -72,6 +72,9 @@ public:
   const Mat99&      cov()   const;
   void setState(const State9_v11& x, const Mat99& P);
 
+  // Force accel-bias estimate to zero (b_a := 0). Does not change covariance.
+  void zeroAccelBias() { x_.b_a.setZero(); }
+
   // Optional: set heave equilibrium (Down) for spring–damper term
   void setHeaveEquilibrium(double z0);
 
@@ -94,6 +97,7 @@ public:
   void propagate(const Vec3& omega_b_meas, const Vec3& accel_b_meas, double dt);
 
   // Convenience outputs
+  Eigen::Vector3d get_acc_bias_est() const { return x_.b_a; }
   Eigen::Matrix<double,9,1>  getState9()  const;
   Eigen::Matrix<double,12,1> getState12(const Vec3& b_gyro_hat) const;
 
@@ -126,6 +130,9 @@ private:
   int nn_stride_{1};
   int nn_count_{0};
   std::deque<Eigen::Matrix<double,10,1>> nn_buf_;
+
+  bool nn_warmed_ = false;
+
 };
 
 } // namespace nnqekf_v11
