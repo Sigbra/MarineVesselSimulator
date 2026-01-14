@@ -23,15 +23,24 @@ Key features
 Inputs (10):  [ax, ay, az, qw, qx, qy, qz, tau_x, tau_y, tau_n]
 Outputs (3):  [vE, vN, vD]
 
-Example
+Examples
 -------
 python3 -u scripts/nn_observer_v11.py \
-  --train data/nn_dataset_v11_X_C7_test_final_no_bias/train.csv \
-  --val   data/nn_dataset_v11_X_C7_test_final_no_bias/val.csv \
-  --test  data/nn_dataset_v11_X_C7_test_final_no_bias/test.csv \
-  --out   data/nn_model_v11_ens4_14_test_final6 \
-  --epochs 1000 --gpu --ensemble 8 \
-  --norm_json data/nn_dataset_v11_X_C7_test_final_no_bias/norm_stats.json \
+  --train data/dataset02_v11_seq128_no_accel_bias_hem/train.csv \
+  --val   data/dataset02_v11_seq128_no_accel_bias_hem/val.csv \
+  --test  data/dataset02_v11_seq128_no_accel_bias_hem/test.csv \
+  --out   data/model02_v11_ens4_h004_qw64_d3_hem \
+  --epochs 1000 --gpu --ensemble 4 \
+  --norm_json data/dataset02_v11_seq128_no_accel_bias_hem/norm_stats.json \
+  --warmup_epochs 5 --warmup_init_factor 0.05
+
+  python3 -u scripts/nn_observer_v11.py \
+  --train data/dataset02_v11_seq128_no_accel_bias_sign/train.csv \
+  --val   data/dataset02_v11_seq128_no_accel_bias_sign/val.csv \
+  --test  data/dataset02_v11_seq128_no_accel_bias_sign/test.csv \
+  --out   data/model02_v11_ens4_h004_qw64_d3_sign \
+  --epochs 1000 --gpu --ensemble 4 \
+  --norm_json data/dataset02_v11_seq128_no_accel_bias_sign/norm_stats.json \
   --warmup_epochs 5 --warmup_init_factor 0.05
 """
 
@@ -264,7 +273,7 @@ class TrainCfg:
     epochs: int = 1000
     lr: float = 1e-3
     weight_decay: float = 0.0
-    dt: float = 0.05
+    dt: float = 0.02
     dropout_p: float = 0.1
     qwidth: int = 128
     device: str = "cuda"
@@ -601,14 +610,14 @@ def main():
     parser.add_argument("--out",   required=True, help="Output directory (models, plots)")
 
     # Training shape / chunking
-    parser.add_argument("--chunk_len",   type=int, default=256, help="Window length T")
-    parser.add_argument("--chunk_batch", type=int, default=32,  help="Windows per batch B")
+    parser.add_argument("--chunk_len",   type=int, default=128, help="Window length T") # same as --seq in make_nn_dataset
+    parser.add_argument("--chunk_batch", type=int, default=64,  help="Windows per batch B")
     parser.add_argument("--tbptt",       type=int, default=256, help="Kept for parity; unused in chunked mode")
 
     parser.add_argument("--epochs",      type=int, default=1000, help="Training epochs")
     parser.add_argument("--lr",          type=float, default=1e-3, help="Learning rate")
     parser.add_argument("--wd",          type=float, default=1e-4, help="Weight decay")
-    parser.add_argument("--qwidth",      type=int, default=128, help="GRU hidden size") #64
+    parser.add_argument("--qwidth",      type=int, default=64, help="GRU hidden size") #64
     parser.add_argument("--dropout",     type=float, default=0.3, help="GRU dropout p") #0.02
 
     # Device / perf
@@ -710,7 +719,7 @@ def main():
 
         model = VelNetV11(hidden=args.qwidth, num_layers=3, dropout_p=args.dropout).to(device)
         cfg = TrainCfg(epochs=args.epochs, lr=args.lr, weight_decay=args.wd,
-                       dt=0.05, dropout_p=args.dropout, qwidth=args.qwidth,
+                       dt=0.04, dropout_p=args.dropout, qwidth=args.qwidth,
                        device=device, loss_w=LossWeights(mse=1.0),
                        x_mean=None, x_std=None,
                        print_period=max(1, min(args.epochs, 5)),

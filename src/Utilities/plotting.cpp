@@ -295,6 +295,226 @@ void plotStateErrors() {
     plt::show();
 }
 
+void plotEndVelocities() {
+    std::filesystem::path filepath =
+        std::filesystem::path(getRepositoryPath()) / "data" / "simdata.csv";
+
+    if (!std::filesystem::exists(filepath)) {
+        std::cerr << "File does not exist: " << filepath << std::endl;
+        return;
+    }
+
+    std::ifstream file(filepath);
+    if (!file.is_open()) {
+        std::cerr << "Error: Unable to open " << filepath << std::endl;
+        return;
+    }
+
+    std::vector<double> time, Ve, Vn, Vd;
+    std::string line;
+
+    while (std::getline(file, line)) {
+        std::stringstream ss(line);
+        std::vector<double> values;
+        std::string cell;
+
+        while (std::getline(ss, cell, ',')) {
+            try {
+                values.push_back(std::stod(cell));
+            } catch (const std::invalid_argument&) {
+                // Skip invalid entries (e.g. header text)
+            }
+        }
+
+        // Need at least up to psi at index 12
+        if (values.size() >= 13) {
+            const double t     = values[0];
+            const double u     = values[1];
+            const double v     = values[2];
+            const double w     = values[3];
+            const double phi   = values[10];
+            const double theta = values[11];
+            const double psi   = values[12];
+
+            const Mat3 Rnb = RnbFromEuler(phi, theta, psi); // Body -> END (E,N,D)
+            const Eigen::Vector3d v_b(u, v, w);
+            const Eigen::Vector3d v_end = Rnb * v_b;
+
+            time.push_back(t);
+            Ve.push_back(v_end(0));  // East
+            Vn.push_back(v_end(1));  // North
+            Vd.push_back(v_end(2));  // Down
+        }
+    }
+
+    file.close();
+
+    if (time.empty() || Ve.empty() || Vn.empty() || Vd.empty()) {
+        std::cerr << "Error: No valid data found in " << filepath << std::endl;
+        return;
+    }
+
+    // Load waypoint change times (same as your other plots)
+    std::vector<double> wpt_change_times = loadWaypointChangeTimes();
+
+    // Compute a reasonable y-range for waypoint vertical lines
+    double ymin = Ve[0], ymax = Ve[0];
+    auto update_minmax = [&](const std::vector<double>& v) {
+        for (double x : v) { ymin = std::min(ymin, x); ymax = std::max(ymax, x); }
+    };
+    update_minmax(Ve);
+    update_minmax(Vn);
+    update_minmax(Vd);
+
+    const double pad = 0.1 * std::max(1e-6, (ymax - ymin));
+    ymin -= pad;
+    ymax += pad;
+
+    plt::figure_size(2480, 620);
+
+    // Add waypoint change lines
+    for (double t : wpt_change_times) {
+        std::vector<double> x_line = {t, t};
+        std::vector<double> y_line = {ymin, ymax};
+        plt::plot(x_line, y_line, "k-");
+    }
+
+    plt::named_plot("$V_e$ [m/s]", time, Ve, "r-");
+    plt::named_plot("$V_n$ [m/s]", time, Vn, "g-");
+    plt::named_plot("$V_d$ [m/s]", time, Vd, "b-");
+
+    plt::xlabel("Time [s]");
+    plt::ylabel("END Velocity [m/s]");
+    plt::title("END Velocities over Time");
+    plt::ylim(ymin, ymax);
+    plt::legend();
+    plt::grid(true);
+    plt::show();
+}
+
+void plotEndVelocitiesVsEstimates() {
+    std::filesystem::path filepath =
+        std::filesystem::path(getRepositoryPath()) / "data" / "simdata.csv";
+
+    if (!std::filesystem::exists(filepath)) {
+        std::cerr << "File does not exist: " << filepath << std::endl;
+        return;
+    }
+
+    std::ifstream file(filepath);
+    if (!file.is_open()) {
+        std::cerr << "Error: Unable to open " << filepath << std::endl;
+        return;
+    }
+
+    std::vector<double> time;
+
+    // "True" END velocities computed from (u,v,w,phi,theta,psi)
+    std::vector<double> Ve, Vn, Vd;
+
+    // Estimated END velocities read from columns 73..75
+    std::vector<double> Ve_est, Vn_est, Vd_est;
+
+    std::string line;
+    while (std::getline(file, line)) {
+        std::stringstream ss(line);
+        std::vector<double> values;
+        std::string cell;
+
+        while (std::getline(ss, cell, ',')) {
+            try {
+                values.push_back(std::stod(cell));
+            } catch (const std::invalid_argument&) {
+                // Skip non-numeric (e.g. header)
+            }
+        }
+
+        // Need at least:
+        //  - psi at index 12
+        //  - v_end_est at indices 73..75
+        if (values.size() >= 76) {
+            const double t     = values[0];
+
+            // From x stored in columns 1..12:
+            const double u     = values[1];
+            const double v     = values[2];
+            const double w     = values[3];
+            const double phi   = values[10];
+            const double theta = values[11];
+            const double psi   = values[12];
+
+            const Mat3 Rnb = RnbFromEuler(phi, theta, psi); // Body -> END (E,N,D)
+            const Eigen::Vector3d v_b(u, v, w);
+            const Eigen::Vector3d v_end = Rnb * v_b;
+
+            // Estimated END velocity logged at columns 73..75
+            const double ve_hat = values[73];
+            const double vn_hat = values[74];
+            const double vd_hat = values[75];
+
+            time.push_back(t);
+
+            Ve.push_back(v_end(0));
+            Vn.push_back(v_end(1));
+            Vd.push_back(v_end(2));
+
+            Ve_est.push_back(ve_hat);
+            Vn_est.push_back(vn_hat);
+            Vd_est.push_back(vd_hat);
+        }
+    }
+    file.close();
+
+    if (time.empty()) {
+        std::cerr << "Error: No valid data found in " << filepath << std::endl;
+        return;
+    }
+
+    // Waypoint change times (optional vertical lines like your other plot)
+    std::vector<double> wpt_change_times = loadWaypointChangeTimes();
+
+    // Compute y-limits from both true and estimated series
+    auto minmax_of = [](const std::vector<double>& v, double& mn, double& mx) {
+        for (double x : v) { mn = std::min(mn, x); mx = std::max(mx, x); }
+    };
+
+    double ymin = Ve[0], ymax = Ve[0];
+    minmax_of(Ve, ymin, ymax);     minmax_of(Vn, ymin, ymax);     minmax_of(Vd, ymin, ymax);
+    minmax_of(Ve_est, ymin, ymax); minmax_of(Vn_est, ymin, ymax); minmax_of(Vd_est, ymin, ymax);
+
+    const double pad = 0.1 * std::max(1e-6, (ymax - ymin));
+    ymin -= pad; ymax += pad;
+
+    plt::figure_size(2480, 620);
+
+    // Vertical waypoint lines
+    for (double tline : wpt_change_times) {
+        std::vector<double> x_line = {tline, tline};
+        std::vector<double> y_line = {ymin, ymax};
+        plt::plot(x_line, y_line, "k-");
+    }
+
+    // True vs estimated (estimated dashed)
+    plt::named_plot("$V_e$ [m/s]",      time, Ve,     "r-");
+    plt::named_plot("$\\hat V_e$ [m/s]", time, Ve_est, "r--");
+
+    plt::named_plot("$V_n$ [m/s]",      time, Vn,     "g-");
+    plt::named_plot("$\\hat V_n$ [m/s]", time, Vn_est, "g--");
+
+    plt::named_plot("$V_d$ [m/s]",      time, Vd,     "b-");
+    plt::named_plot("$\\hat V_d$ [m/s]", time, Vd_est, "b--");
+
+    plt::xlabel("Time [s]");
+    plt::ylabel("END Velocity [m/s]");
+    plt::title("END Velocities: True vs Estimated");
+    plt::ylim(ymin, ymax);
+    plt::legend();
+    plt::grid(true);
+    plt::show();
+}
+
+
+
 void plotAngles() {
     std::filesystem::path filepath = std::filesystem::path(getRepositoryPath()) / "data" / "simdata.csv";
     if (!std::filesystem::exists(filepath)) {
@@ -1490,7 +1710,7 @@ void plotOceanCurrent()
     }
 
     plt::named_plot("V_c [10*m/s]",    t, Vc,    "b-");
-    plt::named_plot("beta_c [deg]", t, betac, "r-");
+    plt::named_plot("beta_c [rad]", t, betac, "r-");
     plt::xlabel("Time [s]");
     plt::ylabel("Ocean current");
     plt::title("Ocean Current (V_c and beta_c)");

@@ -121,6 +121,7 @@ public:
 
   // Convenience outputs
   Eigen::Vector3d get_acc_bias_est() const { return x_.b_a; }
+  Eigen::Vector3d get_end_vel_est() const { return x_.v;}
   Eigen::Matrix<double,9,1>  getState9()  const;
   Eigen::Matrix<double,12,1> getState12(const Vec3& b_gyro_hat) const;
 

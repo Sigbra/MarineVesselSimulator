@@ -1,7 +1,7 @@
 #config.yaml
 
 simulation:
-  h: 0.02              # Sampling time [s]
+  h: 0.04              # Sampling time [s] (0.02 or 0.04 for nn data logging)
   T_final: 8000        # 8000 Final simulation time [s]
 
 load_condition:

@@ -133,16 +133,136 @@ struct NN_v11::Impl {
   std::array<double,IN_DIM> x_mean_{}, x_std_{};
   std::array<double,V_DIM>  y_mean_{}, y_std_{};
   torch::Tensor x_mean_t_, x_std_t_, y_mean_t_, y_std_t_;
+  NN_v11::QuatInputPolicy quat_policy_ = NN_v11::QuatInputPolicy::Hemisphere;
 
+
+//   bool init(const std::string& model_dir,
+//             const std::string& norm_json,
+//             bool use_cuda)
+//   {
+// #ifdef TORCH_CUDA_AVAILABLE
+//     use_cuda_ = use_cuda && torch::cuda::is_available();
+// #else
+//     use_cuda_ = false;
+// #endif
+//     device_ = torch::Device(use_cuda_ ? torch::kCUDA : torch::kCPU);
+
+//     // ---- load norms (YAML parser can read JSON) ----
+//     YAML::Node ns;
+//     {
+//       namespace fs = std::filesystem;
+//       fs::path p(norm_json);
+// #ifdef MVS_PROJECT_ROOT
+//       if (!p.is_absolute()) {
+//         fs::path alt = fs::path(MVS_PROJECT_ROOT) / p;
+//         if (fs::exists(alt)) p = alt;
+//       }
+// #endif
+//       try {
+//         ns = YAML::LoadFile(p.string());
+//       } catch (const YAML::BadFile&) {
+//         std::cerr << "[NN_v11] Failed to open norm_stats: " << norm_json << "\n";
+//         return false;
+//       }
+//     }
+//     auto x_mean = ns["x_mean"]; auto x_std = ns["x_std"];
+//     auto y_mean = ns["y_mean"]; auto y_std = ns["y_std"];
+//     if (!x_mean || !x_std || !y_mean || !y_std) {
+//       std::cerr << "[NN_v11] norm_json missing keys x_mean/x_std/y_mean/y_std\n";
+//       return false;
+//     }
+//     for (int i=0;i<IN_DIM;++i){ x_mean_[i]=x_mean[i].as<double>(); x_std_[i]=x_std[i].as<double>(); }
+//     for (int i=0;i<V_DIM;++i){  y_mean_[i]=y_mean[i].as<double>(); y_std_[i]=y_std[i].as<double>(); }
+
+//     x_mean_t_ = torch::from_blob(x_mean_.data(), {IN_DIM}, torch::kDouble).clone().to(device_);
+//     x_std_t_  = torch::from_blob(x_std_.data(),  {IN_DIM}, torch::kDouble).clone().to(device_);
+//     y_mean_t_ = torch::from_blob(y_mean_.data(), {V_DIM},  torch::kDouble).clone().to(device_);
+//     y_std_t_  = torch::from_blob(y_std_.data(),  {V_DIM},  torch::kDouble).clone().to(device_);
+
+//     // ---- collect ONLY stateful TorchScript members ----
+//     namespace fs = std::filesystem;
+//     fs::path md(model_dir);
+// #ifdef MVS_PROJECT_ROOT
+//     if (!md.is_absolute()) {
+//       fs::path alt = fs::path(MVS_PROJECT_ROOT) / md;
+//       if (fs::exists(alt)) md = alt;
+//     }
+// #endif
+//     if (!fs::exists(md)) {
+//       std::cerr << "[NN_v11] Model path does not exist: " << md << "\n";
+//       return false;
+//     }
+
+//     auto is_pt = [](const fs::path& p){
+//       std::string ext = p.extension().string();
+//       std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+//       return (ext == ".pt" || ext == ".ts");
+//     };
+
+//     std::vector<std::string> files_stateful;
+
+//     if (fs::is_directory(md)) {
+//       for (auto& e : fs::directory_iterator(md)) {
+//         if (!e.is_regular_file()) continue;
+//         const auto& p = e.path();
+//         if (!is_pt(p)) continue;
+//         const std::string name = p.filename().string();
+//         // Accept only member_*_onestep_stateful.pt
+//         if (name.rfind("member_", 0) == 0 &&
+//             name.find("_onestep_stateful") != std::string::npos) {
+//           files_stateful.push_back(p.string());
+//         }
+//       }
+//       std::sort(files_stateful.begin(), files_stateful.end());
+//     } else if (fs::is_regular_file(md) && is_pt(md)) {
+//       const std::string name = md.filename().string();
+//       if (name.find("_onestep_stateful") != std::string::npos) {
+//         files_stateful.push_back(md.string());
+//       }
+//     } else {
+//       std::cerr << "[NN_v11] Invalid model_dir: " << md << "\n";
+//       return false;
+//     }
+
+//     if (files_stateful.empty()) {
+//       std::cerr << "[NN_v11] No stateful members found (files named member_*_onestep_stateful.pt) in: "
+//                 << md << "\n";
+//       return false;
+//     }
+
+//     try {
+//       members_.clear();
+//       members_.reserve(files_stateful.size());
+//       for (const auto& f : files_stateful) {
+//         auto m = torch::jit::load(f, device_);
+//         m.eval();
+//         members_.push_back(std::move(m));
+//         std::cerr << "[NN_v11] Loaded " << f << (use_cuda_ ? " (CUDA)\n" : " (CPU)\n");
+//       }
+//     } catch (const c10::Error& e) {
+//       std::cerr << "[NN_v11] Failed to load model: " << e.what() << "\n";
+//       return false;
+//     }
+
+//     if (members_.size() == 1) {
+//       std::cerr << "[NN_v11] WARNING: only 1 model loaded; covariance will be near floor.\n";
+//     } else {
+//       std::cerr << "[NN_v11] Ensemble size: " << members_.size() << "\n";
+//     }
+
+//     // Hidden states initialized lazily in infer()
+//     h_.clear();
+//     return true;
+//   }
   bool init(const std::string& model_dir,
             const std::string& norm_json,
             bool use_cuda)
   {
-#ifdef TORCH_CUDA_AVAILABLE
+  #ifdef TORCH_CUDA_AVAILABLE
     use_cuda_ = use_cuda && torch::cuda::is_available();
-#else
+  #else
     use_cuda_ = false;
-#endif
+  #endif
     device_ = torch::Device(use_cuda_ ? torch::kCUDA : torch::kCPU);
 
     // ---- load norms (YAML parser can read JSON) ----
@@ -150,12 +270,12 @@ struct NN_v11::Impl {
     {
       namespace fs = std::filesystem;
       fs::path p(norm_json);
-#ifdef MVS_PROJECT_ROOT
+  #ifdef MVS_PROJECT_ROOT
       if (!p.is_absolute()) {
         fs::path alt = fs::path(MVS_PROJECT_ROOT) / p;
         if (fs::exists(alt)) p = alt;
       }
-#endif
+  #endif
       try {
         ns = YAML::LoadFile(p.string());
       } catch (const YAML::BadFile&) {
@@ -177,19 +297,28 @@ struct NN_v11::Impl {
     y_mean_t_ = torch::from_blob(y_mean_.data(), {V_DIM},  torch::kDouble).clone().to(device_);
     y_std_t_  = torch::from_blob(y_std_.data(),  {V_DIM},  torch::kDouble).clone().to(device_);
 
-    // ---- collect ONLY stateful TorchScript members ----
+    // ---- resolve model path ----
     namespace fs = std::filesystem;
     fs::path md(model_dir);
-#ifdef MVS_PROJECT_ROOT
+  #ifdef MVS_PROJECT_ROOT
     if (!md.is_absolute()) {
       fs::path alt = fs::path(MVS_PROJECT_ROOT) / md;
       if (fs::exists(alt)) md = alt;
     }
-#endif
+  #endif
     if (!fs::exists(md)) {
       std::cerr << "[NN_v11] Model path does not exist: " << md << "\n";
       return false;
     }
+
+    // ---- infer quaternion input preprocessing policy from folder name ----
+    // Example paths:
+    //   nn_model_..._hem/ts/...
+    //   nn_model_..._sign/ts/...
+    quat_policy_ = inferQuatPolicyFromModelPath(md);
+    std::cerr << "[NN_v11] Quaternion input policy: "
+              << (quat_policy_ == NN_v11::QuatInputPolicy::Hemisphere ? "Hemisphere" : "SignContinuity")
+              << " (inferred from model path)\n";
 
     auto is_pt = [](const fs::path& p){
       std::string ext = p.extension().string();
@@ -252,6 +381,32 @@ struct NN_v11::Impl {
     h_.clear();
     return true;
   }
+
+
+  static NN_v11::QuatInputPolicy inferQuatPolicyFromModelPath(const std::filesystem::path& p_in)
+  {
+    auto toLower = [](std::string s){
+      std::transform(s.begin(), s.end(), s.begin(),
+                    [](unsigned char c){ return static_cast<char>(std::tolower(c)); });
+      return s;
+    };
+
+    // Search in full resolved path string; folder naming convention is “…_hem/…” or “…_sign/…”
+    const std::string s = toLower(p_in.string());
+
+    const bool has_hem  = (s.find("_hem")  != std::string::npos);
+    const bool has_sign = (s.find("_sign") != std::string::npos);
+
+    if (has_hem && !has_sign)  return NN_v11::QuatInputPolicy::Hemisphere;
+    if (has_sign && !has_hem)  return NN_v11::QuatInputPolicy::SignContinuity;
+
+    // Ambiguous or missing: default to hemisphere and warn.
+    std::cerr << "[NN_v11] WARNING: could not uniquely infer quaternion input policy from model path:\n"
+              << "        " << p_in << "\n"
+              << "        Expected folder name containing '_hem' or '_sign'. Defaulting to Hemisphere.\n";
+    return NN_v11::QuatInputPolicy::Hemisphere;
+  }
+
 
   // bool infer(const std::vector<Eigen::Matrix<double,IN_DIM,1>>& window,
   //            Vec3& v_nav_mean,
@@ -495,6 +650,12 @@ bool NN_v11::infer(const std::vector<Eigen::Matrix<double,10,1>>& window,
   return impl_->infer(window, v_nav_mean, Rv_nav);
 }
 
+NN_v11::QuatInputPolicy NN_v11::quatInputPolicy() const
+{
+  return impl_->quat_policy_;
+}
+
+
 // ============================================================
 //                       EKF v11
 // ============================================================
@@ -545,25 +706,49 @@ void NN_qObs_Aided_EKF_v11::setRotationFromQuat(const Quat& q_nb) {
 }
 
 
-void NN_qObs_Aided_EKF_v11::setNN(NN_v11* nn, int seq_len, int stride) {
+// void NN_qObs_Aided_EKF_v11::setNN(NN_v11* nn, int seq_len, int stride) {
+//   nn_ = nn;
+//   nn_seq_len_ = std::max(1, seq_len);
+//   nn_stride_  = std::max(1, stride);
+//   nn_count_   = 0;
+//   nn_buf_.clear();
+// }
+void NN_qObs_Aided_EKF_v11::setNN(NN_v11* nn, int seq_len, int stride)
+{
   nn_ = nn;
   nn_seq_len_ = std::max(1, seq_len);
   nn_stride_  = std::max(1, stride);
   nn_count_   = 0;
   nn_buf_.clear();
+
+  nn_warmed_ = false;
+
+  // Policy derived from NN model folder name (…_hem vs …_sign)
+  nn_use_sign_continuity_ =
+      (nn_ && nn_->quatInputPolicy() == NN_v11::QuatInputPolicy::SignContinuity);
+
+  // Reset continuity state (only used when nn_use_sign_continuity_ == true)
+  nn_has_prev_q_nn_ = false;
+  nn_prev_q_nn_.w = 1.0; nn_prev_q_nn_.x = 0.0; nn_prev_q_nn_.y = 0.0; nn_prev_q_nn_.z = 0.0;
+
+#ifdef EKF_DEBUG
+  dbgHeader("setNN");
+  std::cerr << "seq_len="<<nn_seq_len_<<" stride="<<nn_stride_
+            << " quat_policy="<<(nn_use_sign_continuity_ ? "SignContinuity" : "Hemisphere")<<"\n";
+#endif
 }
+
 
 void NN_qObs_Aided_EKF_v11::nn_prune_() {
   const int MAX_KEEP = std::max(nn_seq_len_, 4);
   while ((int)nn_buf_.size() > MAX_KEEP) nn_buf_.pop_front();
 }
 
-// Feed one sample to NN buffer; accel and tau are scalars, quaternion is canonicalized.
 // void NN_qObs_Aided_EKF_v11::feedNN(const Vec3& accel_b,
-//                                    const Quat& q_nb,
-//                                    double tau_x,
-//                                    double tau_y,
-//                                    double tau_n)
+//                                   const Quat& q_nb,
+//                                   double tau_x,
+//                                   double tau_y,
+//                                   double tau_n)
 // {
 //   if (!nn_ || nn_seq_len_ <= 0) return;
 
@@ -600,23 +785,58 @@ void NN_qObs_Aided_EKF_v11::nn_prune_() {
 //   nn_buf_.push_back(row);
 //   nn_prune_();
 
-//   // 4) Trigger inference when ready
 //   nn_count_++;
-//   if ((int)nn_buf_.size() < nn_seq_len_) return;
-//   if ((nn_count_ % nn_stride_) != 0)     return;
 
-//   std::vector<Eigen::Matrix<double,10,1>> window;
-//   window.reserve(nn_seq_len_);
-//   auto it = nn_buf_.end();
-//   for (int i = 0; i < nn_seq_len_; ++i) --it;
-//   for (int i = 0; i < nn_seq_len_; ++i, ++it) window.push_back(*it);
+//   // If we do not yet have enough samples for a proper warm-start, do nothing.
+//   // IMPORTANT: do NOT call infer() before we have nn_seq_len_ samples, otherwise
+//   // the GRU hidden state gets initialized on too-short history.
+//   if ((int)nn_buf_.size() < nn_seq_len_) {
+//     nn_warmed_ = false;
+//     return;
+//   }
 
 //   Vec3 v_nav_mean;   // [vE, vN, vD]
 //   Mat3 Rv_nav;
-//   if (!nn_->infer(window, v_nav_mean, Rv_nav)) return;
+
+//   // ------------------------------------------------------------------
+//   // 1) Warm-start once: feed the last nn_seq_len_ samples sequentially
+//   // ------------------------------------------------------------------
+//   if (!nn_warmed_) {
+//     std::vector<Eigen::Matrix<double,10,1>> window;
+//     window.reserve(nn_seq_len_);
+
+//     auto it = nn_buf_.end();
+//     for (int i = 0; i < nn_seq_len_; ++i) --it;
+//     for (int i = 0; i < nn_seq_len_; ++i, ++it) window.push_back(*it);
+
+//     if (!nn_->infer(window, v_nav_mean, Rv_nav)) return;
+
+//     nn_warmed_ = true;
+
+//     // Only apply EKF update on stride, but we still did the warm-start state fill.
+//     if ((nn_count_ % nn_stride_) == 0) {
+//       (void)updateNNVelNav(v_nav_mean, Rv_nav, /*w=*/1);
+//     }
+//     return; // avoid double-feeding the last sample this tick
+//   }
+
+//   // ------------------------------------------------------------------
+//   // 2) Steady-state: step the GRU every tick with the newest sample only
+//   // ------------------------------------------------------------------
+//   {
+//     std::vector<Eigen::Matrix<double,10,1>> one;
+//     one.reserve(1);
+//     one.push_back(row);
+
+//     if (!nn_->infer(one, v_nav_mean, Rv_nav)) return;
+//   }
+
+//   // Apply EKF update only on stride
+//   if ((nn_count_ % nn_stride_) != 0) return;
 
 //   (void)updateNNVelNav(v_nav_mean, Rv_nav, /*w=*/1);
 // }
+
 void NN_qObs_Aided_EKF_v11::feedNN(const Vec3& accel_b,
                                   const Quat& q_nb,
                                   double tau_x,
@@ -633,21 +853,26 @@ void NN_qObs_Aided_EKF_v11::feedNN(const Vec3& accel_b,
       const double invn = 1.0 / std::sqrt(n2);
       q.w *= invn; q.x *= invn; q.y *= invn; q.z *= invn;
     } else {
-      // fallback to identity if someone passes a zero quaternion
       q.w = 1.0; q.x = q.y = q.z = 0.0;
     }
   }
 
-  // 2) Keep NN input quaternion continuous across calls (avoid ±q flip)
-  static bool has_prev_nn = false;
-  static Quat q_prev_nn; // default constructed (all zeros)
-  if (!has_prev_nn) {
-    q_prev_nn.w = 1.0; q_prev_nn.x = 0.0; q_prev_nn.y = 0.0; q_prev_nn.z = 0.0;
-    has_prev_nn = true;
+  // 2) Match the NN training-time quaternion representation:
+  //    - Hemisphere: stateless canonicalization (qw >= 0 with tie-break)
+  //    - SignContinuity: flip if dot(prev, curr) < 0 to avoid ±q jumps
+  if (nn_use_sign_continuity_) {
+    if (!nn_has_prev_q_nn_) {
+      nn_prev_q_nn_ = q;
+      nn_has_prev_q_nn_ = true;
+    } else {
+      const double dot = q.w*nn_prev_q_nn_.w + q.x*nn_prev_q_nn_.x + q.y*nn_prev_q_nn_.y + q.z*nn_prev_q_nn_.z;
+      if (dot < 0.0) { q.w = -q.w; q.x = -q.x; q.y = -q.y; q.z = -q.z; }
+      nn_prev_q_nn_ = q;
+    }
+  } else {
+    // Hemisphere canonicalization (same rule as canonicalizeQuat)
+    q = canonicalizeQuat(q);
   }
-  const double dot = q.w*q_prev_nn.w + q.x*q_prev_nn.x + q.y*q_prev_nn.y + q.z*q_prev_nn.z;
-  if (dot < 0.0) { q.w = -q.w; q.x = -q.x; q.y = -q.y; q.z = -q.z; }
-  q_prev_nn = q;
 
   // 3) Buffer one-step NN input row: [ax ay az qw qx qy qz tau_x tau_y tau_n]
   Eigen::Matrix<double,10,1> row;
@@ -660,9 +885,7 @@ void NN_qObs_Aided_EKF_v11::feedNN(const Vec3& accel_b,
 
   nn_count_++;
 
-  // If we do not yet have enough samples for a proper warm-start, do nothing.
-  // IMPORTANT: do NOT call infer() before we have nn_seq_len_ samples, otherwise
-  // the GRU hidden state gets initialized on too-short history.
+  // Do not call infer() before we have nn_seq_len_ samples (proper warm-start).
   if ((int)nn_buf_.size() < nn_seq_len_) {
     nn_warmed_ = false;
     return;
@@ -671,9 +894,7 @@ void NN_qObs_Aided_EKF_v11::feedNN(const Vec3& accel_b,
   Vec3 v_nav_mean;   // [vE, vN, vD]
   Mat3 Rv_nav;
 
-  // ------------------------------------------------------------------
   // 1) Warm-start once: feed the last nn_seq_len_ samples sequentially
-  // ------------------------------------------------------------------
   if (!nn_warmed_) {
     std::vector<Eigen::Matrix<double,10,1>> window;
     window.reserve(nn_seq_len_);
@@ -686,16 +907,14 @@ void NN_qObs_Aided_EKF_v11::feedNN(const Vec3& accel_b,
 
     nn_warmed_ = true;
 
-    // Only apply EKF update on stride, but we still did the warm-start state fill.
+    // Apply EKF update only on stride
     if ((nn_count_ % nn_stride_) == 0) {
-      (void)updateNNVelNav(v_nav_mean, Rv_nav, /*w=*/1);
+      (void)updateNNVelNav(v_nav_mean, Rv_nav, /*w=*/1e-6);
     }
-    return; // avoid double-feeding the last sample this tick
+    return;
   }
 
-  // ------------------------------------------------------------------
   // 2) Steady-state: step the GRU every tick with the newest sample only
-  // ------------------------------------------------------------------
   {
     std::vector<Eigen::Matrix<double,10,1>> one;
     one.reserve(1);
@@ -704,13 +923,10 @@ void NN_qObs_Aided_EKF_v11::feedNN(const Vec3& accel_b,
     if (!nn_->infer(one, v_nav_mean, Rv_nav)) return;
   }
 
-  // Apply EKF update only on stride
   if ((nn_count_ % nn_stride_) != 0) return;
 
-  (void)updateNNVelNav(v_nav_mean, Rv_nav, /*w=*/1);
+  (void)updateNNVelNav(v_nav_mean, Rv_nav, /*w=*/1e-6);
 }
-
-
 
 bool NN_qObs_Aided_EKF_v11::updateNNVelNav(const Vec3& z_v_nav, const Mat3& Rv, double w)
 {

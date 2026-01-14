@@ -25,12 +25,23 @@ Key defaults for v11:
 Example
 -------
 python3 scripts/make_nn_dataset_v11.py \
-  --in data/simdata.csv \
-  --out_dir data/nn_dataset_v11_X_C7_test_final_no_bias \
+  --in data/simdata02_h004_no_accel_bias.csv \
+  --out_dir data/dataset02_v11_seq128_no_accel_bias_sign \
   --val_frac 0.15 --test_frac 0.15 \
   --header none \
   --trim_tail \
-  --seq 256 --shuffle_windows --seed 123
+  --seq 128 --shuffle_windows --seed 123 \
+  --q_sign_policy continuity
+
+python3 scripts/make_nn_dataset_v11.py \
+  --in data/simdata02_h004_no_accel_bias.csv \
+  --out_dir data/dataset02_v11_seq128_no_accel_bias_hem \
+  --val_frac 0.15 --test_frac 0.15 \
+  --header none \
+  --trim_tail \
+  --seq 128 --shuffle_windows --seed 123 \
+  --q_sign_policy hemisphere
+
 """
 
 import os
@@ -120,6 +131,50 @@ def fix_quaternion_sign_continuity(q: np.ndarray) -> np.ndarray:
             out[i] = -out[i]
     return out
 
+def canonicalize_quaternion_hemisphere(q: np.ndarray, eps: float = 1e-12) -> np.ndarray:
+    """
+    Canonicalize quaternion sign per-sample (hemisphere rule).
+
+    Primary rule: enforce qw >= 0 by flipping q -> -q if qw < 0.
+    Deterministic tie-break when qw ≈ 0:
+      - if |qx| > eps, enforce qx >= 0
+      - else if |qy| > eps, enforce qy >= 0
+      - else if |qz| > eps, enforce qz >= 0
+      - else leave as-is (near-zero quaternion, should not occur after normalization)
+
+    q: [N,4] with columns [qw,qx,qy,qz]
+    """
+    if len(q) == 0:
+        return q
+
+    out = q.copy()
+    qw = out[:, 0]
+    qx = out[:, 1]
+    qy = out[:, 2]
+    qz = out[:, 3]
+
+    # Flip if qw < 0
+    flip = qw < 0.0
+
+    # Tie-break when qw is ~0: use first non-negligible component among (qx,qy,qz)
+    near0 = np.abs(qw) <= eps
+    if np.any(near0):
+        flip_tb = np.zeros_like(flip)
+
+        cond_x = near0 & (np.abs(qx) > eps)
+        flip_tb |= cond_x & (qx < 0.0)
+
+        cond_y = near0 & ~cond_x & (np.abs(qy) > eps)
+        flip_tb |= cond_y & (qy < 0.0)
+
+        cond_z = near0 & ~cond_x & ~cond_y & (np.abs(qz) > eps)
+        flip_tb |= cond_z & (qz < 0.0)
+
+        flip |= flip_tb
+
+    out[flip] *= -1.0
+    return out
+
 # ---------- Tail trimming ----------
 
 def trim_trailing_stationary_rows_np(arr: np.ndarray,
@@ -146,9 +201,14 @@ def trim_trailing_stationary_rows_np(arr: np.ndarray,
 
 def build_rows_from_sim_np(arr: np.ndarray,
                            tau_cols: List[int],
-                           fix_q_sign: bool = True) -> pd.DataFrame:
+                           q_sign_policy: str = "continuity") -> pd.DataFrame:
     """
     Returns DataFrame with columns IN_COLS + OUT_COLS + AUX_W_COLS.
+
+    q_sign_policy:
+      - "continuity": flip q[i] if dot(q[i-1], q[i]) < 0
+      - "hemisphere": enforce qw >= 0 (deterministic tie-break near qw≈0)
+      - "none":       do not change quaternion signs (still normalize to unit length)
     """
     need_cols = max(AX_COLS + Q_COLS + UVW_COLS + tau_cols + W_EST_COLS) + 1
     if arr.shape[1] < need_cols:
@@ -160,11 +220,17 @@ def build_rows_from_sim_np(arr: np.ndarray,
     tau_b = arr[:, tau_cols].astype(np.float64)         # [N,3] (tau_X, tau_Y, tau_N) BODY @ CO
     w_est = arr[:, W_EST_COLS].astype(np.float64)       # [N,3] BODY rates (aux)
 
-    # Normalize quaternion; optionally enforce sign continuity
+    # Normalize quaternion; apply chosen sign policy
     qn = np.linalg.norm(q, axis=1, keepdims=True) + 1e-12
     q  = q / qn
-    if fix_q_sign:
+    if q_sign_policy == "continuity":
         q = fix_quaternion_sign_continuity(q)
+    elif q_sign_policy == "hemisphere":
+        q = canonicalize_quaternion_hemisphere(q)
+    elif q_sign_policy == "none":
+        pass
+    else:
+        raise ValueError(f"Unknown q_sign_policy: {q_sign_policy}")
 
     # Outputs: velocity in END using stored quaternion (custom R_nb)
     v_end = rotate_body_vel_to_END_with_q(q, uvw_b)     # [N,3] -> vE,vN,vD
@@ -265,10 +331,12 @@ def main():
                     help="Trim trailing stationary rows per file (detects repeated final state).")
     ap.add_argument("--tail_tol", type=float, default=0.0,
                     help="Tolerance for tail equality (default 0.0 = exact).")
-    # v11: fix_q_sign enabled by default; provide opt-out
-    ap.add_argument("--no_fix_q_sign", dest="fix_q_sign", action="store_false",
-                    help="Disable quaternion sign continuity fix (enabled by default).")
-    ap.set_defaults(fix_q_sign=True)
+
+    # Quaternion sign policy selector (minimal addition)
+    ap.add_argument("--q_sign_policy", choices=["continuity", "hemisphere", "none"],
+                    default="continuity",
+                    help="Quaternion sign handling: continuity|hemisphere|none (default: continuity).")
+
     ap.add_argument("--tau_source", choices=["actual","commanded"], default="actual",
                     help="Use tau_XYN actual (27..29) or commanded (24..26) as inputs.")
     args = ap.parse_args()
@@ -314,7 +382,7 @@ def main():
 
     # Build target columns (inputs + outputs + aux) using STORED quaternion and chosen τ source
     arr_all = raw.to_numpy(dtype=np.float64, copy=False)
-    data = build_rows_from_sim_np(arr_all, tau_cols=tau_cols, fix_q_sign=args.fix_q_sign)
+    data = build_rows_from_sim_np(arr_all, tau_cols=tau_cols, q_sign_policy=args.q_sign_policy)
 
     # 3-way split (chronological by default)
     if not args.shuffle_windows or args.seq <= 0:
@@ -365,7 +433,7 @@ def main():
             "seq": int(args.seq),
             "seed": int(args.seed),
             "tau_source": args.tau_source,
-            "fix_q_sign": bool(args.fix_q_sign),
+            "q_sign_policy": args.q_sign_policy,
             "columns": {"inputs": IN_COLS, "outputs": OUT_COLS, "aux": AUX_W_COLS}
         }, f, indent=2)
 
@@ -388,7 +456,8 @@ def main():
         print(f"[{VERSION}] Windowed with seq={args.seq}; files are concatenations of intact {args.seq}-step windows (shuffled across windows only).")
     else:
         print(f"[{VERSION}] Chronological split by rows (no window shuffling).")
-    print(f"[{VERSION}] τ source: {args.tau_source}  (cols {tau_cols})  | fix_q_sign={args.fix_q_sign}")
+    print(f"[{VERSION}] τ source: {args.tau_source}  (cols {tau_cols})  | q_sign_policy={args.q_sign_policy}")
+
 
 if __name__ == "__main__":
     main()
