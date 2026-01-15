@@ -152,8 +152,8 @@ int main() {
     double mp = config["load_condition"]["mp"].as<double>(); 
     
     // Ocean current
-    double V_c    = 0; //oceanCurrentV(0, h, gen); //config["ocean_current"]["V_c"].as<double>(); 
-    double beta_c = 0; //oceanCurrentB(0, h, gen); //deg2rad(config["ocean_current"]["beta_c"].as<double>());
+    double V_c    = oceanCurrentV(0, h, gen); //config["ocean_current"]["V_c"].as<double>(); 
+    double beta_c = oceanCurrentB(0, h, gen); //deg2rad(config["ocean_current"]["beta_c"].as<double>());
 
     // Load original waypoints from config
     Waypoints wpt;
@@ -405,7 +405,7 @@ int main() {
         wn_xy,  z_xy,  K_xy,     // surge-like WF
         wn_xy,  z_xy,  K_xy,     // sway-like WF
         wn_psi, z_psi, K_psi,    // yaw-like WF
-        0.0, 0.0, 0.0 //0.20, 0.20, 1.00         // drift sigma [X,Y,N] (BODY) , 0 when making dataset!
+        0.20, 0.20, 1.00         // drift sigma [X,Y,N] (BODY) 
     );
 
     // Model est
@@ -523,8 +523,8 @@ int main() {
         tau_XYN = {tau_full(0), tau_full(1), tau_full(5)};
 
         //Comment out when making dataset
-        //V_c    = oceanCurrentV(V_c, h, gen);
-        //beta_c = oceanCurrentB(beta_c, h, gen);
+        V_c    = oceanCurrentV(V_c, h, gen);
+        beta_c = oceanCurrentB(beta_c, h, gen);
 
         ran_model.wave_step_WF(h);
 
