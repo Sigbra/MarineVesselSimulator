@@ -115,7 +115,7 @@ static double oceanCurrentV(double V_c, double dt, std::mt19937& gen)
     if (!(dt > 0.0)) return V_c;
 
     const double sigmaV = 2e-4; // (m/s)/sqrt(s)
-    const double kV     = 4e-5; // 1/s (weak pull toward 0)
+    const double kV     = 8e-5; // 1/s (weak pull toward 0)
 
     return V_c + (-kV * V_c) * dt + sigmaV * std::sqrt(dt) * N(gen);
 }
@@ -126,7 +126,7 @@ static double oceanCurrentB(double beta_c, double dt, std::mt19937& gen)
     static std::normal_distribution<double> N(0.0, 1.0);
     if (!(dt > 0.0)) return ssa(beta_c);
 
-    const double sigmaB = deg2rad(0.5); // rad/sqrt(s)
+    const double sigmaB = deg2rad(0.3); // rad/sqrt(s)
 
     return ssa(beta_c + sigmaB * std::sqrt(dt) * N(gen));
 }
@@ -138,7 +138,8 @@ int main() {
     YAML::Node config = YAML::LoadFile("../config.yaml");
 
     std::random_device rd;
-    std::mt19937 gen(rd());
+    //std::mt19937 gen(rd());
+    std::mt19937 gen(123456u);
 
     // Distributions for each o (std dev)
     std::normal_distribution<double> noise_nu(0.0, 0.01);  
@@ -152,8 +153,8 @@ int main() {
     double mp = config["load_condition"]["mp"].as<double>(); 
     
     // Ocean current
-    double V_c    = oceanCurrentV(0, h, gen); //config["ocean_current"]["V_c"].as<double>(); 
-    double beta_c = oceanCurrentB(0, h, gen); //deg2rad(config["ocean_current"]["beta_c"].as<double>());
+    double V_c    = config["ocean_current"]["V_c"].as<double>(); 
+    double beta_c = deg2rad(config["ocean_current"]["beta_c"].as<double>());
 
     // Load original waypoints from config
     Waypoints wpt;
@@ -309,8 +310,8 @@ int main() {
     // NN init (use the streaming one-step **stateful** members)
     static nnqekf_v11::NN_v11 nn_v11;
     bool ok_v11 = nn_v11.init(
-        "data/nn_model_v11_ens4_h002_qw64_d3_hem/ts",              // <-- stateful files live here
-        "data/nn_dataset_v11_no_accel_bias_hem/norm_stats.json",         // <-- the same norm used in training
+        "data/model00_v11_ens4_h001_wd4_lr5_qw64_seq256_d3_sign/ts",              // <-- stateful files live here
+        "data/model00_v11_ens4_h001_wd4_lr5_qw64_seq256_d3_sign/norm_used.json",         // <-- the same norm used in training
         /*use_cuda=*/true);
     if (!ok_v11) { std::cerr << "[NNv11] init failed; running without NN.\n"; }
 
@@ -523,8 +524,8 @@ int main() {
         tau_XYN = {tau_full(0), tau_full(1), tau_full(5)};
 
         //Comment out when making dataset
-        V_c    = oceanCurrentV(V_c, h, gen);
-        beta_c = oceanCurrentB(beta_c, h, gen);
+        //V_c    = oceanCurrentV(V_c, h, gen);
+        //beta_c = oceanCurrentB(beta_c, h, gen);
 
         ran_model.wave_step_WF(h);
 
@@ -532,8 +533,8 @@ int main() {
 
         have_gnss_now = false;
         gnss_time += h;
-        if (gnss_time >= 0.5) { // 2 Hz gnss updates
-            do { gnss_time -= 0.5; } while (gnss_time >= 0.5);
+        if (gnss_time >= 0.1) { // 2 Hz gnss updates
+            do { gnss_time -= 0.1; } while (gnss_time >= 0.1);
 
             const auto& eta6 = ran_model.get_wave_eta6(); // END frame [x y z φ θ ψ]
 
@@ -765,7 +766,7 @@ int main() {
             switch (pathType) {
                 case 1: { // Dynamic Positioning.
                     if (R_switch > std::sqrt(std::pow(xn - wpt[wpt_index].x, 2) + std::pow(yn - wpt[wpt_index].y, 2))){
-                        if (std::abs(ssa(psi_d-psi)) < deg2rad(3) && U_est < 0.01) {
+                        if (std::abs(ssa(psi_d-psi)) < deg2rad(5) && U_est < 0.05) {
                             if (wpt_index < wpt.size()-1) {
                                 wpt_index += 1;
                                 MIMO_PID.reset();
@@ -916,8 +917,8 @@ int main() {
 
         // Show SIM progress once in a while
         plotting_time += h;
-        if (plotting_time >= 2) { // 2 Hz gnss updates
-            do { plotting_time -= 2; } while (plotting_time >= 2);
+        if (plotting_time >= 1) { // 2 Hz gnss updates
+            do { plotting_time -= 1; } while (plotting_time >= 1);
     
             std::vector<double> GuidanceVectorX;
             std::vector<double> GuidanceVectorY;
@@ -1087,22 +1088,27 @@ int main() {
 
     plotter.finalizePlot();
 
+    plotOceanCurrent();
+
+    if (pathType == 1 || pathType == 2) {
+        //plotTrajectory(wpt, pathLine);
+        plotTrajectories(wpt, pathLine);
+    } else if (pathType == 3) {
+        //plotTrajectory(wpt, pathFS);
+        plotTrajectories(wpt, pathFS);
+    }
+    //plotClosestPointErrors();
+    //plotStateErrors();
+
+    plotTau();
     plotPropellerSpeeds();
     plotAlphas();
-    plotTau();
-    // if (pathType == 1 || pathType == 2) {
-    //     plotTrajectory(wpt, pathLine);
-    // } else if (pathType == 3) {
-    //     plotTrajectory(wpt, pathFS);
-    // }
-    // plotClosestPointErrors();
-    // plotStateErrors();
 
     plotIMUAccel();
     plotIMUGyro();
-    plotOceanCurrent();
 
     plotQuaternionQnb();
+    plotHeadingComparison();
     plotAngles();
 
     plotStateEstimateErrors();

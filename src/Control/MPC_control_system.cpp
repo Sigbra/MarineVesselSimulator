@@ -312,7 +312,7 @@ bool MPC_Control_System::solve(const std::vector<double>& x0, double x_s, double
         } 
         else { // Penalties in normal operation
             cost += 5 * crosstrack_error_sq; //9
-            cost += 35 * position_error_sq;   //12
+            cost += 30 * position_error_sq;   //12
             cost += 8 * heading_error_sq;    //18
         }
 
@@ -327,7 +327,7 @@ bool MPC_Control_System::solve(const std::vector<double>& x0, double x_s, double
 
         // Penalize large speed resulting in large discretization steps that the MPC can't handle
         MX U_i = sqrt(X(3,i)*X(3,i) + X(4,i)*X(4,i) + 1e-4);
-        cost += exp((U_i-0.4)/0.1); 
+        cost += exp((U_i-0.5)/0.1); 
 
         // Penalize deviation from preferred azimuths (this gives surge and sway control)
         double pref_a1 = 0; // M_PI/12;   // +15 degrees

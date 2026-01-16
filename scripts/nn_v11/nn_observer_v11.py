@@ -26,21 +26,21 @@ Outputs (3):  [vE, vN, vD]
 Examples
 -------
 python3 -u scripts/nn_v11/nn_observer_v11.py \
-  --train data/dataset02_v11_seq128_no_accel_bias_hem/train.csv \
-  --val   data/dataset02_v11_seq128_no_accel_bias_hem/val.csv \
-  --test  data/dataset02_v11_seq128_no_accel_bias_hem/test.csv \
-  --out   data/model02_v11_ens4_h004_qw64_seq128_d3_hem \
-  --epochs 1000 --gpu --ensemble 4 \
-  --norm_json data/dataset02_v11_seq128_no_accel_bias_hem/norm_stats.json \
+  --train data/dataset00_v11_seq256_no_accel_bias_hem/train.csv \
+  --val   data/dataset00_v11_seq256_no_accel_bias_hem/val.csv \
+  --test  data/dataset00_v11_seq256_no_accel_bias_hem/test.csv \
+  --out   data/model00_v11_ens4_h001_wd4__lr5_qw64_seq256_d3_hem \
+  --epochs 600 --gpu --ensemble 4 \
+  --norm_json data/dataset00_v11_seq256_no_accel_bias_hem/norm_stats.json \
   --warmup_epochs 5 --warmup_init_factor 0.05
 
   python3 -u scripts/nn_v11/nn_observer_v11.py \
-  --train data/dataset02_v11_seq128_no_accel_bias_sign/train.csv \
-  --val   data/dataset02_v11_seq128_no_accel_bias_sign/val.csv \
-  --test  data/dataset02_v11_seq128_no_accel_bias_sign/test.csv \
-  --out   data/model02_v11_ens4_h004_qw64_seq128_d3_sign \
-  --epochs 1000 --gpu --ensemble 4 \
-  --norm_json data/dataset02_v11_seq128_no_accel_bias_sign/norm_stats.json \
+  --train data/dataset00_v11_seq256_no_accel_bias_sign/train.csv \
+  --val   data/dataset00_v11_seq256_no_accel_bias_sign/val.csv \
+  --test  data/dataset00_v11_seq256_no_accel_bias_sign/test.csv \
+  --out   data/model00_v11_ens4_h001_wd4_lr5_qw64_seq256_d3_sign \
+  --epochs 600 --gpu --ensemble 4 \
+  --norm_json data/dataset00_v11_seq256_no_accel_bias_sign/norm_stats.json \
   --warmup_epochs 5 --warmup_init_factor 0.05
 """
 
@@ -199,7 +199,7 @@ class VelNetV11(nn.Module):
     forward accepts [B,T,10] or [B,1,10]  → returns (y:[B,T,3], h_next)
     """
     def __init__(self,
-                 hidden: int = 128,
+                 hidden: int = 256,
                  num_layers: int = 3,
                  dropout_p: float = 0.1,
                  use_layernorm: bool = True):
@@ -275,7 +275,7 @@ class TrainCfg:
     weight_decay: float = 0.0
     dt: float = 0.02
     dropout_p: float = 0.1
-    qwidth: int = 128
+    qwidth: int = 256
     device: str = "cuda"
     loss_w: "LossWeights" = field(default_factory=LossWeights)
     x_mean: torch.Tensor = None  # kept for API parity; not used
@@ -610,15 +610,15 @@ def main():
     parser.add_argument("--out",   required=True, help="Output directory (models, plots)")
 
     # Training shape / chunking
-    parser.add_argument("--chunk_len",   type=int, default=128, help="Window length T") # same as --seq in make_nn_dataset 
+    parser.add_argument("--chunk_len",   type=int, default=256, help="Window length T") # same as --seq in make_nn_dataset 
     parser.add_argument("--chunk_batch", type=int, default=64,  help="Windows per batch B")
     parser.add_argument("--tbptt",       type=int, default=256, help="Kept for parity; unused in chunked mode")
 
     parser.add_argument("--epochs",      type=int, default=1000, help="Training epochs")
-    parser.add_argument("--lr",          type=float, default=1e-3, help="Learning rate")
-    parser.add_argument("--wd",          type=float, default=1e-4, help="Weight decay")
+    parser.add_argument("--lr",          type=float, default=5e-4, help="Learning rate") #1e-3
+    parser.add_argument("--wd",          type=float, default=1e-4, help="Weight decay") #1e-4
     parser.add_argument("--qwidth",      type=int, default=64, help="GRU hidden size") #64
-    parser.add_argument("--dropout",     type=float, default=0.3, help="GRU dropout p") #0.02
+    parser.add_argument("--dropout",     type=float, default=0.3, help="GRU dropout p") #0.3
 
     # Device / perf
     parser.add_argument("--gpu",         action="store_true", help="Use CUDA if available")
@@ -719,7 +719,7 @@ def main():
 
         model = VelNetV11(hidden=args.qwidth, num_layers=3, dropout_p=args.dropout).to(device)
         cfg = TrainCfg(epochs=args.epochs, lr=args.lr, weight_decay=args.wd,
-                       dt=0.04, dropout_p=args.dropout, qwidth=args.qwidth,
+                       dt=0.01, dropout_p=args.dropout, qwidth=args.qwidth,
                        device=device, loss_w=LossWeights(mse=1.0),
                        x_mean=None, x_std=None,
                        print_period=max(1, min(args.epochs, 5)),

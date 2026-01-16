@@ -199,10 +199,10 @@ void plotTrajectory(const Waypoints& wpt, const Waypoints& path) {
     
     // Prepare data for quiver (vector field plot)
     std::vector<double> u, v;  // dx, dy components of arrows
-    double arrowLength = 0.4;  // Scale factor for arrows
+    double arrowLength = 0.5;  // Scale factor for arrows
     std::vector<double> xq, yq;
     
-    for (size_t i = 0; i < xn.size(); i += 200) { 
+    for (size_t i = 0; i < xn.size(); i += 2000) { 
         xq.push_back(xn[i]);
         yq.push_back(yn[i]);
         u.push_back(arrowLength * sin(psi[i]));
@@ -215,6 +215,225 @@ void plotTrajectory(const Waypoints& wpt, const Waypoints& path) {
     plt::grid(true);
     plt::show();
 }
+
+void plotTrajectories(const Waypoints& wpt, const Waypoints& path)
+{
+    namespace fs = std::filesystem;
+
+    fs::path filepath = fs::path(getRepositoryPath()) / "data" / "simdata.csv";
+    if (!fs::exists(filepath)) {
+        std::cerr << "File does not exist: " << filepath << std::endl;
+        return;
+    }
+
+    std::ifstream file(filepath);
+    if (!file.is_open()) {
+        std::cerr << "Error: Unable to open " << filepath << std::endl;
+        return;
+    }
+
+    // Robust row parser that preserves column positions
+    auto parseRow = [](const std::string& line) {
+        std::vector<double> values;
+        values.reserve(64);
+
+        std::stringstream ss(line);
+        std::string cell;
+        while (std::getline(ss, cell, ',')) {
+            try {
+                values.push_back(std::stod(cell));
+            } catch (...) {
+                values.push_back(std::numeric_limits<double>::quiet_NaN());
+            }
+        }
+        return values;
+    };
+
+    std::vector<double> x_true, y_true, psi_true;
+    std::vector<double> x_hat,  y_hat,  psi_hat;
+
+    std::string line;
+    while (std::getline(file, line)) {
+        auto values = parseRow(line);
+
+        // Need up to index 45 (0-based) for psi_hat
+        if (values.size() < 46) {
+            continue;
+        }
+
+        const double xt   = values[7];
+        const double yt   = values[8];
+        const double psit = values[12];
+
+        const double xh   = values[40];
+        const double yh   = values[41];
+        const double psih = values[45];
+
+        if (std::isfinite(xt) && std::isfinite(yt) && std::isfinite(psit) &&
+            std::isfinite(xh) && std::isfinite(yh) && std::isfinite(psih))
+        {
+            x_true.push_back(xt);
+            y_true.push_back(yt);
+            psi_true.push_back(psit);
+
+            x_hat.push_back(xh);
+            y_hat.push_back(yh);
+            psi_hat.push_back(psih);
+        }
+    }
+    file.close();
+
+    if (x_true.empty()) {
+        std::cerr << "Error: No valid true/estimated data found in " << filepath << std::endl;
+        return;
+    }
+
+    // Waypoints and planned path
+    std::vector<double> wx, wy;
+    wx.reserve(wpt.size());
+    wy.reserve(wpt.size());
+    for (const auto& wp : wpt) { wx.push_back(wp.x); wy.push_back(wp.y); }
+
+    std::vector<double> px, py;
+    px.reserve(path.size());
+    py.reserve(path.size());
+    for (const auto& p : path) { px.push_back(p.x); py.push_back(p.y); }
+
+    // Build quiver data (downsample)
+    const size_t stride = 2000;     // adjust to taste
+    const double arrowLength = 0.5;
+
+    std::vector<double> xq_t, yq_t, u_t, v_t;
+    std::vector<double> xq_h, yq_h, u_h, v_h;
+
+    xq_t.reserve((x_true.size() + stride - 1) / stride);
+    yq_t.reserve(xq_t.capacity());
+    u_t.reserve(xq_t.capacity());
+    v_t.reserve(xq_t.capacity());
+
+    xq_h.reserve(xq_t.capacity());
+    yq_h.reserve(xq_t.capacity());
+    u_h.reserve(xq_t.capacity());
+    v_h.reserve(xq_t.capacity());
+
+    for (size_t i = 0; i < x_true.size(); i += stride) {
+        // Your convention: psi=0 -> North, increasing clockwise, ENU with x=East, y=North
+        // Heading vector in (East, North) is [sin(psi), cos(psi)].
+        xq_t.push_back(x_true[i]);
+        yq_t.push_back(y_true[i]);
+        u_t.push_back(arrowLength * std::sin(psi_true[i]));
+        v_t.push_back(arrowLength * std::cos(psi_true[i]));
+
+        xq_h.push_back(x_hat[i]);
+        yq_h.push_back(y_hat[i]);
+        u_h.push_back(arrowLength * std::sin(psi_hat[i]));
+        v_h.push_back(arrowLength * std::cos(psi_hat[i]));
+    }
+
+    plt::figure_size(900, 900);
+
+    // Lines/markers
+    plt::named_plot("Planned path", px, py, "r-");
+    plt::named_plot("Waypoints", wx, wy, "ro");
+    plt::named_plot("True pos", x_true, y_true, "b-");
+    plt::named_plot("Estimated pos", x_hat, y_hat, "g--");
+
+    // Quiver arrows (two sets)
+    // Note: matplotlib-cpp forwards to matplotlib; styling support for quiver varies by wrapper version.
+    // If your wrapper supports a style string, you can pass it; if not, these calls still work.
+    plt::quiver(xq_t, yq_t, u_t, v_t);  // true headings
+    plt::quiver(xq_h, yq_h, u_h, v_h);  // estimated headings
+
+    plt::xlabel("x(t) [m]");
+    plt::ylabel("y(t) [m]");
+    plt::title("True vs Estimated Trajectory with Heading Arrows");
+    plt::axis("equal");
+    plt::grid(true);
+    plt::legend();
+    plt::show();
+}
+
+void plotHeadingComparison()
+{
+    namespace fs = std::filesystem;
+
+    fs::path filepath = fs::path(getRepositoryPath()) / "data" / "simdata.csv";
+    if (!fs::exists(filepath)) {
+        std::cerr << "File does not exist: " << filepath << std::endl;
+        return;
+    }
+
+    std::ifstream file(filepath);
+    if (!file.is_open()) {
+        std::cerr << "Error: Unable to open " << filepath << std::endl;
+        return;
+    }
+
+    auto parseRow = [](const std::string& line) {
+        std::vector<double> values;
+        values.reserve(64);
+        std::stringstream ss(line);
+        std::string cell;
+        while (std::getline(ss, cell, ',')) {
+            try {
+                values.push_back(std::stod(cell));
+            } catch (...) {
+                values.push_back(std::numeric_limits<double>::quiet_NaN());
+            }
+        }
+        return values;
+    };
+
+    // Wrap angle in degrees to [-180, 180)
+    auto wrapDeg180 = [](double deg) {
+        deg = std::fmod(deg + 180.0, 360.0);
+        if (deg < 0.0) deg += 360.0;
+        return deg - 180.0;
+    };
+
+    std::vector<double> t, psi_true_deg, psi_hat_deg;
+
+    std::string line;
+    size_t k = 0;
+    while (std::getline(file, line)) {
+        auto values = parseRow(line);
+        if (values.size() < 46) { ++k; continue; }
+
+        const double psit = values[12];  // true psi (rad)
+        const double psih = values[45];  // est  psi (rad)
+
+        const double ti = std::isfinite(values[0]) ? values[0] : static_cast<double>(k);
+
+        if (std::isfinite(psit) && std::isfinite(psih)) {
+            const double psit_deg = wrapDeg180(psit * 180.0 / M_PI);
+            const double psih_deg = wrapDeg180(psih * 180.0 / M_PI);
+
+            t.push_back(ti);
+            psi_true_deg.push_back(psit_deg);
+            psi_hat_deg.push_back(psih_deg);
+        }
+
+        ++k;
+    }
+    file.close();
+
+    if (psi_true_deg.empty()) {
+        std::cerr << "Error: No valid heading data found in " << filepath << std::endl;
+        return;
+    }
+
+    plt::figure_size(900, 400);
+    plt::named_plot("psi true [deg]", t, psi_true_deg, "b-");
+    plt::named_plot("psi estimated [deg]", t, psi_hat_deg, "g--");
+    plt::xlabel("time [s] (or sample index)");
+    plt::ylabel("heading psi [deg]");
+    plt::title("True vs Estimated Heading (wrapped)");
+    plt::ylim(-190.0, 190.0);
+    plt::grid(true);
+    plt::legend();
+    plt::show();
+}
+
 
 void plotStateErrors() {
     std::filesystem::path filepath = std::filesystem::path(getRepositoryPath()) / "data" / "simdata.csv";
@@ -773,7 +992,7 @@ void plotTau() {
     plt::named_plot("$\\tau_X$", time, tauX, "C0-");
     
     plt::xlabel("Time [s]");
-    plt::ylabel("Torque [Nm]");
+    plt::ylabel("Tau");
     plt::title("$\\tau$ over Time");
     plt::ylim(-400, 400);
     plt::legend();
@@ -978,7 +1197,7 @@ void plotIMUAccel()
     plt::named_plot("ay [m/s^2]", t, ay, "g-");
     plt::named_plot("az [m/s^2]", t, az, "b-");
     plt::xlabel("Time [s]");
-    plt::ylabel("Specific force [m/s^2] (BODY, z-down)");
+    plt::ylabel("Specific force [m/s^2]");
     plt::title("IMU Accelerometer");
     plt::grid(true);
     plt::legend();
@@ -1040,7 +1259,7 @@ void plotIMUGyro()
     plt::named_plot("wy [rad/s]", t, wy, "g-");
     plt::named_plot("wz [rad/s]", t, wz, "b-");
     plt::xlabel("Time [s]");
-    plt::ylabel("Angular rate [rad/s] (BODY, z-down)");
+    plt::ylabel("Angular rate [rad/s]");
     plt::title("IMU Gyroscope");
     plt::grid(true);
     plt::legend();
@@ -1145,7 +1364,7 @@ void plotQuaternionQnb()
 
     plt::xlabel("Time [s]");
     plt::ylabel("Quaternion components (q_nb)");
-    plt::title("Attitude Quaternion q_nb Components vs Time");
+    plt::title("Attitude Quaternion Components over Time");
     plt::grid(true);
     plt::legend();
     plt::show();
@@ -1713,7 +1932,7 @@ void plotOceanCurrent()
     plt::named_plot("beta_c [rad]", t, betac, "r-");
     plt::xlabel("Time [s]");
     plt::ylabel("Ocean current");
-    plt::title("Ocean Current (V_c and beta_c)");
+    plt::title("Ocean Current Speed and Direction");
     plt::grid(true);
     plt::legend();
     plt::show();
@@ -1724,7 +1943,7 @@ RealTimePlotter::RealTimePlotter() {
     plt::figure();   
     plt::xlabel("x(t) [m]");
     plt::ylabel("y(t) [m]");
-    plt::title("Live Plot: Current Vessel Status");
+    plt::title("Live Plot: Vessel Status");
     plt::axis("equal");
     plt::grid(true);
     plt::xlim(-50, 100);

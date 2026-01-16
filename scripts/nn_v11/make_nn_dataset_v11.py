@@ -24,22 +24,22 @@ Key defaults for v11:
 
 Example
 -------
-python3 scripts/make_nn_dataset_v11.py \
-  --in data/simdata02_h004_no_accel_bias.csv \
-  --out_dir data/dataset02_v11_seq128_no_accel_bias_sign \
+python3 scripts/nn_v11/make_nn_dataset_v11.py \
+  --in data/simdata03_h001_no_acc_bias.csv \
+  --out_dir data/dataset02_v11_seq256_no_accel_bias_sign \
   --val_frac 0.15 --test_frac 0.15 \
   --header none \
   --trim_tail \
-  --seq 128 --shuffle_windows --seed 123 \
+  --seq 256 --shuffle_windows --seed 123 \
   --q_sign_policy continuity
 
-python3 scripts/make_nn_dataset_v11.py \
-  --in data/simdata02_h004_no_accel_bias.csv \
-  --out_dir data/dataset02_v11_seq128_no_accel_bias_hem \
+python3 scripts/nn_v11/make_nn_dataset_v11.py \
+  --in data/simdata03_h001_no_acc_bias.csv \
+  --out_dir data/dataset02_v11_seq256_no_accel_bias_hem \
   --val_frac 0.15 --test_frac 0.15 \
   --header none \
   --trim_tail \
-  --seq 128 --shuffle_windows --seed 123 \
+  --seq 256 --shuffle_windows --seed 123 \
   --q_sign_policy hemisphere
 
 """

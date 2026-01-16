@@ -1,0 +1,16 @@
+{
+  "epochs": 600,
+  "lr": 0.0005,
+  "weight_decay": 0.0001,
+  "dropout_p": 0.3,
+  "hidden": 64,
+  "device": "cuda",
+  "seed": 42,
+  "amp": "bf16",
+  "tf32": false,
+  "compile": false,
+  "chunk_len": 256,
+  "chunk_batch": 64,
+  "warmup_epochs": 0,
+  "warmup_init_factor": 0.1
+}

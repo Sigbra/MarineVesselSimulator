@@ -40,9 +40,9 @@ Tail trimming (v11-style):
   again after building the final dataset (feature space). This second pass removes
   “duplicate rows at the end” that can survive raw trimming.
 
-  python3 scripts/make_nn_dataset_v12.py \
-  --in data/simdata_final_dataset.csv \
-  --out_dir data/nn_dataset_v12_final_no_bias \
+  python3 scripts/nn_v12/make_nn_dataset_v12.py \
+  --in data/simdata00_h001_no_accel_bias.csv \
+  --out_dir data/dataset00_v12_seq256_no_accel_bias_euler \
   --val_frac 0.15 --test_frac 0.15 \
   --header none \
   --trim_tail \
@@ -304,7 +304,7 @@ def main():
                     help="Seed for window shuffling")
     ap.add_argument("--header", choices=["none","infer"], default="none",
                     help="CSV header: none (default) or infer")
-    ap.add_argument("--seq", type=int, default=150,
+    ap.add_argument("--seq", type=int, default=256,
                     help="Window length for safe shuffling (e.g., 200). 0=disable windowing.")
     ap.add_argument("--shuffle_windows", action="store_true",
                     help="Shuffle **windows** of length --seq before split (window-safe).")
