@@ -353,8 +353,8 @@ int main() {
     // NN init (use the streaming one-step **stateful** members)
     static nnqekf_v12::NN_v12 nn_v12;
     bool ok_v12 = nn_v12.init(
-        "data/model00_v12_ens4_h001_wd4_lr5_qw64_seq256_d3_hem/ts",
-        "data/model00_v12_ens4_h001_wd4_lr5_qw64_seq256_d3_hem/norm_used.json",
+        "data/model00_v12_ens4_h001_wd4_lr5_qw64_seq256_d3_euler/ts",
+        "data/model00_v12_ens4_h001_wd4_lr5_qw64_seq256_d3_euler/norm_used.json",
         /*use_cuda=*/true);
 
     if (!ok_v12) {
