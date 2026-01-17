@@ -315,21 +315,26 @@ int main() {
         /*use_cuda=*/true);
     if (!ok_v11) { std::cerr << "[NNv11] init failed; running without NN.\n"; }
 
+    // Gate fusion until we’ve buffered seq_len samples; after that fuse every stride steps.
+    const int nn_warmup_len = 256;   // e.g. 20 samples of warmup
+    const int nn_stride     = 1;    // fuse every sample after warmup
+    ekf_v11.setNN(&nn_v11, nn_warmup_len, nn_stride);
+
     // -------------- EKF observer v12 ---------------
     nnqekf_v12::Config_v12 cfg_v12;
-    cfg_v12.g              = 9.81;
-    cfg_v12.sigma_a        = 5e-3;     // m/s^2
-    cfg_v12.sigma_ba_rw    = 3e-6;     // m/s^2/s
-    cfg_v12.tau_ba         = 0.0;      // 0 = no bias leak
-    cfg_v12.chi2_gate_pos3 = 16.27;    // ~99.9% gate for 3 DOF (not 95%)
-    cfg_v12.chi2_gate_vec3 = -1.0;     // disable vec3 gate
+    cfg_v12.g               = 9.81;
+    cfg_v12.sigma_a         = 5e-3;     // m/s^2 (IMU accel white noise)
+    cfg_v12.sigma_ba_rw     = 3e-6;     // m/s^2/s (accel bias RW)
+    cfg_v12.tau_ba          = 0.0;      // set >0 if you want bias leak; else 0
+    cfg_v12.chi2_gate_pos3  = 16.27;    // gate for position update
+    cfg_v12.chi2_gate_vec3  = -1.0;     // disable vec3 gate
 
     nnqekf_v12::NN_qObs_Aided_EKF_v12 ekf_v12(cfg_v12);
 
-    // Provide initial attitude (BODY→END)
+    // Provide initial attitude as BODY→NAV (END convention)
     ekf_v12.setRotationNavFromBody(R_nb0);
 
-    // Initial state/cov (v12 types)
+    // Initial state/cov
     nnqekf_v12::State9_v12 x0_v12;
     x0_v12.p   = Eigen::Vector3d(Xn0, Yn0, Zn0);  // END position (Down positive)
     x0_v12.v.setZero();
@@ -342,28 +347,25 @@ int main() {
 
     ekf_v12.setState(x0_v12, P0_v12);
 
-    // Optional: align heave equilibrium with start Down (so spring term is zero at t0)
+    // (Optional but recommended) align heave equilibrium with your start Down:
     ekf_v12.setHeaveEquilibrium(Zn0);
 
-    // NN init (use the streaming one-step STATEFUL members)
+    // NN init (use the streaming one-step **stateful** members)
     static nnqekf_v12::NN_v12 nn_v12;
     bool ok_v12 = nn_v12.init(
-        "data/nn_model_v12_final2/ts",                 // contains member_*_onestep_stateful.pt
-        "data/nn_dataset_v12_final2/norm_stats.json",  // norms used in training
+        "data/model00_v12_ens4_h001_wd4_lr5_qw64_seq256_d3_hem/ts",
+        "data/model00_v12_ens4_h001_wd4_lr5_qw64_seq256_d3_hem/norm_used.json",
         /*use_cuda=*/true);
 
     if (!ok_v12) {
     std::cerr << "[NNv12] init failed; running without NN.\n";
     } else {
-    // Attach NN to EKF and choose cadence
-    ekf_v12.setNN(&nn_v12, /*seq_len=*/1, /*stride=*/1);
-    nn_v12.reset_states(); // recommended at startup/reset
+    // Gate fusion until we’ve buffered seq_len samples; after that fuse every stride steps.
+    const int nn_warmup_len = 256;
+    const int nn_stride     = 1;
+    ekf_v12.setNN(&nn_v12, nn_warmup_len, nn_stride);
     }
 
-    // Gate fusion until we’ve buffered seq_len samples; after that fuse every stride steps.
-    const int nn_warmup_len = 20;   // e.g. 20 samples of warmup
-    const int nn_stride     = 1;    // fuse every sample after warmup
-    ekf_v11.setNN(&nn_v11, nn_warmup_len, nn_stride);
 
     //Observer selector
     ObserverSelector selector;
