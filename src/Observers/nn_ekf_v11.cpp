@@ -909,7 +909,7 @@ void NN_qObs_Aided_EKF_v11::feedNN(const Vec3& accel_b,
 
     // Apply EKF update only on stride
     if ((nn_count_ % nn_stride_) == 0) {
-      (void)updateNNVelNav(v_nav_mean, Rv_nav, /*w=*/1e-6);
+      (void)updateNNVelNav(v_nav_mean, Rv_nav, /*w=*/1e-3);
     }
     return;
   }
@@ -925,7 +925,7 @@ void NN_qObs_Aided_EKF_v11::feedNN(const Vec3& accel_b,
 
   if ((nn_count_ % nn_stride_) != 0) return;
 
-  (void)updateNNVelNav(v_nav_mean, Rv_nav, /*w=*/1e-6);
+  (void)updateNNVelNav(v_nav_mean, Rv_nav, /*w=*/1e-3);
 }
 
 bool NN_qObs_Aided_EKF_v11::updateNNVelNav(const Vec3& z_v_nav, const Mat3& Rv, double w)

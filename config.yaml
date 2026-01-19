@@ -2,7 +2,7 @@
 
 simulation:
   h: 0.01              # Sampling time [s] (0.02 or 0.04 for nn data logging)
-  T_final: 4000        # 8000 Final simulation time [s]
+  T_final: 3000        # 8000 Final simulation time [s]
 
 load_condition:
   mp: 0.0              # Payload mass (front cabin) [kg]
