@@ -14,10 +14,10 @@ EKF15::EKF15()
 {
   // default process noise: tune as needed
   Eigen::Matrix<double,12,1> q_diag;
-  q_diag.segment<3>(0).setConstant(1e-4);  // accel noise
-  q_diag.segment<3>(3).setConstant(1e-6);  // gyro noise
-  q_diag.segment<3>(6).setConstant(1e-6);  // accel bias RW
-  q_diag.segment<3>(9).setConstant(1e-7);  // gyro bias RW
+  q_diag.segment<3>(0).setConstant(4e-4);  // accel noise
+  q_diag.segment<3>(3).setConstant(4e-6);  // gyro noise
+  q_diag.segment<3>(6).setConstant(2e-6);  // accel bias RW
+  q_diag.segment<3>(9).setConstant(2e-7);  // gyro bias RW
   setProcessNoise(q_diag);
 }
 

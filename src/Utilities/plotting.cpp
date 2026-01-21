@@ -335,8 +335,8 @@ void plotTrajectories(const Waypoints& wpt, const Waypoints& path)
     // Lines/markers
     plt::named_plot("Planned path", px, py, "r-");
     plt::named_plot("Waypoints", wx, wy, "ro");
-    plt::named_plot("True pos", x_true, y_true, "b-");
-    plt::named_plot("Estimated pos", x_hat, y_hat, "g--");
+    plt::named_plot("True pos.", x_true, y_true, "b-");
+    plt::named_plot("Estimated pos.", x_hat, y_hat, "g--");
 
     // Quiver arrows (two sets)
     // Note: matplotlib-cpp forwards to matplotlib; styling support for quiver varies by wrapper version.
@@ -422,12 +422,12 @@ void plotHeadingComparison()
         return;
     }
 
-    plt::figure_size(900, 400);
-    plt::named_plot("psi true [deg]", t, psi_true_deg, "b-");
-    plt::named_plot("psi estimated [deg]", t, psi_hat_deg, "g--");
-    plt::xlabel("time [s] (or sample index)");
-    plt::ylabel("heading psi [deg]");
-    plt::title("True vs Estimated Heading (wrapped)");
+    plt::figure_size(2400, 600);
+    plt::named_plot("$\\psi$ est. [deg]", t, psi_hat_deg, "C3--");
+    plt::named_plot("$\\psi$ true [deg]", t, psi_true_deg, "C0-");
+    plt::xlabel("Time [s]");
+    plt::ylabel("Heading ($\\psi$) [deg]");
+    plt::title("Heading: True vs. Estimated (wrapped)");
     plt::ylim(-190.0, 190.0);
     plt::grid(true);
     plt::legend();
@@ -598,14 +598,14 @@ void plotEndVelocities() {
         plt::plot(x_line, y_line, "k-");
     }
 
-    plt::named_plot("$V_e$ [m/s]", time, Ve, "r-");
-    plt::named_plot("$V_n$ [m/s]", time, Vn, "g-");
-    plt::named_plot("$V_d$ [m/s]", time, Vd, "b-");
+    plt::named_plot("$V_e$ [m/s]", time, Ve, "C3-");
+    plt::named_plot("$V_n$ [m/s]", time, Vn, "C0-");
+    plt::named_plot("$V_d$ [m/s]", time, Vd, "C1-");
 
     plt::xlabel("Time [s]");
     plt::ylabel("END Velocity [m/s]");
     plt::title("END Velocities over Time");
-    plt::ylim(ymin, ymax);
+    plt::ylim(-0.22, 0.22);
     plt::legend();
     plt::grid(true);
     plt::show();
@@ -709,29 +709,36 @@ void plotEndVelocitiesVsEstimates() {
     // Vertical waypoint lines
     for (double tline : wpt_change_times) {
         std::vector<double> x_line = {tline, tline};
-        std::vector<double> y_line = {ymin, ymax};
+        std::vector<double> y_line = {-0.22, 0.22}; // {ymin, ymax};
         plt::plot(x_line, y_line, "k-");
     }
 
+    // True vs estimated
+    // Keep TRUE colors identical to plotEndVelocities(): Ve=r, Vn=g, Vd=b
+    // Use darker shades for estimates (solid) via kwargs plot()
+
+    const std::string R_DARK = "#8B0000"; // darkred
+    const std::string G_DARK = "#006400"; // darkgreen
+    const std::string B_DARK = "#00008B"; // darkblue
+
     // True vs estimated (estimated dashed)
-    plt::named_plot("$V_e$ [m/s]",      time, Ve,     "r-");
-    plt::named_plot("$\\hat V_e$ [m/s]", time, Ve_est, "r--");
+    plt::named_plot("$V_e$ [m/s]",       time, Ve,     "C3-");
+    plt::named_plot("$\\hat V_e$ [m/s]", time, Ve_est, "C3--");
 
-    plt::named_plot("$V_n$ [m/s]",      time, Vn,     "g-");
-    plt::named_plot("$\\hat V_n$ [m/s]", time, Vn_est, "g--");
+    plt::named_plot("$V_n$ [m/s]",       time, Vn,     "C0-");
+    plt::named_plot("$\\hat V_n$ [m/s]", time, Vn_est, "C0--");
 
-    plt::named_plot("$V_d$ [m/s]",      time, Vd,     "b-");
-    plt::named_plot("$\\hat V_d$ [m/s]", time, Vd_est, "b--");
+    plt::named_plot("$V_d$ [m/s]",       time, Vd,     "C1-");
+    plt::named_plot("$\\hat V_d$ [m/s]", time, Vd_est, "C1--");
 
     plt::xlabel("Time [s]");
     plt::ylabel("END Velocity [m/s]");
-    plt::title("END Velocities: True vs Estimated");
-    plt::ylim(ymin, ymax);
+    plt::title("END Velocities: True vs. Estimated over Time");
+    plt::ylim(-0.22, 0.22);
     plt::legend();
     plt::grid(true);
     plt::show();
 }
-
 
 
 void plotAngles() {
@@ -797,7 +804,7 @@ void plotAngles() {
     plt::xlabel("Time [s]");
     plt::ylabel("Angle [deg]");
     plt::title("$\\psi$ vs $\\psi_{\\mathrm{desired}}$");
-    plt::ylim(0, 180);
+    plt::ylim(-190, 190);
     plt::legend();
     plt::grid(true);
     plt::show();
@@ -815,7 +822,7 @@ void plotPropellerSpeeds() {
         return;
     }
 
-    std::vector<double> time, n1, n2, nc1, nc2;
+    std::vector<double> time, n1, n2, nc1, nC4;
     std::string line;
     while (std::getline(file, line)) {
         std::stringstream ss(line);
@@ -828,7 +835,7 @@ void plotPropellerSpeeds() {
         if (vals.size() >= 20) {
             time.push_back(vals[0]);
             nc1 .push_back(vals[16]);  // n_c(0)
-            nc2 .push_back(vals[17]);  // n_c(1)
+            nC4 .push_back(vals[17]);  // n_c(1)
             n1  .push_back(vals[18]);  // n(0)
             n2  .push_back(vals[19]);  // n(1)
         }
@@ -855,15 +862,15 @@ void plotPropellerSpeeds() {
         plt::plot(x_line, y_line, "k-");
     }
 
-    plt::named_plot("$n_1$ commanded", time, nc1, "C0-");
-    plt::named_plot("$n_2$ commanded", time, nc2, "C2-");
-    plt::named_plot("$n_1$ actual",    time, n1,  "C3-");
-    plt::named_plot("$n_2$ actual",    time, n2,  "C1-");
+    plt::named_plot("$n_1$ commanded", time, nc1, "C0--");
+    plt::named_plot("$n_2$ commanded", time, nC4, "C3--");
+    plt::named_plot("$n_1$ actual",    time, n1,  "C0-");
+    plt::named_plot("$n_2$ actual",    time, n2,  "C3-");
     
     plt::xlabel("Time [s]");
     plt::ylabel("Relative propeller speed $n$");
     plt::title("Actual vs. Commanded Propeller Speeds");
-    plt::ylim(-1.1, 1.1);
+    plt::ylim(-0.75, 0.75);
     plt::legend();
     plt::grid(true);
     plt::show();
@@ -881,7 +888,7 @@ void plotAlphas() {
         return;
     }
 
-    std::vector<double> time, a1, a2, ac1, ac2;
+    std::vector<double> time, a1, a2, ac1, aC4;
     std::string line;
     while (std::getline(file, line)) {
         std::stringstream ss(line);
@@ -894,7 +901,7 @@ void plotAlphas() {
         if (vals.size() >= 24) {
             time.push_back(vals[0]);
             ac1.push_back(rad2deg(vals[20]));  // alpha_c(0) → degrees
-            ac2.push_back(rad2deg(vals[21]));  // alpha_c(1)
+            aC4.push_back(rad2deg(vals[21]));  // alpha_c(1)
             a1 .push_back(rad2deg(vals[22]));  // alpha(0)
             a2 .push_back(rad2deg(vals[23]));  // alpha(1)
         }
@@ -921,14 +928,14 @@ void plotAlphas() {
         plt::plot(x_line, y_line, "k-");
     }
 
-    plt::named_plot("$\\alpha_1$ commanded", time, ac1, "C0-");
-    plt::named_plot("$\\alpha_2$ commanded", time, ac2, "C2-");
-    plt::named_plot("$\\alpha_1$ actual",    time, a1,  "C3-");
-    plt::named_plot("$\\alpha_2$ actual",    time, a2,  "C1-");
+    plt::named_plot("$\\alpha_1$ commanded", time, ac1, "C0--");
+    plt::named_plot("$\\alpha_2$ commanded", time, aC4, "C3--");
+    plt::named_plot("$\\alpha_1$ actual",    time, a1,  "C0-");
+    plt::named_plot("$\\alpha_2$ actual",    time, a2,  "C3-");
     
     plt::xlabel("Time [s]");
-    plt::ylabel("Angle [deg]");
-    plt::title("Actual vs. Commanded $\\alpha$ Angles");
+    plt::ylabel("$\\alpha$ [deg]");
+    plt::title("Actual vs. Commanded Azimuth: $\\alpha$ over Time");
     plt::ylim(-100, 100);
     plt::legend();
     plt::grid(true);
@@ -987,9 +994,9 @@ void plotTau() {
         plt::plot(x_line, y_line, "k-");
     }
 
+    plt::named_plot("$\\tau_X$", time, tauX, "C3-");
+    plt::named_plot("$\\tau_Y$", time, tauY, "C0-");
     plt::named_plot("$\\tau_N$", time, tauN, "C1-");
-    plt::named_plot("$\\tau_Y$", time, tauY, "C2-");
-    plt::named_plot("$\\tau_X$", time, tauX, "C0-");
     
     plt::xlabel("Time [s]");
     plt::ylabel("Tau");
@@ -1193,12 +1200,12 @@ void plotIMUAccel()
         plt::plot(xl, yl, {{"color","0.7"},{"linestyle","--"},{"linewidth","1"}});
     }
 
-    plt::named_plot("ax [m/s^2]", t, ax, "r-");
-    plt::named_plot("ay [m/s^2]", t, ay, "g-");
-    plt::named_plot("az [m/s^2]", t, az, "b-");
+    plt::named_plot("$\\ddot{x}$", t, ax, "C3-");
+    plt::named_plot("$\\ddot{y}$", t, ay, "C0-");
+    plt::named_plot("$\\ddot{z}$", t, az, "C1-");
     plt::xlabel("Time [s]");
     plt::ylabel("Specific force [m/s^2]");
-    plt::title("IMU Accelerometer");
+    plt::title("Accelerometer");
     plt::grid(true);
     plt::legend();
     plt::show();
@@ -1248,19 +1255,19 @@ void plotIMUGyro()
     try { wpt_change_times = loadWaypointChangeTimes(); } catch (...) {}
 
     plt::figure_size(2400, 600);
-
+ 
     for (double tt : wpt_change_times) {
         std::vector<double> xl = {tt, tt};
         std::vector<double> yl = {-1000, 1000};
         plt::plot(xl, yl, {{"color","0.7"},{"linestyle","--"},{"linewidth","1"}});
     }
 
-    plt::named_plot("wx [rad/s]", t, wx, "r-");
-    plt::named_plot("wy [rad/s]", t, wy, "g-");
-    plt::named_plot("wz [rad/s]", t, wz, "b-");
+    plt::named_plot("Roll rate   ($p$)", t, wx, "C3-");
+    plt::named_plot("Pitch rate ($q$)", t, wy, "C0-");
+    plt::named_plot("Yaw rate   ($r$)", t, wz, "C1-");
     plt::xlabel("Time [s]");
     plt::ylabel("Angular rate [rad/s]");
-    plt::title("IMU Gyroscope");
+    plt::title("Gyroscope");
     plt::grid(true);
     plt::legend();
     plt::show();
@@ -1357,10 +1364,10 @@ void plotQuaternionQnb()
         plt::plot(xl, yl, {{"color","0.7"},{"linestyle","--"},{"linewidth","1"}});
     }
 
-    plt::named_plot("qw", t, qw, "k-");  // black
-    plt::named_plot("qx", t, qx, "r-");
-    plt::named_plot("qy", t, qy, "g-");
-    plt::named_plot("qz", t, qz, "b-");
+    plt::named_plot("qw", t, qw, "C0-");  
+    plt::named_plot("qx", t, qx, "C1-");
+    plt::named_plot("qy", t, qy, "C4-");
+    plt::named_plot("qz", t, qz, "C3-");
 
     plt::xlabel("Time [s]");
     plt::ylabel("Quaternion components (q_nb)");
@@ -1517,19 +1524,18 @@ void plotStateEstimateErrors() {
     }
 
     // Four series on one set of axes (mixed units; label clearly)
-    plt::named_plot("Orientation rate error ||Δω|| [deg/s]",  time, err_omega_degps, "g-");
-    plt::named_plot("Orientation error [deg]",    time, err_ori_deg,     "b-");
-    plt::named_plot("||p_est - p|| [m]",          time, err_pos_total,   "m-");
-    plt::named_plot("||v_est - v|| [m/s]",        time, err_vel_total,   "c-");
+    plt::named_plot("||Attitude rate error|| [deg/s]",  time, err_omega_degps, "C4-");
+    plt::named_plot("||Attitude error||        [deg]",    time, err_ori_deg,     "C1-");
+    plt::named_plot("||Position error||        [m]",      time, err_pos_total,   "C3-");
+    plt::named_plot("||Velocity error||        [m/s]",    time, err_vel_total,   "C0-");
 
     plt::xlabel("Time [s]");
     plt::ylabel("Errors");
-    plt::title("State Estimate Errors");
+    plt::title("Vessel State Estimate Errors");
     plt::grid(true);
     plt::legend();
     plt::show();
 }
-
 
 void plotIMUAccelBiasCompare()
 {
@@ -1546,13 +1552,12 @@ void plotIMUAccelBiasCompare()
         return;
     }
 
-    // Column indices (0-based) in simdata.csv
     constexpr int T_COL = 0;
 
-    // Estimated biases (you store these):
+    // Estimated biases
     constexpr int BA_EST_X = 59, BA_EST_Y = 60, BA_EST_Z = 61;
 
-    // True biases (only if you actually store them; otherwise set these to -1 and we’ll just plot estimates)
+    // True biases (set to -1 if not available)
     constexpr int BA_TRUE_X = 65, BA_TRUE_Y = 66, BA_TRUE_Z = 67;
 
     std::vector<double> t;
@@ -1575,24 +1580,21 @@ void plotIMUAccelBiasCompare()
         if ((int)v.size() < need_cols) continue;
 
         const double tt = v[T_COL];
-
         const double ex = v[BA_EST_X], ey = v[BA_EST_Y], ez = v[BA_EST_Z];
 
-        // If true cols exist, use them; else set to NaN and skip plotting them later
-        const bool have_true = (BA_TRUE_X >= 0 && BA_TRUE_Y >= 0 && BA_TRUE_Z >= 0);
-        const double tx = have_true ? v[BA_TRUE_X] : std::numeric_limits<double>::quiet_NaN();
-        const double ty = have_true ? v[BA_TRUE_Y] : std::numeric_limits<double>::quiet_NaN();
-        const double tz = have_true ? v[BA_TRUE_Z] : std::numeric_limits<double>::quiet_NaN();
+        const bool have_true_cols = (BA_TRUE_X >= 0 && BA_TRUE_Y >= 0 && BA_TRUE_Z >= 0);
+        const double tx = have_true_cols ? v[BA_TRUE_X] : std::numeric_limits<double>::quiet_NaN();
+        const double ty = have_true_cols ? v[BA_TRUE_Y] : std::numeric_limits<double>::quiet_NaN();
+        const double tz = have_true_cols ? v[BA_TRUE_Z] : std::numeric_limits<double>::quiet_NaN();
 
-        // Skip non-finite rows (matplotlib-cpp sometimes behaves poorly with NaNs/Infs in some builds)
         auto finite = [](double a){ return std::isfinite(a); };
         if (!finite(tt) || !finite(ex) || !finite(ey) || !finite(ez)) continue;
-        if (have_true && (!finite(tx) || !finite(ty) || !finite(tz))) continue;
+        if (have_true_cols && (!finite(tx) || !finite(ty) || !finite(tz))) continue;
 
         t.push_back(tt);
         bax_est.push_back(ex); bay_est.push_back(ey); baz_est.push_back(ez);
 
-        if (have_true) {
+        if (have_true_cols) {
             bax_true.push_back(tx); bay_true.push_back(ty); baz_true.push_back(tz);
         }
     }
@@ -1603,103 +1605,27 @@ void plotIMUAccelBiasCompare()
         return;
     }
 
-    // ---- simple downsample to avoid crashes ----
-    auto downsample7 = [](size_t max_pts,
-                          std::vector<double>& t,
-                          std::vector<double>& a1, std::vector<double>& a2, std::vector<double>& a3,
-                          std::vector<double>& b1, std::vector<double>& b2, std::vector<double>& b3)
-    {
-        const size_t N = t.size();
-        if (N <= max_pts) return;
-        const size_t step = (N + max_pts - 1) / max_pts;
-
-        std::vector<double> t2;  t2.reserve((N + step - 1) / step);
-        std::vector<double> a12; a12.reserve(t2.capacity());
-        std::vector<double> a22; a22.reserve(t2.capacity());
-        std::vector<double> a32; a32.reserve(t2.capacity());
-        std::vector<double> b12; b12.reserve(t2.capacity());
-        std::vector<double> b22; b22.reserve(t2.capacity());
-        std::vector<double> b32; b32.reserve(t2.capacity());
-
-        for (size_t i = 0; i < N; i += step) {
-            t2.push_back(t[i]);
-            a12.push_back(a1[i]); a22.push_back(a2[i]); a32.push_back(a3[i]);
-            b12.push_back(b1[i]); b22.push_back(b2[i]); b32.push_back(b3[i]);
-        }
-
-        t.swap(t2);
-        a1.swap(a12); a2.swap(a22); a3.swap(a32);
-        b1.swap(b12); b2.swap(b22); b3.swap(b32);
-    };
-
     const bool have_true = (bax_true.size() == t.size());
-    if (have_true) {
-        downsample7(20000, t, bax_true, bay_true, baz_true, bax_est, bay_est, baz_est);
-    } else {
-        // if true not available, downsample only estimated vectors
-        auto downsample4 = [](size_t max_pts,
-                              std::vector<double>& t,
-                              std::vector<double>& a1, std::vector<double>& a2, std::vector<double>& a3)
-        {
-            const size_t N = t.size();
-            if (N <= max_pts) return;
-            const size_t step = (N + max_pts - 1) / max_pts;
 
-            std::vector<double> t2;  t2.reserve((N + step - 1) / step);
-            std::vector<double> a12; a12.reserve(t2.capacity());
-            std::vector<double> a22; a22.reserve(t2.capacity());
-            std::vector<double> a32; a32.reserve(t2.capacity());
+    plt::figure_size(2400, 600);
 
-            for (size_t i = 0; i < N; i += step) {
-                t2.push_back(t[i]);
-                a12.push_back(a1[i]); a22.push_back(a2[i]); a32.push_back(a3[i]);
-            }
+    // Use C1/C4/C0 mapping: x=C1, y=C4, z=C0
+    // Estimated: dashed (--), True: solid (-)
+    // Keep your current plotting order: z-pair, y-pair, x-pair
 
-            t.swap(t2);
-            a1.swap(a12); a2.swap(a22); a3.swap(a32);
-        };
-        downsample4(20000, t, bax_est, bay_est, baz_est);
-    }
+    plt::named_plot("$b_\\ddot{x}$ est.",  t, bax_est,  "C3--");
+    if (have_true) plt::named_plot("$b_\\ddot{x}$ true", t, bax_true, "C3-");
 
-    // ---- Plot: simplest possible (3 figures, 2 lines each) ----
-    plt::figure_size(1600, 500);
-    if (have_true) {
-        plt::named_plot("ba_x true", t, bax_true, "-");
-        plt::named_plot("ba_x est",  t, bax_est,  "C1-");
-    } else {
-        plt::named_plot("ba_x est",  t, bax_est,  "C1-");
-    }
+    plt::named_plot("$b_\\ddot{y}$ est.",  t, bay_est,  "C0--");
+    if (have_true) plt::named_plot("$b_\\ddot{y}$ true", t, bay_true, "C0-");
+
+    plt::named_plot("$b_\\ddot{z}$ est.",  t, baz_est,  "C1--");
+    if (have_true) plt::named_plot("$b_\\ddot{z}$ true", t, baz_true, "C1-");
+
     plt::xlabel("Time [s]");
-    plt::ylabel("ba_x [m/s^2]");
-    plt::title("Accel bias X");
-    plt::grid(true);
-    plt::legend();
-    plt::show();
-
-    plt::figure_size(1600, 500);
-    if (have_true) {
-        plt::named_plot("ba_y true", t, bay_true, "-");
-        plt::named_plot("ba_y est",  t, bay_est,  "C1-");
-    } else {
-        plt::named_plot("ba_y est",  t, bay_est,  "C1-");
-    }
-    plt::xlabel("Time [s]");
-    plt::ylabel("ba_y [m/s^2]");
-    plt::title("Accel bias Y");
-    plt::grid(true);
-    plt::legend();
-    plt::show();
-
-    plt::figure_size(1600, 500);
-    if (have_true) {
-        plt::named_plot("ba_z true", t, baz_true, "-");
-        plt::named_plot("ba_z est",  t, baz_est,  "C1-");
-    } else {
-        plt::named_plot("ba_z est",  t, baz_est,  "C1-");
-    }
-    plt::xlabel("Time [s]");
-    plt::ylabel("ba_z [m/s^2]");
-    plt::title("Accel bias Z");
+    plt::ylabel("Accel. bias [m/s^2]");
+    plt::title("Accel. bias: True vs Estimated");
+    plt::ylim(-5e-5, 5e-5);
     plt::grid(true);
     plt::legend();
     plt::show();
@@ -1723,10 +1649,10 @@ void plotIMUGyroBiasCompare()
 
     constexpr int T_COL = 0;
 
-    // Estimated biases (you store these):
+    // Estimated biases
     constexpr int BG_EST_X = 62, BG_EST_Y = 63, BG_EST_Z = 64;
 
-    // True biases (only if you actually store them; otherwise set to -1 and we’ll just plot estimates)
+    // True biases (set to -1 if not available)
     constexpr int BG_TRUE_X = 68, BG_TRUE_Y = 69, BG_TRUE_Z = 70;
 
     std::vector<double> t;
@@ -1751,19 +1677,19 @@ void plotIMUGyroBiasCompare()
         const double tt = v[T_COL];
         const double ex = v[BG_EST_X], ey = v[BG_EST_Y], ez = v[BG_EST_Z];
 
-        const bool have_true = (BG_TRUE_X >= 0 && BG_TRUE_Y >= 0 && BG_TRUE_Z >= 0);
-        const double tx = have_true ? v[BG_TRUE_X] : std::numeric_limits<double>::quiet_NaN();
-        const double ty = have_true ? v[BG_TRUE_Y] : std::numeric_limits<double>::quiet_NaN();
-        const double tz = have_true ? v[BG_TRUE_Z] : std::numeric_limits<double>::quiet_NaN();
+        const bool have_true_cols = (BG_TRUE_X >= 0 && BG_TRUE_Y >= 0 && BG_TRUE_Z >= 0);
+        const double tx = have_true_cols ? v[BG_TRUE_X] : std::numeric_limits<double>::quiet_NaN();
+        const double ty = have_true_cols ? v[BG_TRUE_Y] : std::numeric_limits<double>::quiet_NaN();
+        const double tz = have_true_cols ? v[BG_TRUE_Z] : std::numeric_limits<double>::quiet_NaN();
 
         auto finite = [](double a){ return std::isfinite(a); };
         if (!finite(tt) || !finite(ex) || !finite(ey) || !finite(ez)) continue;
-        if (have_true && (!finite(tx) || !finite(ty) || !finite(tz))) continue;
+        if (have_true_cols && (!finite(tx) || !finite(ty) || !finite(tz))) continue;
 
         t.push_back(tt);
         bgx_est.push_back(ex); bgy_est.push_back(ey); bgz_est.push_back(ez);
 
-        if (have_true) {
+        if (have_true_cols) {
             bgx_true.push_back(tx); bgy_true.push_back(ty); bgz_true.push_back(tz);
         }
     }
@@ -1774,106 +1700,375 @@ void plotIMUGyroBiasCompare()
         return;
     }
 
-    // Downsample
-    auto downsample7 = [](size_t max_pts,
-                          std::vector<double>& t,
-                          std::vector<double>& a1, std::vector<double>& a2, std::vector<double>& a3,
-                          std::vector<double>& b1, std::vector<double>& b2, std::vector<double>& b3)
-    {
-        const size_t N = t.size();
-        if (N <= max_pts) return;
-        const size_t step = (N + max_pts - 1) / max_pts;
-
-        std::vector<double> t2;  t2.reserve((N + step - 1) / step);
-        std::vector<double> a12; a12.reserve(t2.capacity());
-        std::vector<double> a22; a22.reserve(t2.capacity());
-        std::vector<double> a32; a32.reserve(t2.capacity());
-        std::vector<double> b12; b12.reserve(t2.capacity());
-        std::vector<double> b22; b22.reserve(t2.capacity());
-        std::vector<double> b32; b32.reserve(t2.capacity());
-
-        for (size_t i = 0; i < N; i += step) {
-            t2.push_back(t[i]);
-            a12.push_back(a1[i]); a22.push_back(a2[i]); a32.push_back(a3[i]);
-            b12.push_back(b1[i]); b22.push_back(b2[i]); b32.push_back(b3[i]);
-        }
-
-        t.swap(t2);
-        a1.swap(a12); a2.swap(a22); a3.swap(a32);
-        b1.swap(b12); b2.swap(b22); b3.swap(b32);
-    };
-
     const bool have_true = (bgx_true.size() == t.size());
-    if (have_true) {
-        downsample7(20000, t, bgx_true, bgy_true, bgz_true, bgx_est, bgy_est, bgz_est);
-    } else {
-        auto downsample4 = [](size_t max_pts,
-                              std::vector<double>& t,
-                              std::vector<double>& a1, std::vector<double>& a2, std::vector<double>& a3)
-        {
-            const size_t N = t.size();
-            if (N <= max_pts) return;
-            const size_t step = (N + max_pts - 1) / max_pts;
 
-            std::vector<double> t2;  t2.reserve((N + step - 1) / step);
-            std::vector<double> a12; a12.reserve(t2.capacity());
-            std::vector<double> a22; a22.reserve(t2.capacity());
-            std::vector<double> a32; a32.reserve(t2.capacity());
+    plt::figure_size(2400, 600);
 
-            for (size_t i = 0; i < N; i += step) {
-                t2.push_back(t[i]);
-                a12.push_back(a1[i]); a22.push_back(a2[i]); a32.push_back(a3[i]);
-            }
+    // Use C1/C4/C0 mapping: x=C1, y=C4, z=C0
+    // Estimated: dashed (--), True: solid (-)
+    // Keep your current plotting order: z-pair, y-pair, x-pair
+    plt::named_plot("$b_p$ est.",  t, bgx_est,  "C3--");
+    if (have_true) plt::named_plot("$b_p$ true", t, bgx_true, "C3-");
 
-            t.swap(t2);
-            a1.swap(a12); a2.swap(a22); a3.swap(a32);
-        };
-        downsample4(20000, t, bgx_est, bgy_est, bgz_est);
-    }
+    plt::named_plot("$b_q$ est.",  t, bgy_est,  "C0--");
+    if (have_true) plt::named_plot("$b_q$ true", t, bgy_true, "C0-");
 
-    // Plot (3 figures)
-    plt::figure_size(1600, 500);
-    if (have_true) {
-        plt::named_plot("bgyro_x true", t, bgx_true, "-");
-        plt::named_plot("bgyro_x est",  t, bgx_est,  "C1-");
-    } else {
-        plt::named_plot("bgyro_x est",  t, bgx_est,  "C1-");
-    }
+    plt::named_plot("$b_r$ est.",  t, bgz_est,  "C1--");
+    if (have_true) plt::named_plot("$b_r$ true", t, bgz_true, "C1-");
+
     plt::xlabel("Time [s]");
-    plt::ylabel("bgyro_x [rad/s]");
-    plt::title("Gyro bias X");
-    plt::grid(true);
-    plt::legend();
-    plt::show();
-
-    plt::figure_size(1600, 500);
-    if (have_true) {
-        plt::named_plot("bgyro_y true", t, bgy_true, "-");
-        plt::named_plot("bgyro_y est",  t, bgy_est,  "C1-");
-    } else {
-        plt::named_plot("bgyro_y est",  t, bgy_est,  "C1-");
-    }
-    plt::xlabel("Time [s]");
-    plt::ylabel("bgyro_y [rad/s]");
-    plt::title("Gyro bias Y");
-    plt::grid(true);
-    plt::legend();
-    plt::show();
-
-    plt::figure_size(1600, 500);
-    if (have_true) {
-        plt::named_plot("bgyro_z true", t, bgz_true, "-");
-        plt::named_plot("bgyro_z est",  t, bgz_est,  "C1-");
-    } else {
-        plt::named_plot("bgyro_z est",  t, bgz_est,  "C1-");
-    }
-    plt::xlabel("Time [s]");
-    plt::ylabel("bgyro_z [rad/s]");
-    plt::title("Gyro bias Z");
+    plt::ylabel("Gyro. bias [rad/s]");
+    plt::title("Gyro. bias: True vs Estimated");
+    plt::ylim(-5e-6, 5e-6);
     plt::grid(true);
     plt::legend();
     plt::show();
 }
+
+
+// void plotIMUAccelBiasCompare()
+// {
+//     namespace fs = std::filesystem;
+//     fs::path filepath = fs::path(getRepositoryPath()) / "data" / "simdata.csv";
+//     if (!fs::exists(filepath)) {
+//         std::cerr << "File does not exist: " << filepath << std::endl;
+//         return;
+//     }
+
+//     std::ifstream file(filepath);
+//     if (!file.is_open()) {
+//         std::cerr << "Error: Unable to open " << filepath << std::endl;
+//         return;
+//     }
+
+//     // Column indices (0-based) in simdata.csv
+//     constexpr int T_COL = 0;
+
+//     // Estimated biases (you store these):
+//     constexpr int BA_EST_X = 59, BA_EST_Y = 60, BA_EST_Z = 61;
+
+//     // True biases (only if you actually store them; otherwise set these to -1 and we’ll just plot estimates)
+//     constexpr int BA_TRUE_X = 65, BA_TRUE_Y = 66, BA_TRUE_Z = 67;
+
+//     std::vector<double> t;
+//     std::vector<double> bax_true, bay_true, baz_true;
+//     std::vector<double> bax_est,  bay_est,  baz_est;
+
+//     std::string line;
+//     while (std::getline(file, line)) {
+//         std::stringstream ss(line);
+//         std::vector<double> v;
+//         v.reserve(80);
+
+//         std::string cell;
+//         while (std::getline(ss, cell, ',')) {
+//             try { v.push_back(std::stod(cell)); }
+//             catch (...) { /* skip */ }
+//         }
+
+//         const int need_cols = std::max({T_COL, BA_EST_Z, BA_TRUE_Z}) + 1;
+//         if ((int)v.size() < need_cols) continue;
+
+//         const double tt = v[T_COL];
+
+//         const double ex = v[BA_EST_X], ey = v[BA_EST_Y], ez = v[BA_EST_Z];
+
+//         // If true cols exist, use them; else set to NaN and skip plotting them later
+//         const bool have_true = (BA_TRUE_X >= 0 && BA_TRUE_Y >= 0 && BA_TRUE_Z >= 0);
+//         const double tx = have_true ? v[BA_TRUE_X] : std::numeric_limits<double>::quiet_NaN();
+//         const double ty = have_true ? v[BA_TRUE_Y] : std::numeric_limits<double>::quiet_NaN();
+//         const double tz = have_true ? v[BA_TRUE_Z] : std::numeric_limits<double>::quiet_NaN();
+
+//         // Skip non-finite rows (matplotlib-cpp sometimes behaves poorly with NaNs/Infs in some builds)
+//         auto finite = [](double a){ return std::isfinite(a); };
+//         if (!finite(tt) || !finite(ex) || !finite(ey) || !finite(ez)) continue;
+//         if (have_true && (!finite(tx) || !finite(ty) || !finite(tz))) continue;
+
+//         t.push_back(tt);
+//         bax_est.push_back(ex); bay_est.push_back(ey); baz_est.push_back(ez);
+
+//         if (have_true) {
+//             bax_true.push_back(tx); bay_true.push_back(ty); baz_true.push_back(tz);
+//         }
+//     }
+//     file.close();
+
+//     if (t.empty()) {
+//         std::cerr << "Error: No valid accel bias data found in " << filepath << std::endl;
+//         return;
+//     }
+
+//     // ---- simple downsample to avoid crashes ----
+//     auto downsample7 = [](size_t max_pts,
+//                           std::vector<double>& t,
+//                           std::vector<double>& a1, std::vector<double>& a2, std::vector<double>& a3,
+//                           std::vector<double>& b1, std::vector<double>& b2, std::vector<double>& b3)
+//     {
+//         const size_t N = t.size();
+//         if (N <= max_pts) return;
+//         const size_t step = (N + max_pts - 1) / max_pts;
+
+//         std::vector<double> t2;  t2.reserve((N + step - 1) / step);
+//         std::vector<double> a12; a12.reserve(t2.capacity());
+//         std::vector<double> a22; a22.reserve(t2.capacity());
+//         std::vector<double> a32; a32.reserve(t2.capacity());
+//         std::vector<double> b12; b12.reserve(t2.capacity());
+//         std::vector<double> b22; b22.reserve(t2.capacity());
+//         std::vector<double> b32; b32.reserve(t2.capacity());
+
+//         for (size_t i = 0; i < N; i += step) {
+//             t2.push_back(t[i]);
+//             a12.push_back(a1[i]); a22.push_back(a2[i]); a32.push_back(a3[i]);
+//             b12.push_back(b1[i]); b22.push_back(b2[i]); b32.push_back(b3[i]);
+//         }
+
+//         t.swap(t2);
+//         a1.swap(a12); a2.swap(a22); a3.swap(a32);
+//         b1.swap(b12); b2.swap(b22); b3.swap(b32);
+//     };
+
+//     const bool have_true = (bax_true.size() == t.size());
+//     if (have_true) {
+//         downsample7(20000, t, bax_true, bay_true, baz_true, bax_est, bay_est, baz_est);
+//     } else {
+//         // if true not available, downsample only estimated vectors
+//         auto downsample4 = [](size_t max_pts,
+//                               std::vector<double>& t,
+//                               std::vector<double>& a1, std::vector<double>& a2, std::vector<double>& a3)
+//         {
+//             const size_t N = t.size();
+//             if (N <= max_pts) return;
+//             const size_t step = (N + max_pts - 1) / max_pts;
+
+//             std::vector<double> t2;  t2.reserve((N + step - 1) / step);
+//             std::vector<double> a12; a12.reserve(t2.capacity());
+//             std::vector<double> a22; a22.reserve(t2.capacity());
+//             std::vector<double> a32; a32.reserve(t2.capacity());
+
+//             for (size_t i = 0; i < N; i += step) {
+//                 t2.push_back(t[i]);
+//                 a12.push_back(a1[i]); a22.push_back(a2[i]); a32.push_back(a3[i]);
+//             }
+
+//             t.swap(t2);
+//             a1.swap(a12); a2.swap(a22); a3.swap(a32);
+//         };
+//         downsample4(20000, t, bax_est, bay_est, baz_est);
+//     }
+
+//     // ---- Plot: simplest possible (3 figures, 2 lines each) ----
+//     plt::figure_size(1600, 500);
+//     if (have_true) {
+//         plt::named_plot("ba_x true", t, bax_true, "-");
+//         plt::named_plot("ba_x est",  t, bax_est,  "C1-");
+//     } else {
+//         plt::named_plot("ba_x est",  t, bax_est,  "C1-");
+//     }
+//     plt::xlabel("Time [s]");
+//     plt::ylabel("ba_x [m/s^2]");
+//     plt::title("Accel bias X");
+//     plt::grid(true);
+//     plt::legend();
+//     plt::show();
+
+//     plt::figure_size(1600, 500);
+//     if (have_true) {
+//         plt::named_plot("ba_y true", t, bay_true, "-");
+//         plt::named_plot("ba_y est",  t, bay_est,  "C1-");
+//     } else {
+//         plt::named_plot("ba_y est",  t, bay_est,  "C1-");
+//     }
+//     plt::xlabel("Time [s]");
+//     plt::ylabel("ba_y [m/s^2]");
+//     plt::title("Accel bias Y");
+//     plt::grid(true);
+//     plt::legend();
+//     plt::show();
+
+//     plt::figure_size(1600, 500);
+//     if (have_true) {
+//         plt::named_plot("ba_z true", t, baz_true, "-");
+//         plt::named_plot("ba_z est",  t, baz_est,  "C1-");
+//     } else {
+//         plt::named_plot("ba_z est",  t, baz_est,  "C1-");
+//     }
+//     plt::xlabel("Time [s]");
+//     plt::ylabel("ba_z [m/s^2]");
+//     plt::title("Accel bias Z");
+//     plt::grid(true);
+//     plt::legend();
+//     plt::show();
+// }
+
+
+// void plotIMUGyroBiasCompare()
+// {
+//     namespace fs = std::filesystem;
+//     fs::path filepath = fs::path(getRepositoryPath()) / "data" / "simdata.csv";
+//     if (!fs::exists(filepath)) {
+//         std::cerr << "File does not exist: " << filepath << std::endl;
+//         return;
+//     }
+
+//     std::ifstream file(filepath);
+//     if (!file.is_open()) {
+//         std::cerr << "Error: Unable to open " << filepath << std::endl;
+//         return;
+//     }
+
+//     constexpr int T_COL = 0;
+
+//     // Estimated biases (you store these):
+//     constexpr int BG_EST_X = 62, BG_EST_Y = 63, BG_EST_Z = 64;
+
+//     // True biases (only if you actually store them; otherwise set to -1 and we’ll just plot estimates)
+//     constexpr int BG_TRUE_X = 68, BG_TRUE_Y = 69, BG_TRUE_Z = 70;
+
+//     std::vector<double> t;
+//     std::vector<double> bgx_true, bgy_true, bgz_true;
+//     std::vector<double> bgx_est,  bgy_est,  bgz_est;
+
+//     std::string line;
+//     while (std::getline(file, line)) {
+//         std::stringstream ss(line);
+//         std::vector<double> v;
+//         v.reserve(80);
+
+//         std::string cell;
+//         while (std::getline(ss, cell, ',')) {
+//             try { v.push_back(std::stod(cell)); }
+//             catch (...) { /* skip */ }
+//         }
+
+//         const int need_cols = std::max({T_COL, BG_EST_Z, BG_TRUE_Z}) + 1;
+//         if ((int)v.size() < need_cols) continue;
+
+//         const double tt = v[T_COL];
+//         const double ex = v[BG_EST_X], ey = v[BG_EST_Y], ez = v[BG_EST_Z];
+
+//         const bool have_true = (BG_TRUE_X >= 0 && BG_TRUE_Y >= 0 && BG_TRUE_Z >= 0);
+//         const double tx = have_true ? v[BG_TRUE_X] : std::numeric_limits<double>::quiet_NaN();
+//         const double ty = have_true ? v[BG_TRUE_Y] : std::numeric_limits<double>::quiet_NaN();
+//         const double tz = have_true ? v[BG_TRUE_Z] : std::numeric_limits<double>::quiet_NaN();
+
+//         auto finite = [](double a){ return std::isfinite(a); };
+//         if (!finite(tt) || !finite(ex) || !finite(ey) || !finite(ez)) continue;
+//         if (have_true && (!finite(tx) || !finite(ty) || !finite(tz))) continue;
+
+//         t.push_back(tt);
+//         bgx_est.push_back(ex); bgy_est.push_back(ey); bgz_est.push_back(ez);
+
+//         if (have_true) {
+//             bgx_true.push_back(tx); bgy_true.push_back(ty); bgz_true.push_back(tz);
+//         }
+//     }
+//     file.close();
+
+//     if (t.empty()) {
+//         std::cerr << "Error: No valid gyro bias data found in " << filepath << std::endl;
+//         return;
+//     }
+
+//     // Downsample
+//     auto downsample7 = [](size_t max_pts,
+//                           std::vector<double>& t,
+//                           std::vector<double>& a1, std::vector<double>& a2, std::vector<double>& a3,
+//                           std::vector<double>& b1, std::vector<double>& b2, std::vector<double>& b3)
+//     {
+//         const size_t N = t.size();
+//         if (N <= max_pts) return;
+//         const size_t step = (N + max_pts - 1) / max_pts;
+
+//         std::vector<double> t2;  t2.reserve((N + step - 1) / step);
+//         std::vector<double> a12; a12.reserve(t2.capacity());
+//         std::vector<double> a22; a22.reserve(t2.capacity());
+//         std::vector<double> a32; a32.reserve(t2.capacity());
+//         std::vector<double> b12; b12.reserve(t2.capacity());
+//         std::vector<double> b22; b22.reserve(t2.capacity());
+//         std::vector<double> b32; b32.reserve(t2.capacity());
+
+//         for (size_t i = 0; i < N; i += step) {
+//             t2.push_back(t[i]);
+//             a12.push_back(a1[i]); a22.push_back(a2[i]); a32.push_back(a3[i]);
+//             b12.push_back(b1[i]); b22.push_back(b2[i]); b32.push_back(b3[i]);
+//         }
+
+//         t.swap(t2);
+//         a1.swap(a12); a2.swap(a22); a3.swap(a32);
+//         b1.swap(b12); b2.swap(b22); b3.swap(b32);
+//     };
+
+//     const bool have_true = (bgx_true.size() == t.size());
+//     if (have_true) {
+//         downsample7(20000, t, bgx_true, bgy_true, bgz_true, bgx_est, bgy_est, bgz_est);
+//     } else {
+//         auto downsample4 = [](size_t max_pts,
+//                               std::vector<double>& t,
+//                               std::vector<double>& a1, std::vector<double>& a2, std::vector<double>& a3)
+//         {
+//             const size_t N = t.size();
+//             if (N <= max_pts) return;
+//             const size_t step = (N + max_pts - 1) / max_pts;
+
+//             std::vector<double> t2;  t2.reserve((N + step - 1) / step);
+//             std::vector<double> a12; a12.reserve(t2.capacity());
+//             std::vector<double> a22; a22.reserve(t2.capacity());
+//             std::vector<double> a32; a32.reserve(t2.capacity());
+
+//             for (size_t i = 0; i < N; i += step) {
+//                 t2.push_back(t[i]);
+//                 a12.push_back(a1[i]); a22.push_back(a2[i]); a32.push_back(a3[i]);
+//             }
+
+//             t.swap(t2);
+//             a1.swap(a12); a2.swap(a22); a3.swap(a32);
+//         };
+//         downsample4(20000, t, bgx_est, bgy_est, bgz_est);
+//     }
+
+//     // Plot (3 figures)
+//     plt::figure_size(1600, 500);
+//     if (have_true) {
+//         plt::named_plot("bgyro_x true", t, bgx_true, "-");
+//         plt::named_plot("bgyro_x est",  t, bgx_est,  "C1-");
+//     } else {
+//         plt::named_plot("bgyro_x est",  t, bgx_est,  "C1-");
+//     }
+//     plt::xlabel("Time [s]");
+//     plt::ylabel("bgyro_x [rad/s]");
+//     plt::title("Gyro bias X");
+//     plt::grid(true);
+//     plt::legend();
+//     plt::show();
+
+//     plt::figure_size(1600, 500);
+//     if (have_true) {
+//         plt::named_plot("bgyro_y true", t, bgy_true, "-");
+//         plt::named_plot("bgyro_y est",  t, bgy_est,  "C1-");
+//     } else {
+//         plt::named_plot("bgyro_y est",  t, bgy_est,  "C1-");
+//     }
+//     plt::xlabel("Time [s]");
+//     plt::ylabel("bgyro_y [rad/s]");
+//     plt::title("Gyro bias Y");
+//     plt::grid(true);
+//     plt::legend();
+//     plt::show();
+
+//     plt::figure_size(1600, 500);
+//     if (have_true) {
+//         plt::named_plot("bgyro_z true", t, bgz_true, "-");
+//         plt::named_plot("bgyro_z est",  t, bgz_est,  "C1-");
+//     } else {
+//         plt::named_plot("bgyro_z est",  t, bgz_est,  "C1-");
+//     }
+//     plt::xlabel("Time [s]");
+//     plt::ylabel("bgyro_z [rad/s]");
+//     plt::title("Gyro bias Z");
+//     plt::grid(true);
+//     plt::legend();
+//     plt::show();
+// }
 
 void plotOceanCurrent()
 {
@@ -1928,8 +2123,8 @@ void plotOceanCurrent()
         plt::plot(xl, yl, "k--");
     }
 
-    plt::named_plot("V_c [10*m/s]",    t, Vc,    "b-");
-    plt::named_plot("beta_c [rad]", t, betac, "r-");
+    plt::named_plot("$V_c$ [10*m/s]",    t, Vc, "C0-");
+    plt::named_plot("$\\beta_c$ [rad]", t, betac, "C3-");
     plt::xlabel("Time [s]");
     plt::ylabel("Ocean current");
     plt::title("Ocean Current Speed and Direction");
