@@ -41,8 +41,8 @@ Tail trimming (v11-style):
   “duplicate rows at the end” that can survive raw trimming.
 
   python3 scripts/nn_v12/make_nn_dataset_v12.py \
-  --in data/simdata00_h001_no_accel_bias.csv \
-  --out_dir data/dataset00_v12_seq256_no_accel_bias_euler \
+  --in data/simdata.csv \
+  --out_dir data/dataset03_v12_seq256_no_accel_bias_euler \
   --val_frac 0.15 --test_frac 0.15 \
   --header none \
   --trim_tail \

@@ -662,7 +662,7 @@ NN_v11::QuatInputPolicy NN_v11::quatInputPolicy() const
 
 NN_qObs_Aided_EKF_v11::NN_qObs_Aided_EKF_v11(const Config_v11& cfg) : cfg_(cfg) {
   P_.setIdentity();
-  P_ *= 1e-2;                 // mild initial uncertainty
+  P_ *= 1e-3;                 // mild initial uncertainty
   R_nb_.setIdentity();        // BODY->END
   g_n_ = Vec3(0,0,cfg_.g);    // Down positive
 

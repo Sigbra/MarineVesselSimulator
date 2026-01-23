@@ -555,7 +555,7 @@ void NN_qObs_Aided_EKF_v12::setRotationNavFromBody(const Mat3& R_nb) {
 }
 
 void NN_qObs_Aided_EKF_v12::setRotationFromQuat(const Quat& q_nb) {
-  const Quat q_can = canonicalizeQuat(q_nb);
+  const Quat q_can = q_nb; //canonicalizeQuat(q_nb);
   R_nb_ = RnbFromQuatCustom(q_can);
 }
 

@@ -32,13 +32,12 @@ phi/theta/psi are wrapped to the ±180° interval each time they are loaded:
 Outputs (3): [vE, vN, vD]
 
 python3 -u scripts/nn_v12/nn_observer_v12.py \
-  --train data/dataset00_v12_seq256_no_accel_bias_euler/train.csv \
-  --val   data/dataset00_v12_seq256_no_accel_bias_euler/val.csv \
-  --test  data/dataset00_v12_seq256_no_accel_bias_euler/test.csv \
-  --out   data/model00_v12_ens4_h001_wd4_lr5_qw64_seq256_d3_hem \
+  --train data/dataset03_v12_seq256_no_accel_bias_euler/train.csv \
+  --val   data/dataset03_v12_seq256_no_accel_bias_euler/val.csv \
+  --test  data/dataset03_v12_seq256_no_accel_bias_euler/test.csv \
+  --out   data/model03_v12_ens4_h001_wd4_lr5_qw64_seq256_d3_euler \
   --epochs 600 --gpu --ensemble 4 \
-  --norm_json data/dataset00_v12_seq256_no_accel_bias_euler/norm_stats.json \
-  --warmup_epochs 5 --warmup_init_factor 0.05
+  --norm_json data/dataset03_v12_seq256_no_accel_bias_euler/norm_stats.json
 
 """
 

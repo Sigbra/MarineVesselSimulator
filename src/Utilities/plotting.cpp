@@ -199,7 +199,7 @@ void plotTrajectory(const Waypoints& wpt, const Waypoints& path) {
     
     // Prepare data for quiver (vector field plot)
     std::vector<double> u, v;  // dx, dy components of arrows
-    double arrowLength = 0.5;  // Scale factor for arrows
+    double arrowLength = 0.2;  // Scale factor for arrows
     std::vector<double> xq, yq;
     
     for (size_t i = 0; i < xn.size(); i += 2000) { 

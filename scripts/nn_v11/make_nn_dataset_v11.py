@@ -25,8 +25,8 @@ Key defaults for v11:
 Example
 -------
 python3 scripts/nn_v11/make_nn_dataset_v11.py \
-  --in data/simdata03_h001_no_acc_bias.csv \
-  --out_dir data/dataset02_v11_seq256_no_accel_bias_sign \
+  --in data/simdata.csv \
+  --out_dir data/dataset03_v11_seq256_no_accel_bias_sign \
   --val_frac 0.15 --test_frac 0.15 \
   --header none \
   --trim_tail \
@@ -34,8 +34,8 @@ python3 scripts/nn_v11/make_nn_dataset_v11.py \
   --q_sign_policy continuity
 
 python3 scripts/nn_v11/make_nn_dataset_v11.py \
-  --in data/simdata03_h001_no_acc_bias.csv \
-  --out_dir data/dataset02_v11_seq256_no_accel_bias_hem \
+  --in data/simdata.csv \
+  --out_dir data/dataset03_v11_seq256_no_accel_bias_hem \
   --val_frac 0.15 --test_frac 0.15 \
   --header none \
   --trim_tail \

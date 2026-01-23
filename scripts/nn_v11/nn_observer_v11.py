@@ -26,22 +26,20 @@ Outputs (3):  [vE, vN, vD]
 Examples
 -------
 python3 -u scripts/nn_v11/nn_observer_v11.py \
-  --train data/dataset00_v11_seq256_no_accel_bias_hem/train.csv \
-  --val   data/dataset00_v11_seq256_no_accel_bias_hem/val.csv \
-  --test  data/dataset00_v11_seq256_no_accel_bias_hem/test.csv \
-  --out   data/model00_v11_ens4_h001_wd4__lr5_qw64_seq256_d3_hem \
+  --train data/dataset03_v11_seq256_no_accel_bias_hem/train.csv \
+  --val   data/dataset03_v11_seq256_no_accel_bias_hem/val.csv \
+  --test  data/dataset03_v11_seq256_no_accel_bias_hem/test.csv \
+  --out   data/model03_v11_ens4_h001_wd4_lr5_qw64_seq256_d3_hem \
   --epochs 600 --gpu --ensemble 4 \
-  --norm_json data/dataset00_v11_seq256_no_accel_bias_hem/norm_stats.json \
-  --warmup_epochs 5 --warmup_init_factor 0.05
+  --norm_json data/dataset03_v11_seq256_no_accel_bias_hem/norm_stats.json
 
   python3 -u scripts/nn_v11/nn_observer_v11.py \
-  --train data/dataset00_v11_seq256_no_accel_bias_sign/train.csv \
-  --val   data/dataset00_v11_seq256_no_accel_bias_sign/val.csv \
-  --test  data/dataset00_v11_seq256_no_accel_bias_sign/test.csv \
-  --out   data/model00_v11_ens4_h001_wd4_lr5_qw64_seq256_d3_sign \
+  --train data/dataset03_v11_seq256_no_accel_bias_sign/train.csv \
+  --val   data/dataset03_v11_seq256_no_accel_bias_sign/val.csv \
+  --test  data/dataset03_v11_seq256_no_accel_bias_sign/test.csv \
+  --out   data/model03_v11_ens4_h001_wd4_lr5_qw64_seq256_d3_sign \
   --epochs 600 --gpu --ensemble 4 \
-  --norm_json data/dataset00_v11_seq256_no_accel_bias_sign/norm_stats.json \
-  --warmup_epochs 5 --warmup_init_factor 0.05
+  --norm_json data/dataset03_v11_seq256_no_accel_bias_sign/norm_stats.json
 """
 
 import os
