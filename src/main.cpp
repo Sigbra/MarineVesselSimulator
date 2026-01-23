@@ -310,8 +310,8 @@ int main() {
     // NN init (use the streaming one-step **stateful** members)
     static nnqekf_v11::NN_v11 nn_v11;
     bool ok_v11 = nn_v11.init(
-        "data/model00_v11_ens4_h001_wd4_lr5_qw64_seq256_d3_sign/ts",              // <-- stateful files live here
-        "data/model00_v11_ens4_h001_wd4_lr5_qw64_seq256_d3_sign/norm_used.json",         // <-- the same norm used in training
+        "data/model03_v11_ens4_h001_wd4_lr5_qw64_seq256_d3_sign/ts",              // <-- stateful files live here
+        "data/model03_v11_ens4_h001_wd4_lr5_qw64_seq256_d3_sign/norm_used.json",         // <-- the same norm used in training
         /*use_cuda=*/true);
     if (!ok_v11) { std::cerr << "[NNv11] init failed; running without NN.\n"; }
 
@@ -353,8 +353,8 @@ int main() {
     // NN init (use the streaming one-step **stateful** members)
     static nnqekf_v12::NN_v12 nn_v12;
     bool ok_v12 = nn_v12.init(
-        "data/model00_v12_ens4_h001_wd4_lr5_qw64_seq256_d3_euler/ts",
-        "data/model00_v12_ens4_h001_wd4_lr5_qw64_seq256_d3_euler/norm_used.json",
+        "data/model03_v12_ens4_h001_wd4_lr5_qw64_seq256_d3_euler/ts",
+        "data/model03_v12_ens4_h001_wd4_lr5_qw64_seq256_d3_euler/norm_used.json",
         /*use_cuda=*/true);
 
     if (!ok_v12) {
