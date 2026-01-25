@@ -523,8 +523,8 @@ int main() {
         t[i] = i * h;
 
         //Comment out when making dataset
-        //V_c    = oceanCurrentV(V_c, h, gen);
-        //beta_c = oceanCurrentB(beta_c, h, gen);
+        V_c    = oceanCurrentV(V_c, h, gen);
+        beta_c = oceanCurrentB(beta_c, h, gen);
 
         ran_model.wave_step_WF(h);
 
