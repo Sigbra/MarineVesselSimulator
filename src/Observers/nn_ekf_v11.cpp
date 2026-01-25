@@ -928,6 +928,55 @@ void NN_qObs_Aided_EKF_v11::feedNN(const Vec3& accel_b,
   (void)updateNNVelNav(v_nav_mean, Rv_nav, /*w=*/1);
 }
 
+// bool NN_qObs_Aided_EKF_v11::updateNNVelNav(const Vec3& z_v_nav, const Mat3& Rv, double w)
+// {
+//   // residual: z - h(x) with h(x)=v^n
+//   const Vec3 res = z_v_nav - x_.v;
+
+//   // H = [0_{3x3}  I_{3x3}  0_{3x3}]
+//   Eigen::Matrix<double,3,9> H = Eigen::Matrix<double,3,9>::Zero();
+//   H.block<3,3>(0,3).setIdentity();
+
+//   const double wt = (std::isfinite(w) && w>0.0) ? w : 1.0;
+//   const Mat3 R = Rv / wt;
+
+//   // Innovation covariance
+//   const Mat3 S = (H * P_ * H.transpose()) + R;
+
+//   // Optional NIS gate
+//   if (cfg_.chi2_gate_vec3 > 0.0) {
+//     const double nis = res.transpose() * S.inverse() * res;
+//     if (nis >= cfg_.chi2_gate_vec3) return false;
+//   }
+
+//   const Eigen::Matrix<double,9,3> K  = P_ * H.transpose() * S.inverse();
+//   const Eigen::Matrix<double,9,1> dx = K * res;
+
+// #ifdef EKF_DEBUG
+//   if ((++g_dbg_counter % DBG_PRINT_EVERY) == 0) {
+//     const double yaw = yaw_from_Rnb_END(R_nb_);
+//     dbgHeader("updNNv");
+//     dbgPrintVec("res_vn", res); std::cerr << "  ";
+//     std::cerr << "NIS=" << (res.transpose()*S.inverse()*res) << "  yaw="<<rad2deg(yaw)<<"deg";
+//     if (near180(yaw)) std::cerr << " **NEAR 180°**";
+//     std::cerr << "  d|v|="<< dx.segment<3>(3).norm() << "\n";
+//   }
+// #endif
+
+//   // Masked update: only velocity
+//   Eigen::Matrix<double,9,9> J = Eigen::Matrix<double,9,9>::Zero();
+//   J.block<3,3>(3,3).setIdentity();
+//   const Eigen::Matrix<double,9,1> Jdx = J * dx;
+//   x_.v   += Jdx.segment<3>(3);
+
+//   // Joseph form (masked)
+//   const Eigen::Matrix<double,9,9> I = Eigen::Matrix<double,9,9>::Identity();
+//   const Eigen::Matrix<double,9,9> IKH = I - (J * K * H);
+//   P_ = IKH * P_ * IKH.transpose() + (J * K) * R * (J * K).transpose();
+
+//   return true;
+// }
+
 bool NN_qObs_Aided_EKF_v11::updateNNVelNav(const Vec3& z_v_nav, const Mat3& Rv, double w)
 {
   // residual: z - h(x) with h(x)=v^n
@@ -937,45 +986,58 @@ bool NN_qObs_Aided_EKF_v11::updateNNVelNav(const Vec3& z_v_nav, const Mat3& Rv, 
   Eigen::Matrix<double,3,9> H = Eigen::Matrix<double,3,9>::Zero();
   H.block<3,3>(0,3).setIdentity();
 
-  const double wt = (std::isfinite(w) && w>0.0) ? w : 1.0;
+  const double wt = (std::isfinite(w) && w > 0.0) ? w : 1.0;
   const Mat3 R = Rv / wt;
 
-  // Innovation covariance
+  // Innovation covariance: S = HPH^T + R
   const Mat3 S = (H * P_ * H.transpose()) + R;
 
-  // Optional NIS gate
+  // Prefer a solve over explicit inverse (more stable)
+  Eigen::LDLT<Mat3> ldltS(S);
+  if (ldltS.info() != Eigen::Success) return false;
+
+  // Optional NIS gate: nis = res^T S^{-1} res
   if (cfg_.chi2_gate_vec3 > 0.0) {
-    const double nis = res.transpose() * S.inverse() * res;
+    const Vec3 Sinv_res = ldltS.solve(res);
+    const double nis = res.dot(Sinv_res);
     if (nis >= cfg_.chi2_gate_vec3) return false;
   }
 
-  const Eigen::Matrix<double,9,3> K  = P_ * H.transpose() * S.inverse();
+  // Kalman gain: K = P H^T S^{-1}
+  const Eigen::Matrix<double,9,3> PHt = P_ * H.transpose();
+  const Eigen::Matrix<double,9,3> K   = PHt * ldltS.solve(Mat3::Identity());
+
+  // State correction: dx = K * res
   const Eigen::Matrix<double,9,1> dx = K * res;
 
 #ifdef EKF_DEBUG
   if ((++g_dbg_counter % DBG_PRINT_EVERY) == 0) {
     const double yaw = yaw_from_Rnb_END(R_nb_);
-    dbgHeader("updNNv");
+    dbgHeader("updNNv_full");
     dbgPrintVec("res_vn", res); std::cerr << "  ";
-    std::cerr << "NIS=" << (res.transpose()*S.inverse()*res) << "  yaw="<<rad2deg(yaw)<<"deg";
-    if (near180(yaw)) std::cerr << " **NEAR 180°**";
-    std::cerr << "  d|v|="<< dx.segment<3>(3).norm() << "\n";
+    std::cerr << "d|p|=" << dx.segment<3>(0).norm()
+              << "  d|v|=" << dx.segment<3>(3).norm()
+              << "  d|b_a|=" << dx.segment<3>(6).norm()
+              << "  yaw=" << rad2deg(yaw) << "deg\n";
   }
 #endif
 
-  // Masked update: only velocity
-  Eigen::Matrix<double,9,9> J = Eigen::Matrix<double,9,9>::Zero();
-  J.block<3,3>(3,3).setIdentity();
-  const Eigen::Matrix<double,9,1> Jdx = J * dx;
-  x_.v   += Jdx.segment<3>(3);
+  // Apply full update to ALL relevant states
+  x_.p   += dx.segment<3>(0);
+  x_.v   += dx.segment<3>(3);
+  x_.b_a += dx.segment<3>(6);
 
-  // Joseph form (masked)
+  // Joseph-form covariance update: P = (I-KH) P (I-KH)^T + K R K^T
   const Eigen::Matrix<double,9,9> I = Eigen::Matrix<double,9,9>::Identity();
-  const Eigen::Matrix<double,9,9> IKH = I - (J * K * H);
-  P_ = IKH * P_ * IKH.transpose() + (J * K) * R * (J * K).transpose();
+  const Eigen::Matrix<double,9,9> IKH = I - (K * H);
+  P_ = IKH * P_ * IKH.transpose() + K * R * K.transpose();
+
+  // Optional: enforce symmetry (good practice with finite precision)
+  P_ = 0.5 * (P_ + P_.transpose());
 
   return true;
 }
+
 
 const State9_v11& NN_qObs_Aided_EKF_v11::state() const { return x_; }
 const Mat99&     NN_qObs_Aided_EKF_v11::cov()   const { return P_; }

@@ -191,7 +191,7 @@ void plotTrajectory(const Waypoints& wpt, const Waypoints& path) {
     
     plt::figure_size(800, 800);
     plt::plot(px, py, "r-"); 
-    plt::plot(wx, wy, "ro");  
+    plt::plot(wx, wy, "g-");  
     plt::plot(xn, yn, "b-");
     plt::xlabel("x(t) [m]");
     plt::ylabel("y(t) [m]");
@@ -300,8 +300,8 @@ void plotTrajectories(const Waypoints& wpt, const Waypoints& path)
     for (const auto& p : path) { px.push_back(p.x); py.push_back(p.y); }
 
     // Build quiver data (downsample)
-    const size_t stride = 2000;     // adjust to taste
-    const double arrowLength = 0.5;
+    const size_t stride = 5000;     // adjust to taste
+    const double arrowLength = 0.0001;
 
     std::vector<double> xq_t, yq_t, u_t, v_t;
     std::vector<double> xq_h, yq_h, u_h, v_h;
@@ -333,10 +333,10 @@ void plotTrajectories(const Waypoints& wpt, const Waypoints& path)
     plt::figure_size(900, 900);
 
     // Lines/markers
-    plt::named_plot("Planned path", px, py, "r-");
-    plt::named_plot("Waypoints", wx, wy, "ro");
-    plt::named_plot("True pos.", x_true, y_true, "b-");
-    plt::named_plot("Estimated pos.", x_hat, y_hat, "g--");
+    plt::named_plot("Planned path", px, py, "C3-");
+    plt::named_plot("Waypoints", wx, wy, "C3o");
+    plt::named_plot("Estimated pos.", x_hat, y_hat, "C1-");
+    plt::named_plot("True pos.", x_true, y_true, "C9-");
 
     // Quiver arrows (two sets)
     // Note: matplotlib-cpp forwards to matplotlib; styling support for quiver varies by wrapper version.
@@ -391,26 +391,61 @@ void plotHeadingComparison()
         return deg - 180.0;
     };
 
-    std::vector<double> t, psi_true_deg, psi_hat_deg;
+    // Insert NaNs to break the plotted line when a wrap/discontinuity occurs.
+    auto breakOnWrap = [](const std::vector<double>& t_in,
+                          const std::vector<double>& y_in,
+                          std::vector<double>& t_out,
+                          std::vector<double>& y_out,
+                          double jump_deg_threshold = 180.0)
+    {
+        t_out.clear();
+        y_out.clear();
+        if (t_in.empty() || y_in.empty()) return;
+
+        t_out.reserve(t_in.size() + 16);
+        y_out.reserve(y_in.size() + 16);
+
+        t_out.push_back(t_in[0]);
+        y_out.push_back(y_in[0]);
+
+        for (size_t i = 1; i < y_in.size(); ++i) {
+            const double y_prev = y_in[i - 1];
+            const double y_cur  = y_in[i];
+
+            if (std::isfinite(y_prev) && std::isfinite(y_cur)) {
+                const double dy = y_cur - y_prev;
+                if (std::fabs(dy) > jump_deg_threshold) {
+                    const double NaN = std::numeric_limits<double>::quiet_NaN();
+                    t_out.push_back(NaN);
+                    y_out.push_back(NaN);
+                }
+            }
+
+            t_out.push_back(t_in[i]);
+            y_out.push_back(y_in[i]);
+        }
+    };
+
+    std::vector<double> t, psi_true_deg, psi_hat_deg, psi_d_deg;
 
     std::string line;
     size_t k = 0;
     while (std::getline(file, line)) {
         auto values = parseRow(line);
+
+        // Need at least indices: 0 (time), 12 (psi true), 15 (psi desired), 45 (psi hat)
         if (values.size() < 46) { ++k; continue; }
 
-        const double psit = values[12];  // true psi (rad)
-        const double psih = values[45];  // est  psi (rad)
+        const double psit  = values[12];  // true psi (rad)
+        const double psid  = values[15];  // desired psi (rad)
+        const double psih  = values[45];  // est psi (rad)
+        const double ti    = std::isfinite(values[0]) ? values[0] : static_cast<double>(k);
 
-        const double ti = std::isfinite(values[0]) ? values[0] : static_cast<double>(k);
-
-        if (std::isfinite(psit) && std::isfinite(psih)) {
-            const double psit_deg = wrapDeg180(psit * 180.0 / M_PI);
-            const double psih_deg = wrapDeg180(psih * 180.0 / M_PI);
-
+        if (std::isfinite(psit) && std::isfinite(psih) && std::isfinite(psid)) {
             t.push_back(ti);
-            psi_true_deg.push_back(psit_deg);
-            psi_hat_deg.push_back(psih_deg);
+            psi_true_deg.push_back(wrapDeg180(psit * 180.0 / M_PI));
+            psi_hat_deg.push_back(wrapDeg180(psih * 180.0 / M_PI));
+            psi_d_deg.push_back(wrapDeg180(psid * 180.0 / M_PI));
         }
 
         ++k;
@@ -422,15 +457,160 @@ void plotHeadingComparison()
         return;
     }
 
+    // Build plotting vectors with NaNs inserted at wrap points (per series).
+    std::vector<double> t_true_plot, psi_true_plot;
+    std::vector<double> t_hat_plot,  psi_hat_plot;
+    std::vector<double> t_d_plot,    psi_d_plot;
+
+    breakOnWrap(t, psi_true_deg, t_true_plot, psi_true_plot, 180.0);
+    breakOnWrap(t, psi_hat_deg,  t_hat_plot,  psi_hat_plot,  180.0);
+    breakOnWrap(t, psi_d_deg,    t_d_plot,    psi_d_plot,    180.0);
+
     plt::figure_size(2400, 600);
-    plt::named_plot("$\\psi$ est. [deg]", t, psi_hat_deg, "C3--");
-    plt::named_plot("$\\psi$ true [deg]", t, psi_true_deg, "C0-");
+    plt::named_plot("$\\psi$ est. [deg]",     t_hat_plot,  psi_hat_plot,  "C3--");
+    plt::named_plot("$\\psi$ true [deg]",     t_true_plot, psi_true_plot, "C3-");
+    plt::named_plot("$\\psi_{\\mathrm{desired}}$ [deg]", t_d_plot,    psi_d_plot,    "C0-");
+
     plt::xlabel("Time [s]");
     plt::ylabel("Heading ($\\psi$) [deg]");
-    plt::title("Heading: True vs. Estimated (wrapped)");
+    plt::title("Heading: True vs. Estimated vs. Desired (wrapped)");
     plt::ylim(-190.0, 190.0);
     plt::grid(true);
     plt::legend();
+    plt::show();
+}
+
+
+void plotAngles() {
+    namespace fs = std::filesystem;
+
+    fs::path filepath = fs::path(getRepositoryPath()) / "data" / "simdata.csv";
+    if (!fs::exists(filepath)) {
+        std::cerr << "File does not exist: " << filepath << std::endl;
+        return;
+    }
+
+    std::ifstream file(filepath);
+    if (!file.is_open()) {
+        std::cerr << "Error: Unable to open " << filepath << std::endl;
+        return;
+    }
+
+    auto parseRow = [](const std::string& line) {
+        std::vector<double> values;
+        values.reserve(64);
+        std::stringstream ss(line);
+        std::string cell;
+        while (std::getline(ss, cell, ',')) {
+            try {
+                values.push_back(std::stod(cell));
+            } catch (...) {
+                values.push_back(std::numeric_limits<double>::quiet_NaN());
+            }
+        }
+        return values;
+    };
+
+    // Wrap angle in degrees to [-180, 180)
+    auto wrapDeg180 = [](double deg) {
+        deg = std::fmod(deg + 180.0, 360.0);
+        if (deg < 0.0) deg += 360.0;
+        return deg - 180.0;
+    };
+
+    // Insert NaNs to break the plotted line when a wrap/discontinuity occurs.
+    auto breakOnWrap = [](const std::vector<double>& t_in,
+                          const std::vector<double>& y_in,
+                          std::vector<double>& t_out,
+                          std::vector<double>& y_out,
+                          double jump_deg_threshold = 180.0)
+    {
+        t_out.clear();
+        y_out.clear();
+        if (t_in.empty() || y_in.empty()) return;
+
+        t_out.reserve(t_in.size() + 16);
+        y_out.reserve(y_in.size() + 16);
+
+        t_out.push_back(t_in[0]);
+        y_out.push_back(y_in[0]);
+
+        for (size_t i = 1; i < y_in.size(); ++i) {
+            const double y_prev = y_in[i - 1];
+            const double y_cur  = y_in[i];
+
+            if (std::isfinite(y_prev) && std::isfinite(y_cur)) {
+                const double dy = y_cur - y_prev;
+                if (std::fabs(dy) > jump_deg_threshold) {
+                    const double NaN = std::numeric_limits<double>::quiet_NaN();
+                    t_out.push_back(NaN);
+                    y_out.push_back(NaN);
+                }
+            }
+
+            t_out.push_back(t_in[i]);
+            y_out.push_back(y_in[i]);
+        }
+    };
+
+    std::vector<double> time, psi_wrapped, psi_d_wrapped;
+
+    std::string line;
+    size_t k = 0;
+    while (std::getline(file, line)) {
+        auto values = parseRow(line);
+
+        if (values.size() >= 24) {
+            const double ti   = std::isfinite(values[0]) ? values[0] : static_cast<double>(k);
+            const double psi  = values[12]; // rad
+            const double psi_d= values[15]; // rad
+
+            if (std::isfinite(psi) && std::isfinite(psi_d)) {
+                time.push_back(ti);
+
+                // Convert to deg and wrap before plotting
+                psi_wrapped.push_back(wrapDeg180(rad2deg(psi)));
+                psi_d_wrapped.push_back(wrapDeg180(rad2deg(psi_d)));
+            }
+        }
+
+        ++k;
+    }
+    file.close();
+
+    if (time.empty() || psi_wrapped.empty() || psi_d_wrapped.empty()) {
+        std::cerr << "Error: No valid data found in " << filepath << std::endl;
+        return;
+    }
+
+    // Load waypoint change times
+    std::vector<double> wpt_change_times = loadWaypointChangeTimes();
+
+    // Build plotting vectors with NaNs inserted at wrap points (per series).
+    std::vector<double> t_psi_plot, psi_plot;
+    std::vector<double> t_psid_plot, psid_plot;
+
+    breakOnWrap(time, psi_wrapped,   t_psi_plot,  psi_plot,  180.0);
+    breakOnWrap(time, psi_d_wrapped, t_psid_plot, psid_plot, 180.0);
+
+    plt::figure_size(2480, 620);
+
+    // Add waypoint change lines (keep as-is)
+    for (double t : wpt_change_times) {
+        std::vector<double> x_line = {t, t};
+        std::vector<double> y_line = {-200, 200};
+        plt::plot(x_line, y_line, "k-");
+    }
+
+    plt::named_plot("$\\psi_{\\mathrm{desired}}$", t_psid_plot, psid_plot, "C3-");
+    plt::named_plot("$\\psi$", t_psi_plot, psi_plot, "C0-");
+
+    plt::xlabel("Time [s]");
+    plt::ylabel("Angle [deg]");
+    plt::title("$\\psi$ vs $\\psi_{\\mathrm{desired}}$ (wrapped)");
+    plt::ylim(-190, 190);
+    plt::legend();
+    plt::grid(true);
     plt::show();
 }
 
@@ -740,75 +920,6 @@ void plotEndVelocitiesVsEstimates() {
     plt::show();
 }
 
-
-void plotAngles() {
-    std::filesystem::path filepath = std::filesystem::path(getRepositoryPath()) / "data" / "simdata.csv";
-    if (!std::filesystem::exists(filepath)) {
-        std::cerr << "File does not exist: " << filepath << std::endl;
-        return;
-    }
-    std::ifstream file(filepath);
-    if (!file.is_open()) {
-        std::cerr << "Error: Unable to open " << filepath << std::endl;
-        return;
-    }
-    
-    std::vector<double> time, psi_d, psi;
-    std::string line;
-    
-    while (std::getline(file, line)) {
-        std::stringstream ss(line);
-        std::vector<double> values;
-        std::string cell;
-        
-        while (std::getline(ss, cell, ',')) {
-            try {
-                values.push_back(std::stod(cell));
-            } catch (const std::invalid_argument&) {
-                // Skip any invalid entries
-            }
-        }
-
-        if (values.size() >= 24) {
-            time.push_back(values[0]);
-            psi.push_back(rad2deg(values[12]));
-            psi_d.push_back(rad2deg(values[15]));
-        }
-        
-    }
-    file.close();
-    
-    if (time.empty() || psi_d.empty() || psi.empty()) {
-        std::cerr << "Error: No valid data found in " << filepath << std::endl;
-        return;
-    }
-    
-    // Load waypoint change times
-    std::vector<double> wpt_change_times = loadWaypointChangeTimes();
-    
-    plt::figure_size(2480, 620);
-
-    // Add waypoint change lines
-    for (double t : wpt_change_times) {
-        // Create a vertical line at time t
-        std::vector<double> x_line = {t, t};
-        std::vector<double> y_line = {-200, 200};  // Very large range to ensure visibility
-        
-        // Plot a simple black dashed line
-        plt::plot(x_line, y_line, "k-");
-    }
-
-    plt::named_plot("$\\psi$", time, psi, "r-");
-    plt::named_plot("$\\psi_{\\mathrm{desired}}$", time, psi_d, "g-"); 
-    
-    plt::xlabel("Time [s]");
-    plt::ylabel("Angle [deg]");
-    plt::title("$\\psi$ vs $\\psi_{\\mathrm{desired}}$");
-    plt::ylim(-190, 190);
-    plt::legend();
-    plt::grid(true);
-    plt::show();
-}      
 
 void plotPropellerSpeeds() {
     std::filesystem::path filepath = std::filesystem::path(getRepositoryPath()) / "data" / "simdata.csv";

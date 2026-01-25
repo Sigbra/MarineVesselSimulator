@@ -211,15 +211,15 @@ int main() {
     Eigen::Vector3d lever_arm_port_body( -2, -1, -1.5 ); //Measure!
     Eigen::Vector3d lever_arm_stbd_body( -2,  1, -1.5 ); //Measure!
 
-    Eigen::Vector3d ant1_meas = raw_GNSS(x, lever_arm_port_body, gen, 0.2);
-    Eigen::Vector3d ant2_meas = raw_GNSS(x, lever_arm_stbd_body, gen, 0.2);
+    Eigen::Vector3d ant1_meas = raw_GNSS(x, lever_arm_port_body, gen, 0.5);
+    Eigen::Vector3d ant2_meas = raw_GNSS(x, lever_arm_stbd_body, gen, 0.5);
     Eigen::Vector3d nav_pos_1 = origin_from_raw_GNSS(x, ant1_meas, lever_arm_port_body);
     Eigen::Vector3d nav_pos_2 = origin_from_raw_GNSS(x, ant2_meas, lever_arm_stbd_body);
     double psi_gnss = gnss_heading_from_two_antennas(ant1_meas, ant2_meas);
     bool have_gnss_now = false;
 
-    Eigen::Vector3d ba = Eigen::Vector3d::Constant(0);//1e-4);     // accel bias state (m/s^2)
-    Eigen::Vector3d bgyro = Eigen::Vector3d::Constant(0);//1e-5);  // gyro  bias state (rad/s)
+    Eigen::Vector3d ba = Eigen::Vector3d::Constant(0); //1e-6);     // accel bias state (m/s^2)
+    Eigen::Vector3d bgyro = Eigen::Vector3d::Constant(0); //1e-6);  // gyro  bias state (rad/s)
     const double acc_nd  = 1e-4;  // 1.2e-3 m/s^2 / sqrt(Hz)  (~122 µg/√Hz)
     const double gyro_nd = 1e-6;  // 7.0e-5 rad/s  / sqrt(Hz) (~0.24 °/√hr)
     IMUData imu = raw_IMU(x, xdot, gen, ba, bgyro, h, acc_nd, gyro_nd);
@@ -280,10 +280,10 @@ int main() {
     // --------------EKF observer v11---------------
     nnqekf_v11::Config_v11 cfg_v11;
     cfg_v11.g               = 9.81;
-    cfg_v11.sigma_a         = 3e-3;     // m/s^2 (IMU accel white noise)
-    cfg_v11.sigma_ba_rw     = 2e-6;     // m/s^2/s (accel bias RW)
+    cfg_v11.sigma_a         = 2e-3;     // m/s^2 (IMU accel white noise)
+    cfg_v11.sigma_ba_rw     = 3e-7;     // m/s^2/s (accel bias RW)
     cfg_v11.tau_ba          = 0;        // set >0 if you want bias leak; else 0
-    cfg_v11.chi2_gate_pos3  = 1;
+    cfg_v11.chi2_gate_pos3  = 4;
     cfg_v11.chi2_gate_vec3  = -1.0;     // disable velocity gate (like v9)
 
     nnqekf_v11::NN_qObs_Aided_EKF_v11 ekf_v11(cfg_v11);
@@ -299,7 +299,7 @@ int main() {
 
     Eigen::Matrix<double,9,9> P0_v11 = Eigen::Matrix<double,9,9>::Identity();
     P0_v11.block<3,3>(0,0) *= 1.0; //0.01;   // pos
-    P0_v11.block<3,3>(3,3) *= 0.1;//0.01;   // vel
+    P0_v11.block<3,3>(3,3) *= 0.001;//0.01;   // vel
     P0_v11.block<3,3>(6,6) *= 0;  // accel bias
 
     ekf_v11.setState(x0_v11, P0_v11);   // <-- fix: use ekf_v10, not ekf_v9
@@ -310,8 +310,8 @@ int main() {
     // NN init (use the streaming one-step **stateful** members)
     static nnqekf_v11::NN_v11 nn_v11;
     bool ok_v11 = nn_v11.init(
-        "data/model03_v11_ens4_h001_wd4_lr5_qw64_seq256_d3_sign/ts",              // <-- stateful files live here
-        "data/model03_v11_ens4_h001_wd4_lr5_qw64_seq256_d3_sign/norm_used.json",         // <-- the same norm used in training
+        "data/model03_v11_ens4_h001_wd4_lr5_qw64_seq256_d3_hem/ts",              // <-- stateful files live here
+        "data/model03_v11_ens4_h001_wd4_lr5_qw64_seq256_d3_hem/norm_used.json",         // <-- the same norm used in training
         /*use_cuda=*/true);
     if (!ok_v11) { std::cerr << "[NNv11] init failed; running without NN.\n"; }
 
@@ -323,10 +323,10 @@ int main() {
     // -------------- EKF observer v12 ---------------
     nnqekf_v12::Config_v12 cfg_v12;
     cfg_v12.g               = 9.81;
-    cfg_v12.sigma_a         = 3e-3;     // m/s^2 (IMU accel white noise)
-    cfg_v12.sigma_ba_rw     = 2e-6;     // m/s^2/s (accel bias RW)
+    cfg_v12.sigma_a         = 2e-3;     // m/s^2 (IMU accel white noise)
+    cfg_v12.sigma_ba_rw     = 3e-7;     // m/s^2/s (accel bias RW)
     cfg_v12.tau_ba          = 0.0;      // set >0 if you want bias leak; else 0
-    cfg_v12.chi2_gate_pos3  = 1;  // ~95% gate in 3D
+    cfg_v12.chi2_gate_pos3  = 4;  // ~95% gate in 3D
     cfg_v12.chi2_gate_vec3  = -1.0;     // disable vec3 gate
 
     nnqekf_v12::NN_qObs_Aided_EKF_v12 ekf_v12(cfg_v12);
@@ -342,7 +342,7 @@ int main() {
 
     nnqekf_v12::Mat99 P0_v12 = nnqekf_v12::Mat99::Identity();
     P0_v12.block<3,3>(0,0) *= 1.0;   // pos
-    P0_v12.block<3,3>(3,3) *= 0.1;   // vel
+    P0_v12.block<3,3>(3,3) *= 0.001;   // vel
     P0_v12.block<3,3>(6,6) *= 0;  // accel bias
 
     ekf_v12.setState(x0_v12, P0_v12);
@@ -523,8 +523,8 @@ int main() {
         t[i] = i * h;
 
         //Comment out when making dataset
-        V_c    = oceanCurrentV(V_c, h, gen);
-        beta_c = oceanCurrentB(beta_c, h, gen);
+        //V_c    = oceanCurrentV(V_c, h, gen);
+        //beta_c = oceanCurrentB(beta_c, h, gen);
 
         ran_model.wave_step_WF(h);
 
@@ -537,8 +537,8 @@ int main() {
 
         have_gnss_now = false;
         gnss_time += h;
-        if (gnss_time >= 0.1) { // 2 Hz gnss updates
-            do { gnss_time -= 0.1; } while (gnss_time >= 0.1);
+        if (gnss_time >= 0.5) { // 2 Hz gnss updates
+            do { gnss_time -= 0.5; } while (gnss_time >= 0.5);
 
             const auto& eta6 = ran_model.get_wave_eta6(); // END frame [x y z φ θ ψ]
 
@@ -550,8 +550,8 @@ int main() {
             x_w(11) = ssa(x(11) + eta6(5));    // yaw
 
             // Simulate raw GNSS measurements for both antennas
-            ant1_meas = raw_GNSS(x_w, lever_arm_port_body, gen, 0.2);
-            ant2_meas = raw_GNSS(x_w, lever_arm_stbd_body, gen, 0.2); 
+            ant1_meas = raw_GNSS(x_w, lever_arm_port_body, gen, 0.5);
+            ant2_meas = raw_GNSS(x_w, lever_arm_stbd_body, gen, 0.5); 
 
             // Transform raw_GNSS position to origin position.
             nav_pos_1 = origin_from_raw_GNSS(x_est, ant1_meas, lever_arm_port_body);
@@ -669,17 +669,22 @@ int main() {
                 ekf_v11.setRotationFromQuat(q_nb);     // BODY->END (custom END conv)
 
                 // 2) Propagate using IMU (acceleration and gyro)
-                ekf_v11.propagate(imu.gyro-gyro_bias_est, imu.accel, h);
+                ekf_v11.propagate(imu.gyro, imu.accel, h);
 
                 // 3) NN giving pseudo correction for velocity estimates)
-                ekf_v11.feedNN(imu.accel-acc_bias_est, q_nb, tau_XYN[0], tau_XYN[1], tau_XYN[2]);
-                
+                if (t[i]<10){
+                    ekf_v11.feedNN(imu.accel, q_nb, 0.0, 0.0, 0.0);
+                }
+                else{
+                    ekf_v11.feedNN(imu.accel, q_nb, tau_XYN[0], tau_XYN[1], tau_XYN[2]);
+                }
+
                 // 4) GNSS position giving position and velocity corrections:  t[i] for testing 
                 if (have_gnss_now || (t[i]<0)) {
-                    Eigen::Matrix3d Rpos_port = Eigen::Matrix3d::Identity() * std::pow(0.2, 2); 
-                    Eigen::Matrix3d Rpos_stbd = Eigen::Matrix3d::Identity() * std::pow(0.2, 2); //0.5
-                    ekf_v11.updateGnssPos(ant1_meas, Rpos_port, lever_arm_port_body, 1);
-                    ekf_v11.updateGnssPos(ant2_meas, Rpos_stbd, lever_arm_stbd_body, 1);//1
+                    Eigen::Matrix3d Rpos_port = Eigen::Matrix3d::Identity() * std::pow(0.5, 2); 
+                    Eigen::Matrix3d Rpos_stbd = Eigen::Matrix3d::Identity() * std::pow(0.5, 2); //0.5
+                    ekf_v11.updateGnssPos(ant1_meas, Rpos_port, lever_arm_port_body, 3000); //100 with velnet, 1 without
+                    ekf_v11.updateGnssPos(ant2_meas, Rpos_stbd, lever_arm_stbd_body, 3000);
                 }
 
                 // 5) Read state
@@ -697,14 +702,19 @@ int main() {
                 ekf_v12.propagate(imu.gyro, imu.accel, h);
 
                 // 3) NN pseudo-measurement update (END velocity)
-                ekf_v12.feedNN(imu.accel-acc_bias_est, q_nb, tau_XYN[0], tau_XYN[1], tau_XYN[2]);
+                if (t[i]<10){
+                    ekf_v12.feedNN(imu.accel, q_nb, 0.0, 0.0, 0.0);
+                }
+                else{
+                    ekf_v12.feedNN(imu.accel, q_nb, tau_XYN[0], tau_XYN[1], tau_XYN[2]);
+                }
 
                 // 4) GNSS position updates: t[i] for testing
                 if (have_gnss_now || (t[i] < 0)) {
-                    Eigen::Matrix3d Rpos_port = Eigen::Matrix3d::Identity() * (0.2 * 0.2);
-                    Eigen::Matrix3d Rpos_stbd = Eigen::Matrix3d::Identity() * (0.2 * 0.2);
-                    ekf_v12.updateGnssPos(ant1_meas, Rpos_port, lever_arm_port_body, 1);
-                    ekf_v12.updateGnssPos(ant2_meas, Rpos_stbd, lever_arm_stbd_body, 1);
+                    Eigen::Matrix3d Rpos_port = Eigen::Matrix3d::Identity() * (0.5 * 0.5);
+                    Eigen::Matrix3d Rpos_stbd = Eigen::Matrix3d::Identity() * (0.5 * 0.5);
+                    ekf_v12.updateGnssPos(ant1_meas, Rpos_port, lever_arm_port_body, 3000);
+                    ekf_v12.updateGnssPos(ant2_meas, Rpos_stbd, lever_arm_stbd_body, 3000);
                 }
 
                 // 5) Read state
@@ -1114,7 +1124,7 @@ int main() {
 
     plotQuaternionQnb();
     plotHeadingComparison();
-    plotAngles();
+    //plotAngles();
 
     plotStateEstimateErrors();
 
