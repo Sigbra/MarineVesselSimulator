@@ -310,8 +310,8 @@ int main() {
     // NN init (use the streaming one-step **stateful** members)
     static nnqekf_v11::NN_v11 nn_v11;
     bool ok_v11 = nn_v11.init(
-        "data/model03_v11_ens4_h001_wd4_lr5_qw64_seq256_d3_hem/ts",              // <-- stateful files live here
-        "data/model03_v11_ens4_h001_wd4_lr5_qw64_seq256_d3_hem/norm_used.json",         // <-- the same norm used in training
+        "data/model03_v11_ens4_h001_wd4_lr5_qw64_seq256_d3_sign/ts",              // <-- stateful files live here
+        "data/model03_v11_ens4_h001_wd4_lr5_qw64_seq256_d3_sign/norm_used.json",         // <-- the same norm used in training
         /*use_cuda=*/true);
     if (!ok_v11) { std::cerr << "[NNv11] init failed; running without NN.\n"; }
 
@@ -537,7 +537,7 @@ int main() {
 
         have_gnss_now = false;
         gnss_time += h;
-        if (gnss_time >= 0.5) { // 2 Hz gnss updates
+        if (gnss_time >= 0.5) { // 2 Hz gnss updates (>= 0.5)
             do { gnss_time -= 0.5; } while (gnss_time >= 0.5);
 
             const auto& eta6 = ran_model.get_wave_eta6(); // END frame [x y z φ θ ψ]
@@ -683,8 +683,8 @@ int main() {
                 if (have_gnss_now || (t[i]<0)) {
                     Eigen::Matrix3d Rpos_port = Eigen::Matrix3d::Identity() * std::pow(0.5, 2); 
                     Eigen::Matrix3d Rpos_stbd = Eigen::Matrix3d::Identity() * std::pow(0.5, 2); //0.5
-                    ekf_v11.updateGnssPos(ant1_meas, Rpos_port, lever_arm_port_body, 3000); //100 with velnet, 1 without
-                    ekf_v11.updateGnssPos(ant2_meas, Rpos_stbd, lever_arm_stbd_body, 3000);
+                    ekf_v11.updateGnssPos(ant1_meas, Rpos_port, lever_arm_port_body, 300); //3000 with velnet, 300 when docking with velnet, 1 without
+                    ekf_v11.updateGnssPos(ant2_meas, Rpos_stbd, lever_arm_stbd_body, 300);
                 }
 
                 // 5) Read state
@@ -778,7 +778,7 @@ int main() {
             switch (pathType) {
                 case 1: { // Dynamic Positioning.
                     if (R_switch > std::sqrt(std::pow(xn - wpt[wpt_index].x, 2) + std::pow(yn - wpt[wpt_index].y, 2))){
-                        if (std::abs(ssa(psi_d-psi)) < deg2rad(5) && U_est < 0.05) {
+                        if (std::abs(ssa(psi_d-psi)) < deg2rad(1) && U_est < 0.02) {
                             if (wpt_index < wpt.size()-1) {
                                 wpt_index += 1;
                                 MIMO_PID.reset();
