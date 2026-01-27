@@ -5,8 +5,9 @@
 namespace qobs {
 
 //-------------------------------------------------------------------------
-// Quaternion utilities (Hamilton product, [w,x,y,z])
+// Quaternion utilities 
 //-------------------------------------------------------------------------
+// Hamilton product(Hamilton product, [w,x,y,z])
 Quat QuatObserver::quatMul_(const Quat& a, const Quat& b)
 { 
   Quat c;
@@ -30,7 +31,6 @@ Quat QuatObserver::quatNormalize_(const Quat& q_in)
   return q;
 }
 
-// MATLAB-equivalent unit normalization only (no deterministic hemisphere).
 Quat QuatObserver::normalizeUnit_(const Quat& q_in)
 {
   return quatNormalize_(q_in);
@@ -47,12 +47,6 @@ void QuatObserver::Tquat_q(const Quat& q_in, double Tq_out[4][3])
   const double eps2 = q.y;
   const double eps3 = q.z;
 
-  // MATLAB:
-  // T = 0.5 * [
-  //   -eps1 -eps2 -eps3
-  //    eta  -eps3  eps2
-  //    eps3  eta  -eps1
-  //   -eps2  eps1  eta ]
   Tq_out[0][0] = -0.5*eps1;  Tq_out[0][1] = -0.5*eps2;  Tq_out[0][2] = -0.5*eps3;
   Tq_out[1][0] =  0.5*eta;   Tq_out[1][1] = -0.5*eps3;  Tq_out[1][2] =  0.5*eps2;
   Tq_out[2][0] =  0.5*eps3;  Tq_out[2][1] =  0.5*eta;   Tq_out[2][2] = -0.5*eps1;
@@ -65,31 +59,21 @@ void QuatObserver::Tquat_w(const Vec3& w_b, double Tw_out[4][4])
   const double wy = w_b.y();
   const double wz = w_b.z();
 
-  // MATLAB:
-  // Tw = 0.5 * [
-  //   0  -w'
-  //   w  -Smtrx(w) ]
-  // with Smtrx(w) = [ 0 -wz wy; wz 0 -wx; -wy wx 0 ]
-
-  // row 0
   Tw_out[0][0] = 0.0;
   Tw_out[0][1] = -0.5*wx;
   Tw_out[0][2] = -0.5*wy;
   Tw_out[0][3] = -0.5*wz;
 
-  // row 1
   Tw_out[1][0] =  0.5*wx;
   Tw_out[1][1] =  0.0;
   Tw_out[1][2] =  0.5*wz;
   Tw_out[1][3] = -0.5*wy;
 
-  // row 2
   Tw_out[2][0] =  0.5*wy;
   Tw_out[2][1] = -0.5*wz;
   Tw_out[2][2] =  0.0;
   Tw_out[2][3] =  0.5*wx;
 
-  // row 3
   Tw_out[3][0] =  0.5*wz;
   Tw_out[3][1] =  0.5*wy;
   Tw_out[3][2] = -0.5*wx;
@@ -97,9 +81,8 @@ void QuatObserver::Tquat_w(const Vec3& w_b, double Tw_out[4][4])
 }
 
 //-------------------------------------------------------------------------
-// Exact discrete update equivalent to:
-//   q_{k+1} = expm( Tquat(w) * dt ) * q_k
-// where Tquat(w) matches the MATLAB Tw above.
+// Discrete update:
+// q_{k+1} = expm( Tquat(w) * dt ) * q_k
 //-------------------------------------------------------------------------
 Quat QuatObserver::expmTquatW_times_q_(const Vec3& w_b, double dt, const Quat& q_k)
 {
@@ -126,8 +109,6 @@ Quat QuatObserver::expmTquatW_times_q_(const Vec3& w_b, double dt, const Quat& q
     dq.z = wz * s_over_w;
   }
 
-  // MATLAB Tw corresponds to: q_dot = 0.5 * (q ⊗ [0,w])
-  // therefore: q_{k+1} = q_k ⊗ dq
   return quatNormalize_(quatMul_(quatNormalize_(q_k), dq));
 }
 
@@ -152,7 +133,7 @@ void QuatObserver::setBiasGyro(const Vec3& b)
 }
 
 //-------------------------------------------------------------------------
-// Injection terms (MATLAB-equivalent, adapted for END)
+// Injection terms (using END convention)
 //-------------------------------------------------------------------------
 Vec3 QuatObserver::sigma7_(const Vec3& f_imu_b, double psi_meas_end) const
 {
@@ -212,10 +193,10 @@ Vec3 QuatObserver::sigma9_(const Vec3& f_imu_b, const Vec3& m_imu_b) const
 }
 
 //-------------------------------------------------------------------------
-// Step functions (match MATLAB mode behavior)
+// Step functions 
 //-------------------------------------------------------------------------
 
-// 6DOF: MATLAB predictor step only (sigma = 0)
+// 6DOF: Predictor step (sigma = 0)
 void QuatObserver::step6DOF(double dt, const Vec3& /*accel_b*/, const Vec3& gyro_b)
 {
   const Vec3 sigma = Vec3::Zero();
@@ -227,7 +208,7 @@ void QuatObserver::step6DOF(double dt, const Vec3& /*accel_b*/, const Vec3& gyro
   b_g_   += - (cfg_.Ki * sigma) * dt;
 }
 
-// 7DOF: MATLAB corrector (accel + heading)
+// 7DOF: Corrector (accel + heading)
 void QuatObserver::step7DOF(double dt, const Vec3& accel_b, const Vec3& gyro_b, double psi_meas_end)
 {
   const Vec3 sigma = sigma7_(accel_b, psi_meas_end);
@@ -239,7 +220,7 @@ void QuatObserver::step7DOF(double dt, const Vec3& accel_b, const Vec3& gyro_b, 
   b_g_   += - (cfg_.Ki * sigma) * dt;
 }
 
-// 9DOF: MATLAB corrector (accel + mag)
+// 9DOF: Corrector (accel + mag)
 void QuatObserver::step9DOF(double dt, const Vec3& accel_b, const Vec3& gyro_b, const Vec3& mag_b)
 {
   const Vec3 sigma = sigma9_(accel_b, mag_b);

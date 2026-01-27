@@ -15,6 +15,10 @@ void plotPath(const Waypoints& wpt, const Waypoints &path);
 
 void plotTrajectory(const Waypoints& wpt, const Waypoints& path);
 
+void plotTrajectories(const Waypoints& wpt, const Waypoints& path);
+
+void plotHeadingComparison();
+
 void plotStateErrors();
 
 void plotAngles();
@@ -50,6 +54,10 @@ void plotIMUAccelBiasCompare();
 void plotIMUGyroBiasCompare();
 
 void plotOceanCurrent();
+
+void plotEndVelocities();
+
+void plotEndVelocitiesVsEstimates();
 
 //void addWaypointChangeLines(const std::vector<double>& change_times);
 

@@ -194,7 +194,7 @@ void RAN::update(const Eigen::VectorXd x, double mp, double V_c, double beta_c,
     MA(3,3) = -Kpdot;
     MA(4,4) = -Mqdot;
     MA(5,5) = -Nrdot;
-    // Added mass Coriolis matrix (stub)
+    // Added mass Coriolis matrix 
     Eigen::MatrixXd CA = m2c(MA, nu_r);
     
     // System mass and Coriolis matrices

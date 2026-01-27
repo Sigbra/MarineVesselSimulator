@@ -7,16 +7,16 @@
 EKF15::EKF15()
 : g_(9.80665),
   x_(VecN::Zero()),
-  P_(MatN::Identity() * 1e-2),
+  P_(MatN::Identity() * 0),
   Qw_(Eigen::Matrix<double,12,12>::Zero()),
   R_pos_(Eigen::Matrix3d::Identity() * (0.5*0.5)),
-  R_head_(std::pow(0.5*M_PI/180.0, 2))
+  R_head_(std::pow(5*M_PI/180.0, 2))
 {
   // default process noise: tune as needed
   Eigen::Matrix<double,12,1> q_diag;
-  q_diag.segment<3>(0).setConstant(2e-4);  // accel noise
-  q_diag.segment<3>(3).setConstant(2e-6);  // gyro noise
-  q_diag.segment<3>(6).setConstant(2e-6);  // accel bias RW
+  q_diag.segment<3>(0).setConstant(8e-4);  // accel noise
+  q_diag.segment<3>(3).setConstant(8e-6);  // gyro noise
+  q_diag.segment<3>(6).setConstant(2e-7);  // accel bias RW
   q_diag.segment<3>(9).setConstant(2e-7);  // gyro bias RW
   setProcessNoise(q_diag);
 }

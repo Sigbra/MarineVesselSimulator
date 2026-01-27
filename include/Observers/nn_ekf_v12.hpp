@@ -1,5 +1,17 @@
 #pragma once
-// nn_ekf_v12.hpp — 9-state EKF + stateful TorchScript velocity NN (v12, Euler-only wrapped angles)
+// nn_ekf_v12.hpp — 9-state EKF + stateful TorchScript velocity NN (v12, Euler input)
+//
+// v12 NN interface (Euler-only, wrapped angles):
+//  - EKF buffers a canonical 10-vector per step (API kept stable):
+//      [ax, ay, az, phi, theta, psi, tau_x, tau_y, tau_n, 0]
+//  - NN input dimension is inferred from norm_stats.json (x_mean length) and is expected to be:
+//      D=9 -> [ax, ay, az, phi, theta, psi, tau_x, tau_y, tau_n]
+//  - Angles are wrapped to [-pi, +pi) using ssa() (mapped from (-pi, pi]) before normalization.
+//  - Streaming / warm-start semantics match v11:
+//      * do not call infer() until nn_seq_len samples exist
+//      * warm-start once by feeding last nn_seq_len window
+//      * thereafter feed only newest sample every tick
+//      * apply EKF update only on stride
 
 #include <Eigen/Core>
 #include <deque>
@@ -17,8 +29,8 @@ using Mat99 = Eigen::Matrix<double,9,9>;
 // ----------------------- EKF config -----------------------
 struct Config_v12 {
   double g              = 9.81;   // gravity magnitude (+Down)
-  double sigma_a        = 5e-3;   // accel white noise [m/s^2]
-  double sigma_ba_rw    = 3e-6;   // accel bias random walk [m/s^2/s]
+  double sigma_a        = 0.05;   // accel white noise [m/s^2]
+  double sigma_ba_rw    = 1e-3;   // accel bias random walk [m/s^2/s]
   double tau_ba         = 0.0;    // accel bias leak time-constant [s] (0 = none)
   double chi2_gate_pos3 = -1.0;   // NIS gate for position (<=0 disables)
   double chi2_gate_vec3 = -1.0;   // NIS gate for 3D vectors (<=0 disables)
@@ -42,25 +54,16 @@ public:
   ~NN_v12();
 
   // model_dir: directory containing member_XX_onestep_stateful.pt files
-  //
-  // norm_json: JSON/YAML with keys x_mean, x_std, y_mean, y_std.
-  //  - v12 setup (Euler-only, wrapped): x_mean/x_std length MUST be 9, with ordering:
-  //      [ax, ay, az, phi, theta, psi, tau_x, tau_y, tau_n]
-  //    where phi/theta/psi are wrapped to [-pi, +pi) (±180°) in the dataset and at runtime.
-  //  - y_mean/y_std must be length 3 (END velocity: vE,vN,vD)
+  // norm_json: JSON/YAML with keys x_mean, x_std, y_mean, y_std (lengths D and 3)
+  // v12 expects D=9 for Euler-only inputs.
   bool init(const std::string& model_dir, const std::string& norm_json, bool use_cuda);
 
-  // Reset all members' hidden states to zeros via init_state(1)
+  // Reset all members' hidden states (clears cached hidden tensors so next infer() re-inits via init_state(1))
   void reset_states();
 
-  // Window is kept for API compatibility (EKF buffers 10-wide rows).
-  //
-  // The EKF buffers a canonical 10-vector per step:
-  //   [ax, ay, az, phi, theta, psi, tau_x, tau_y, tau_n, 0]
-  //
-  // Internally, the NN uses ONLY Euler (D=9):
-  //   [ax, ay, az, phi, theta, psi, tau_x, tau_y, tau_n]
-  // with angles wrapped to [-pi, +pi).
+  // Window is kept for API compat; v12 uses Euler inputs packed into the row:
+  //   row = [ax ay az phi theta psi tau_x tau_y tau_n 0]
+  // The implementation maps to the model input dimension D=9.
   bool infer(const std::vector<Eigen::Matrix<double,10,1>>& window,
              Vec3& v_nav_mean, Mat3& Rv_nav);
 
@@ -77,9 +80,7 @@ public:
 
   // Set attitude directly (BODY -> END)
   void setRotationNavFromBody(const Mat3& R_nb);
-
   // Or from quaternion (BODY->END).
-  // Note: v12 NN input does not use quaternion; this is still used by the EKF process model.
   void setRotationFromQuat(const Quat& q_nb);
 
   // State & covariance
@@ -87,24 +88,18 @@ public:
   const Mat99&      cov()   const;
   void setState(const State9_v12& x, const Mat99& P);
 
+  // Force accel-bias estimate to zero (b_a := 0). Does not change covariance.
   void zeroAccelBias() { x_.b_a.setZero(); }
 
   // Optional: set heave equilibrium (Down) for spring–damper term
   void setHeaveEquilibrium(double z0);
 
-  // Hook up NN and choose streaming cadence
-  // seq_len: warm-start history length for GRU hidden state
-  // stride:  apply EKF update every N samples (still steps NN every tick after warm-start)
+  // Hook up NN and choose streaming cadence.
+  // Semantics match v11: warm-start once on last seq_len samples, then 1-step each tick.
   void setNN(NN_v12* nn, int seq_len, int stride);
 
-  // Feed one NN sample:
-  //  - accel_b: BODY specific force (or accel measurement, consistent with training)
-  //  - q_nb:    BODY->END quaternion (kept for API compatibility; NN features derived from R_nb_)
-  //  - tau_*:   BODY forces/torques used as NN inputs
-  //
-  // v12 NN features are Euler-based:
-  //  - Euler angles (phi,theta,psi) are derived from the EKF attitude R_nb_ (END convention)
-  //  - phi/theta/psi are wrapped to [-pi, +pi) before buffering
+  // Feed one NN sample (BODY accel, BODY->END quat, body torques).
+  // v12 derives Euler angles from q_nb (END convention) and wraps via ssa() to [-pi, +pi).
   void feedNN(const Vec3& accel_b,
               const Quat& q_nb,
               double tau_x, double tau_y, double tau_n);
@@ -121,6 +116,7 @@ public:
 
   // Convenience outputs
   Eigen::Vector3d get_acc_bias_est() const { return x_.b_a; }
+  Eigen::Vector3d get_end_vel_est() const { return x_.v;  }
   Eigen::Matrix<double,9,1>  getState9()  const;
   Eigen::Matrix<double,12,1> getState12(const Vec3& b_gyro_hat) const;
 
@@ -147,18 +143,13 @@ private:
   // Last gyro for convenience outputs
   Vec3 last_omega_b_meas_{Vec3::Zero()};
 
-  // NN
+  // NN streaming
   NN_v12* nn_{nullptr};
   int nn_seq_len_{1};
   int nn_stride_{1};
   int nn_count_{0};
-
-  // Buffered canonical row (10):
-  //   [ax, ay, az, phi, theta, psi, tau_x, tau_y, tau_n, 0]
-  // where angles are wrapped to [-pi, +pi).
   std::deque<Eigen::Matrix<double,10,1>> nn_buf_;
-
-  bool nn_warmed_ = false;   // becomes true after we warm-start the GRU once
+  bool nn_warmed_{false};
 };
 
 } // namespace nnqekf_v12

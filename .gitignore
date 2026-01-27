@@ -43,3 +43,5 @@ build/
 #Ignore Dataset files
 data/simdata*.csv
 data/simdata.csv
+
+parsed*.csv

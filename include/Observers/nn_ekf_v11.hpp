@@ -55,6 +55,13 @@ public:
 private:
   struct Impl;
   std::unique_ptr<Impl> impl_;
+
+public:
+  enum class QuatInputPolicy { Hemisphere, SignContinuity };
+
+  // Selected automatically from model_dir path in NN_v11::init()
+  QuatInputPolicy quatInputPolicy() const;
+
 };
 
 // ===================== EKF v11 ============================
@@ -98,6 +105,7 @@ public:
 
   // Convenience outputs
   Eigen::Vector3d get_acc_bias_est() const { return x_.b_a; }
+  Eigen::Vector3d get_end_vel_est() const { return x_.v;}
   Eigen::Matrix<double,9,1>  getState9()  const;
   Eigen::Matrix<double,12,1> getState12(const Vec3& b_gyro_hat) const;
 
@@ -133,6 +141,10 @@ private:
 
   bool nn_warmed_ = false;
 
+private:
+  bool nn_use_sign_continuity_ = false;  // derived from NN_v11 model folder name
+  bool nn_has_prev_q_nn_ = false;
+  Quat nn_prev_q_nn_{1.0, 0.0, 0.0, 0.0};
 };
 
 } // namespace nnqekf_v11

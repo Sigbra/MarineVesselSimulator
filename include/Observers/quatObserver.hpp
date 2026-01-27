@@ -12,17 +12,16 @@ using ::Mat3;
 // Configuration
 //-------------------------------------------------------------------------
 struct Config {
-  // MATLAB: Ki (often diagonal, but keep general 3x3)
-  Mat3   Ki = Mat3::Identity() * 1e-3;
 
-  // MATLAB: gains
+  // Observer gains
+  Mat3   Ki = Mat3::Identity() * 1e-3;
   double k1 = 0.9;   // specific-force injection gain
   double k2 = 1.2;   // heading / magnetic injection gain
 
-  // MATLAB 9-DOF only: magnetic reference vector expressed in END
+  // 9-DOF: magnetic reference vector expressed in END
   Vec3   m_ref_end = Vec3(1.0, 0.0, 0.0);
 
-  // Numerical guards (MATLAB normalizes without guards; we guard against /0)
+  // Numerical guards )
   double accel_min_norm = 1e-12;
   double mag_min_norm   = 1e-12;
 };
@@ -34,13 +33,13 @@ struct Config {
 //   NAV/END: x East, y North, z Down
 //   BODY   : x forward, y starboard, z Down
 //
-// MATLAB-equivalent observer (Grip et al.) in discrete time:
+// Observer (Grip et al. 2013) in discrete time:
 //   sigma = k1 * v1 x (R_bn * v01) + k2 * v2 x (R_bn * v02)
 //   w_est = w_imu - b + sigma
 //   q     = expm( Tquat(w_est) * dt ) * q
 //   b     = b - dt * Ki * sigma
 //
-// Mode behavior matching your MATLAB file:
+// Mode behavior:
 //   step6DOF: sigma = 0 (predictor only)
 //   step7DOF: accel + heading-vector injection (psi)
 //   step9DOF: accel + magnetometer-vector injection (m_ref)
