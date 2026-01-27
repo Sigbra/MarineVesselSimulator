@@ -306,14 +306,14 @@ bool MPC_Control_System::solve(const std::vector<double>& x0, double x_s, double
         MX heading_error_sq = sqrt(heading_error * heading_error + 1e-4);
 
         if (failstate[0] || failstate[1]) { // Penalties when error state
-            cost +=  11   * crosstrack_error_sq; //                                 <- Fix this
+            cost +=  11   * crosstrack_error_sq; //                                 <- tune
             cost += 140   * position_error_sq;
             cost +=  11.5 * heading_error_sq;  
         } 
         else { // Penalties in normal operation
-            cost += 9  * crosstrack_error_sq;  //5
-            cost += 70 * position_error_sq;   //30
-            cost += 25 * heading_error_sq;     //8
+            cost +=  9   * crosstrack_error_sq; //9
+            cost += 70.0 * position_error_sq;   //70
+            cost += 24.0 * heading_error_sq;    //25
         }
 
        

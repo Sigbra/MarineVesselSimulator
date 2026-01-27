@@ -666,25 +666,25 @@ int main() {
                 break;
             }
             case ObserverKind::nn_EKF_v11: {
-                ekf_v11.setRotationFromQuat(q_nb);     // BODY->END (custom END conv)
+                ekf_v11.setRotationFromQuat(q_nb);     // BODY->END (custom END conv)         
 
                 // 2) Propagate using IMU (acceleration and gyro)
                 ekf_v11.propagate(imu.gyro, imu.accel, h);
 
                 // 3) NN giving pseudo correction for velocity estimates)
-                if (t[i]<10){
-                    ekf_v11.feedNN(imu.accel, q_nb, 0.0, 0.0, 0.0);
-                }
-                else{
-                    ekf_v11.feedNN(imu.accel, q_nb, tau_XYN[0], tau_XYN[1], tau_XYN[2]);
-                }
+                // if (t[i]<10){
+                //     ekf_v11.feedNN(imu.accel, q_nb, 0.0, 0.0, 0.0);
+                // }
+                // else{
+                //     ekf_v11.feedNN(imu.accel, q_nb, tau_XYN[0], tau_XYN[1], tau_XYN[2]);
+                // }
 
                 // 4) GNSS position giving position and velocity corrections:  t[i] for testing 
                 if (have_gnss_now || (t[i]<0)) {
                     Eigen::Matrix3d Rpos_port = Eigen::Matrix3d::Identity() * std::pow(0.5, 2); 
                     Eigen::Matrix3d Rpos_stbd = Eigen::Matrix3d::Identity() * std::pow(0.5, 2); //0.5
-                    ekf_v11.updateGnssPos(ant1_meas, Rpos_port, lever_arm_port_body, 300); //3000 with velnet, 300 when docking with velnet, 1 without
-                    ekf_v11.updateGnssPos(ant2_meas, Rpos_stbd, lever_arm_stbd_body, 300);
+                    ekf_v11.updateGnssPos(ant1_meas, Rpos_port, lever_arm_port_body, 1); //3000 when pf with velnet, 300 when docking with velnet, 1 without
+                    ekf_v11.updateGnssPos(ant2_meas, Rpos_stbd, lever_arm_stbd_body, 1);
                 }
 
                 // 5) Read state
@@ -778,7 +778,7 @@ int main() {
             switch (pathType) {
                 case 1: { // Dynamic Positioning.
                     if (R_switch > std::sqrt(std::pow(xn - wpt[wpt_index].x, 2) + std::pow(yn - wpt[wpt_index].y, 2))){
-                        if (std::abs(ssa(psi_d-psi)) < deg2rad(1) && U_est < 0.02) {
+                        if (std::abs(ssa(psi_d-psi)) < deg2rad(1) && U_est < 0.01) {
                             if (wpt_index < wpt.size()-1) {
                                 wpt_index += 1;
                                 MIMO_PID.reset();

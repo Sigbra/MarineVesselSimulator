@@ -138,7 +138,7 @@ void RAN::update(const Eigen::VectorXd x, double mp, double V_c, double beta_c,
     // Corrected center of gravity including payload:
     Eigen::Vector3d rg_corrected = (m * rg_hull + mp * rp) / (m + mp);
     
-    // Total inertia matrix at CG:
+    // Total inertia matrix at CO:
     Eigen::Matrix3d Ig = Ig_CG - m * (Smtrx(rg_hull) * Smtrx(rg_hull))
                                - mp * (Smtrx(rp) * Smtrx(rp));
 
