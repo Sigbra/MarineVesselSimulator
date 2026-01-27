@@ -112,7 +112,7 @@ MX control_allocation(const MX& n, const MX& alpha, double lx_o, double ly1_o, d
     MX tau_X_model = Thrust1 * cos(alpha1) + Thrust2 * cos(alpha2);
     MX tau_Y_model = Thrust1 * sin(alpha1) + Thrust2 * sin(alpha2);
     MX tau_N_model = lx1 * Thrust1 * sin(alpha1) + lx2 * Thrust2 * sin(alpha2)
-                   + ly1 * Thrust1 * cos(alpha1) + ly2 * Thrust2 * cos(alpha2);
+                   - ly1 * Thrust1 * cos(alpha1) - ly2 * Thrust2 * cos(alpha2);
 
     return MX::vertcat({tau_X_model, tau_Y_model, tau_N_model});
 }
