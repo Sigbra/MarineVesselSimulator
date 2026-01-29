@@ -683,7 +683,7 @@ int main() {
                 if (have_gnss_now || (t[i]<0)) {
                     Eigen::Matrix3d Rpos_port = Eigen::Matrix3d::Identity() * std::pow(0.5, 2); 
                     Eigen::Matrix3d Rpos_stbd = Eigen::Matrix3d::Identity() * std::pow(0.5, 2); //0.5
-                    ekf_v11.updateGnssPos(ant1_meas, Rpos_port, lever_arm_port_body, 3000); //3000 when pf with velnet, 300 when docking with velnet, 1 without
+                    ekf_v11.updateGnssPos(ant1_meas, Rpos_port, lever_arm_port_body, 3000); //3000 when pf with velnet, 200 when docking with velnet, 1 without
                     ekf_v11.updateGnssPos(ant2_meas, Rpos_stbd, lever_arm_stbd_body, 3000);
                 }
 
@@ -694,7 +694,7 @@ int main() {
                 x_est = ekf_v11.getState12(gyro_bias_est);   // [u v w p q r x y z phi theta psi]^T
                 break;
             }
-            case ObserverKind::nn_EKF_v12: {
+            case ObserverKind::nn_EKF_v12: { //264, 604, 804, 1286
                 // 1) Attitude (BODY->END)
                 ekf_v12.setRotationFromQuat(q_nb);
 
