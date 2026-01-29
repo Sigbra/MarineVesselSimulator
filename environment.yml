@@ -1,0 +1,36 @@
+name: vMVSenv
+channels:
+  - conda-forge
+dependencies:
+  # Build tools
+  - cmake
+  - ninja
+  - pkg-config
+
+  # C/C++ libraries
+  - eigen=3.4.*
+  - yaml-cpp=0.8.*
+  - spdlog=1.13.*          # pulls a compatible fmt 10.x
+  # - fmt=10.2.*           # OPTIONAL: uncomment to pin explicitly
+  - fftw
+  - gsl
+  - tbb
+
+  # Python runtime + general libs (NO torch here)
+  - python=3.12
+  - pip
+  - numpy>=2.0
+  - scipy
+  - matplotlib
+  - jinja2
+  - pyyaml
+  - requests
+  - tqdm
+  - rich
+
+  # PyTorch CUDA 12.8 wheels via pip (matches your setup)
+  - pip:
+      - --extra-index-url https://download.pytorch.org/whl/cu128
+      - torch==2.9.0+cu128
+      - torchvision==0.24.0+cu128
+      # - torchaudio==2.9.0+cu128  # if you need it

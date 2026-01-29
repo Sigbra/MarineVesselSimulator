@@ -1,0 +1,45 @@
+{
+  "version": "v12_euler_wrapped",
+  "counts": {
+    "train": 280064,
+    "val": 60160,
+    "test": 60160
+  },
+  "fractions": {
+    "val_frac": 0.15,
+    "test_frac": 0.15,
+    "train_frac": 0.7
+  },
+  "shuffle_windows": true,
+  "seq": 256,
+  "seed": 123,
+  "tau_source": "actual",
+  "trim_tail": true,
+  "tail_tol": 0.0,
+  "trim_removed_raw": 399401,
+  "trim_removed_feat": 0,
+  "columns": {
+    "inputs": [
+      "ax",
+      "ay",
+      "az",
+      "phi",
+      "theta",
+      "psi",
+      "tau_x",
+      "tau_y",
+      "tau_n"
+    ],
+    "outputs": [
+      "vE",
+      "vN",
+      "vD"
+    ],
+    "aux": [
+      "w_est_x",
+      "w_est_y",
+      "w_est_z"
+    ]
+  },
+  "angle_wrap": "wrapped to [-pi, +pi) (\u00b1180\u00b0)"
+}

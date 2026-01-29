@@ -1,0 +1,42 @@
+{
+  "version": "v11",
+  "counts": {
+    "train": 279296,
+    "val": 59904,
+    "test": 59904
+  },
+  "fractions": {
+    "val_frac": 0.15,
+    "test_frac": 0.15,
+    "train_frac": 0.7
+  },
+  "shuffle_windows": true,
+  "seq": 256,
+  "seed": 123,
+  "tau_source": "actual",
+  "q_sign_policy": "hemisphere",
+  "columns": {
+    "inputs": [
+      "ax",
+      "ay",
+      "az",
+      "qw",
+      "qx",
+      "qy",
+      "qz",
+      "tau_x",
+      "tau_y",
+      "tau_n"
+    ],
+    "outputs": [
+      "vE",
+      "vN",
+      "vD"
+    ],
+    "aux": [
+      "w_est_x",
+      "w_est_y",
+      "w_est_z"
+    ]
+  }
+}

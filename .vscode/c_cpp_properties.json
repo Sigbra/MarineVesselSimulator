@@ -1,0 +1,19 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include/eigen3",
+                "/home/sigurdvb/anaconda3/envs/thrust_alloc_cpp_env/include",
+                "${workspaceFolder}/external/matplotlib-cpp" 
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c17",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "linux-gcc-x64"
+        }
+    ],
+    "version": 4
+}

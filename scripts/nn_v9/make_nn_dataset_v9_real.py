@@ -1,0 +1,1582 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+make_nn_dataset_v9_real.py — build v9 dataset from real logs (IMU+SeaPath+ALOG)
+
+Key points
+----------
+• Quaternion observer mirrors your C++ (frames, signs, injection) and propagates
+  its internal state at each step with the actual dt_k = t[k]-t[k-1].
+• SeaPath velocities → 100 Hz targets via linear interpolation (no extrapolation).
+• τ calculation matches RAN::tau_pods and thrust poly (descending, no constant).
+• Optional quaternion sign continuity fix (--fix_q_sign).
+• Sequence windows (--seq, --shuffle_windows) for NN training without breaking time order inside windows.
+
+Typical usage
+-------------
+python3 MarineVesselSimulator/scripts/make_nn_dataset_v9_real.py \
+  --root MarineVesselSimulator/data/nn_dataset_v9_TestData3 \
+  --indices 1 2 3 4 5 6 7 \
+  --out_dir MarineVesselSimulator/data/nn_dataset_v9_real \
+  --val_frac 0.15 --test_frac 0.15 \
+  --k1 1.0 --k2 0.5 --Ki 0.001 --accel_min_norm 1e-3 \
+  --alpha_units rad \
+  --lx_o -1.17 --ly1_o -0.79 --ly2_o 0.79 --pod_radius 0.2 \
+  --tau_coeffs -312.547 8.87016 413.598 46.922 45.6015 \
+  --seq 200 --shuffle_windows --fix_q_sign
+"""
+
+import os
+import json
+import argparse
+from typing import List, Tuple
+
+import numpy as np
+import pandas as pd
+
+# ---------------- Expected columns for nn_observer_v9 ----------------
+IN_COLS     = ["ax","ay","az","qw","qx","qy","qz","tau_x","tau_y","tau_n"]
+OUT_COLS    = ["vE","vN","vD"]
+AUX_W_COLS  = ["w_est_x","w_est_y","w_est_z"]  # provided for aux/physics loss
+
+# ---------------- Time helpers ----------------
+
+def parse_iso_to_epoch(s: str) -> float:
+    if not isinstance(s, str): return np.nan
+    ss = s.strip()
+    if ss.endswith("Z"):
+        ss = ss[:-1] + "+00:00"
+    try:  # pandas handles ns precision & offsets
+        return pd.Timestamp(ss).timestamp()
+    except Exception:
+        return np.nan
+
+def zoh_series(t_src: np.ndarray, y_src: np.ndarray, t_grid: np.ndarray) -> np.ndarray:
+    if len(t_src) == 0:
+        return np.full_like(t_grid, np.nan, dtype=float)
+    idx = np.searchsorted(t_src, t_grid, side='right') - 1
+    idx = np.clip(idx, 0, len(t_src)-1)
+    y = y_src[idx].astype(float, copy=False)
+    y = y.copy()
+    y[t_grid < t_src[0]] = np.nan
+    return y
+
+def linear_series(t_src: np.ndarray, y_src: np.ndarray, t_grid: np.ndarray) -> np.ndarray:
+    if len(t_src) < 2:
+        return np.full_like(t_grid, np.nan, dtype=float)
+    mask = np.isfinite(t_src) & np.isfinite(y_src)
+    if mask.sum() < 2:
+        return np.full_like(t_grid, np.nan, dtype=float)
+    return np.interp(t_grid, t_src[mask], y_src[mask], left=np.nan, right=np.nan)
+
+# ---------------- File loaders ----------------
+
+def load_parsed_imu(path: str):
+    # expected header: time,acc_x,acc_y,acc_z,gyro_x,gyro_y,gyro_z
+    df = pd.read_csv(path)
+    cols = {str(c).strip().lower(): c for c in df.columns}
+
+    def pick(*names):
+        for n in names:
+            if n in cols: return cols[n]
+        return None
+
+    t_name  = pick("time","timestamp") or df.columns[0]
+    ax_name = pick("ax","acc_x","accx","accel_x")
+    ay_name = pick("ay","acc_y","accy","accel_y")
+    az_name = pick("az","acc_z","accz","accel_z")
+    gx_name = pick("gx","gyro_x","wx","omega_x")
+    gy_name = pick("gy","gyro_y","wy","omega_y")
+    gz_name = pick("gz","gyro_z","wz","omega_z")
+
+    if None in (ax_name,ay_name,az_name,gx_name,gy_name,gz_name):
+        raise KeyError(f"{path}: IMU header mismatch. Got {list(df.columns)}")
+
+    t  = df[t_name].astype(str).map(parse_iso_to_epoch).to_numpy()
+    ax = pd.to_numeric(df[ax_name], errors="coerce").to_numpy()
+    ay = pd.to_numeric(df[ay_name], errors="coerce").to_numpy()
+    az = pd.to_numeric(df[az_name], errors="coerce").to_numpy()
+    gx = pd.to_numeric(df[gx_name], errors="coerce").to_numpy()
+    gy = pd.to_numeric(df[gy_name], errors="coerce").to_numpy()
+    gz = pd.to_numeric(df[gz_name], errors="coerce").to_numpy()
+    return t, ax, ay, az, gx, gy, gz
+
+def load_parsed_seapath(path: str):
+    # expected header (your example):
+    # timestamp, roll, pitch, heading, heave, roll_rate, pitch_rate, yaw_rate,
+    # velocity_north, velocity_east, velocity_down
+    df = pd.read_csv(path)
+    cols = {str(c).strip().lower(): c for c in df.columns}
+
+    t  = df[cols.get("timestamp", df.columns[0])].astype(str).map(parse_iso_to_epoch).to_numpy()
+    hd = pd.to_numeric(df[cols["heading"]], errors="coerce").to_numpy() if "heading" in cols \
+         else np.full_like(t, np.nan, dtype=float)
+    vN = pd.to_numeric(df[cols["velocity_north"]], errors="coerce").to_numpy() if "velocity_north" in cols \
+         else np.full_like(t, np.nan, dtype=float)
+    vE = pd.to_numeric(df[cols["velocity_east"]],  errors="coerce").to_numpy() if "velocity_east"  in cols \
+         else np.full_like(t, np.nan, dtype=float)
+    vD = pd.to_numeric(df[cols["velocity_down"]],  errors="coerce").to_numpy() if "velocity_down"  in cols \
+         else np.full_like(t, np.nan, dtype=float)
+    return t, np.deg2rad(hd), vE, vN, vD
+
+def load_parsed_alog(path: str, alpha_units: str):
+    # expected header: timestamp,N1,N2,alpha1,alpha2
+    df = pd.read_csv(path)
+    cols = {str(c).strip().lower(): c for c in df.columns}
+
+    t  = df[cols.get("timestamp", df.columns[0])].astype(str).map(parse_iso_to_epoch).to_numpy()
+    N1 = pd.to_numeric(df[cols["n1"]], errors="coerce").to_numpy()
+    N2 = pd.to_numeric(df[cols["n2"]], errors="coerce").to_numpy()
+    a1 = pd.to_numeric(df[cols["alpha1"]], errors="coerce").to_numpy()
+    a2 = pd.to_numeric(df[cols["alpha2"]], errors="coerce").to_numpy()
+    if alpha_units.lower().startswith("deg"):
+        a1 = np.deg2rad(a1); a2 = np.deg2rad(a2)
+    return t, N1, N2, a1, a2
+
+# ---------------- END rotation (exact match to your custom mapping) ----------------
+
+def rnb_from_quat(q: np.ndarray) -> np.ndarray:
+    """
+    Map quaternion (w,x,y,z) to END DCM R_nb.
+    Row E: [ 2(xy+wz),  1-2(xx+zz),  2(yz-wx) ]
+    Row N: [ 1-2(yy+zz), 2(xy-wz),   2(xz+wy) ]
+    Row D: [ 2(xz-wy),   2(yz+wx),   1-2(xx+yy)]
+    """
+    q = q / (np.linalg.norm(q, axis=-1, keepdims=True) + 1e-12)
+    w, x, y, z = np.moveaxis(q, -1, 0)
+    xx, yy, zz = x*x, y*y, z*z
+    wx, wy, wz = w*x, w*y, w*z
+    xy, xz, yz = x*y, x*z, y*z
+    R = np.empty((q.shape[0], 3, 3), dtype=q.dtype)
+    # East
+    R[:,0,0] =  2.0*(xy + wz)
+    R[:,0,1] =  1.0 - 2.0*(xx + zz)
+    R[:,0,2] =  2.0*(yz - wx)
+    # North
+    R[:,1,0] =  1.0 - 2.0*(yy + zz)
+    R[:,1,1] =  2.0*(xy - wz)
+    R[:,1,2] =  2.0*(xz + wy)
+    # Down
+    R[:,2,0] =  2.0*(xz - wy)
+    R[:,2,1] =  2.0*(yz + wx)
+    R[:,2,2] =  1.0 - 2.0*(xx + yy)
+    return R
+
+# ---------------- Quaternion math & observer (C++-aligned signs) ----------------
+
+def quat_mul(q, r):
+    w1,x1,y1,z1 = q; w2,x2,y2,z2 = r
+    return np.array([
+        w1*w2 - x1*x2 - y1*y2 - z1*z2,
+        w1*x2 + x1*w2 + y1*z2 - z1*y2,
+        w1*y2 - x1*z2 + y1*w2 + z1*x2,
+        w1*z2 + x1*y2 - y1*x2 + z1*w2,
+    ], dtype=float)
+
+def quat_exp(phi: np.ndarray):
+    th = np.linalg.norm(phi)
+    if th < 1e-12:
+        return np.array([1.0, 0.5*phi[0], 0.5*phi[1], 0.5*phi[2]], dtype=float) / np.linalg.norm([1.0, 0.5*phi[0], 0.5*phi[1], 0.5*phi[2]])
+    half = 0.5 * th
+    s = np.sin(half) / th
+    return np.array([np.cos(half), s*phi[0], s*phi[1], s*phi[2]], dtype=float)
+
+def accel_sigma_body(q: np.ndarray, f_b: np.ndarray, k1: float, accel_min_norm: float) -> np.ndarray:
+    """
+    sigma1 = k1 * (v1 × (R_bn * v01)), v01 = [0,0,-1]
+    with v1 = f_b / max(|f_b|, accel_min_norm)
+    """
+    if k1 <= 0.0 or not np.isfinite(f_b).all(): return np.zeros(3)
+    n = np.linalg.norm(f_b)
+    if n < accel_min_norm: return np.zeros(3)
+    v1 = f_b / n
+    Rnb = rnb_from_quat(q[np.newaxis,:])[0]
+    R_bn = Rnb.T
+    v01 = np.array([0.0, 0.0, -1.0], dtype=float)  # NAV
+    return k1 * np.cross(v1, R_bn @ v01)
+
+def heading_sigma_body(q: np.ndarray, yaw_meas: float, k2: float) -> np.ndarray:
+    """
+    sigma2 = k2 * (v2_body × (R_bn * v02)), v2_body=[1,0,0], v02=[sinψ, cosψ, 0]
+    0° = North, +CW.
+    """
+    if k2 <= 0.0 or not np.isfinite(yaw_meas):
+        return np.zeros(3, dtype=float)
+    Rnb = rnb_from_quat(q[np.newaxis,:])[0]
+    R_bn = Rnb.T
+    v02 = np.array([np.sin(yaw_meas), np.cos(yaw_meas), 0.0], dtype=float)  # NAV
+    v2b = np.array([1.0, 0.0, 0.0], dtype=float)                            # BODY
+    return k2 * np.cross(v2b, R_bn @ v02)
+
+def run_quat_observer(t_grid, ax, ay, az, gx, gy, gz, yaw_meas, fresh_yaw, k1, k2, Ki, accel_min_norm):
+    """
+    Propagate like C++:
+      w_est = w_imu - b + sigma
+      q_{k+1} = exp(w_est * dt_k) ⊗ q_k
+      b_{k+1} = b_k - dt_k * Ki * sigma
+    - accel sigma every step (if |f| >= accel_min_norm)
+    - heading sigma when fresh SeaPath sample available
+    """
+    q = np.array([1.0,0.0,0.0,0.0], dtype=float)  # BODY→NAV
+    b = np.zeros(3, dtype=float)
+    qw = np.empty_like(t_grid); qx = np.empty_like(t_grid); qy = np.empty_like(t_grid); qz = np.empty_like(t_grid)
+    wx = np.empty_like(t_grid); wy = np.empty_like(t_grid); wz = np.empty_like(t_grid)
+
+    for k in range(len(t_grid)):
+        if k == 0:
+            dt_k = 0.0
+        else:
+            dt_k = max(0.0, float(t_grid[k] - t_grid[k-1]))
+
+        omega = np.array([gx[k], gy[k], gz[k]], dtype=float)  # rad/s (already scaled IMU — leave as-is)
+        sig = accel_sigma_body(q, np.array([ax[k],ay[k],az[k]]), k1, accel_min_norm)
+
+        if fresh_yaw[k] and np.isfinite(yaw_meas[k]):
+            sig = sig + heading_sigma_body(q, float(yaw_meas[k]), k2)
+
+        w_est = omega - b + sig
+        if dt_k > 0.0:
+            dq = quat_exp(w_est * dt_k)
+            q = quat_mul(dq, q)
+            q = q / (np.linalg.norm(q) + 1e-12)
+            b = b - Ki * sig * dt_k
+
+        qw[k], qx[k], qy[k], qz[k] = q
+        wx[k], wy[k], wz[k] = w_est
+
+    return qw,qx,qy,qz, wx,wy,wz
+
+def fix_quaternion_sign_continuity(q: np.ndarray) -> np.ndarray:
+    if len(q) == 0: return q
+    out = q.copy()
+    for i in range(1, len(out)):
+        if np.dot(out[i-1], out[i]) < 0.0:
+            out[i] = -out[i]
+    return out
+
+# ---------------- τ model (exact RAN::tau_pods port) ----------------
+
+def thrusts_from_relative_n(n1: float, n2: float, coeffs: List[float]) -> Tuple[float,float]:
+    """
+    T(N) = c5*N^5 + c4*N^4 + c3*N^3 + c2*N^2 + c1*N   (descending coeffs, NO constant term)
+    coeffs = [c5, c4, c3, c2, c1]
+    """
+    def poly_no_const(N, cs):
+        # map [c5..c1] to N^5..N^1
+        return sum(cs[len(cs)-p] * (N**p) for p in range(1, len(cs)+1))
+    return poly_no_const(float(n1), coeffs), poly_no_const(float(n2), coeffs)
+
+def tau_from_thrusters(n1,n2,a1,a2, coeffs, lx_o, ly1_o, ly2_o, pod_radius, n1_fail=False, n2_fail=False):
+    if n1_fail: n1 = 0.0
+    if n2_fail: n2 = 0.0
+    lx1 = lx_o  - pod_radius*np.cos(a1)
+    lx2 = lx_o  - pod_radius*np.cos(a2)
+    ly1 = ly1_o - pod_radius*np.sin(a1)
+    ly2 = ly2_o - pod_radius*np.sin(a2)
+    T1,T2 = thrusts_from_relative_n(n1,n2,coeffs)
+    c1,s1 = np.cos(a1),np.sin(a1)
+    c2,s2 = np.cos(a2),np.sin(a2)
+    tau_x = T1*c1 + T2*c2
+    tau_y = T1*s1 + T2*s2
+    tau_n = lx1*T1*s1 + lx2*T2*s2 + ly1*T1*c1 + ly2*T2*c2
+    return float(tau_x), float(tau_y), float(tau_n)
+
+# ---------------- Window helpers (like old script) ----------------
+
+def windows(df: pd.DataFrame, seq: int) -> List[pd.DataFrame]:
+    if seq <= 0:
+        raise ValueError("--seq must be > 0 to use --shuffle_windows")
+    N = len(df); B = N // seq
+    if B == 0:
+        raise ValueError(f"Sequence length {seq} longer than data ({N}).")
+    if N % seq != 0:
+        print(f"[make_nn_dataset_v9_real] Dropping {N - B*seq} tail rows to fit {B} full windows of {seq}.")
+    return [df.iloc[i*seq:(i+1)*seq].copy().reset_index(drop=True) for i in range(B)]
+
+def three_way_indices(total: int, val_frac: float, test_frac: float):
+    v = int(round(val_frac * total))
+    t = int(round(test_frac * total))
+    v = max(0, min(total, v))
+    t = max(0, min(total - v, t))
+    tr = total - v - t
+    if tr <= 0: raise ValueError("Fractions leave no room for training data.")
+    return tr, v, t
+
+def compute_norm_stats(train_df: pd.DataFrame) -> dict:
+    x = train_df[IN_COLS].to_numpy(np.float64)
+    y = train_df[OUT_COLS].to_numpy(np.float64)
+    return {
+        "x_mean": x.mean(axis=0).tolist(),
+        "x_std":  (x.std(axis=0, ddof=0) + 1e-12).tolist(),
+        "y_mean": y.mean(axis=0).tolist(),
+        "y_std":  (y.std(axis=0, ddof=0) + 1e-12).tolist(),
+    }
+
+def _avg_over_window(t_src: np.ndarray, y_src: np.ndarray, a: float, b: float) -> float:
+    """
+    Time-weighted mean of y(t) over [a,b] using trapezoidal integration
+    on a piecewise-linear interpolation through (t_src, y_src). Assumes a<b.
+    Returns NaN if it cannot compute.
+    """
+    if not np.isfinite(a) or not np.isfinite(b) or b <= a:
+        return np.nan
+    # Find samples that fall inside (a,b)
+    i0 = np.searchsorted(t_src, a, side="right")
+    i1 = np.searchsorted(t_src, b, side="left")
+    # Build breakpoints: [a], t_src[i0:i1], [b]
+    ts = [a]
+    ys = [np.interp(a, t_src, y_src)]
+    if i1 > i0:
+        ts.extend(t_src[i0:i1])
+        ys.extend(y_src[i0:i1])
+    ts.append(b)
+    ys.append(np.interp(b, t_src, y_src))
+    ts = np.asarray(ts, dtype=float)
+    ys = np.asarray(ys, dtype=float)
+    if not np.all(np.isfinite(ys)):
+        return np.nan
+    area = np.trapz(ys, ts)  # ∫ y dt
+    return area / (b - a)
+
+def average_series_centered(t_src: np.ndarray, y_src: np.ndarray,
+                            centers: np.ndarray, half: float) -> np.ndarray:
+    """
+    For each center c, compute time-weighted average over [c-half, c+half].
+    If the window exceeds the source range, it is clipped to [tmin,tmax].
+    If no valid evaluation is possible, returns NaN at that index.
+    """
+    out = np.full_like(centers, np.nan, dtype=float)
+    if len(t_src) == 0 or len(centers) == 0 or not np.isfinite(half) or half <= 0:
+        return out
+    tmin, tmax = np.nanmin(t_src), np.nanmax(t_src)
+    if not np.isfinite(tmin) or not np.isfinite(tmax) or tmax <= tmin:
+        return out
+    for k, c in enumerate(centers):
+        a = max(c - half, tmin)
+        b = min(c + half, tmax)
+        if b <= a:
+            # fall back to a point sample at center (if possible)
+            out[k] = np.interp(c, t_src, y_src, left=np.nan, right=np.nan)
+        else:
+            out[k] = _avg_over_window(t_src, y_src, a, b)
+            if not np.isfinite(out[k]):
+                out[k] = np.interp(c, t_src, y_src, left=np.nan, right=np.nan)
+    return out
+
+# ---------------- Build one set ----------------
+
+def build_from_set(root: str, idx: int, dt: float, params: dict) -> pd.DataFrame:
+    imu_path = os.path.join(root, f"parsedIMU_{idx}.csv")
+    sp_path  = os.path.join(root, f"parsedSeapath_{idx}.csv")
+    al_path  = os.path.join(root, f"parsedAlog_{idx}.csv")
+    if not (os.path.isfile(imu_path) and os.path.isfile(sp_path) and os.path.isfile(al_path)):
+        raise FileNotFoundError(f"Missing one of: {imu_path} | {sp_path} | {al_path}")
+
+    # Load
+    t_i, ax, ay, az, gx, gy, gz = load_parsed_imu(imu_path)
+    t_s, hdg, vE_s, vN_s, vD_s = load_parsed_seapath(sp_path)
+    t_a, N1, N2, a1, a2        = load_parsed_alog(al_path, alpha_units=params["alpha_units"])
+
+    # Time overlap → 100 Hz grid
+    t0 = max(np.nanmin(t_i), np.nanmin(t_s), np.nanmin(t_a))
+    t1 = min(np.nanmax(t_i), np.nanmax(t_s), np.nanmax(t_a))
+    if not np.isfinite(t0) or not np.isfinite(t1) or (t1 - t0) < 2*dt:
+        raise RuntimeError(f"Insufficient overlap for idx={idx}")
+    steps = int(np.floor((t1 - t0)/dt)) + 1
+    t_grid = (t0 + np.arange(steps)*dt).astype(float)
+
+    # Resample IMU with time-weighted moving average over each 10 ms window
+    half = 0.5 * dt
+    ax_g = average_series_centered(t_i, ax, t_grid, half)
+    ay_g = average_series_centered(t_i, ay, t_grid, half)
+    az_g = average_series_centered(t_i, az, t_grid, half)
+    gx_g = average_series_centered(t_i, gx, t_grid, half)
+    gy_g = average_series_centered(t_i, gy, t_grid, half)
+    gz_g = average_series_centered(t_i, gz, t_grid, half)
+
+    # SeaPath heading → nearest grid index (±dt/2)
+    yaw_meas = np.full_like(t_grid, np.nan, dtype=float)
+    fresh    = np.zeros_like(t_grid, dtype=bool)
+    if len(t_s):
+        k_idx = np.clip(np.round((t_s - t0)/dt).astype(int), 0, len(t_grid)-1)
+        yaw_meas[k_idx] = hdg
+        fresh[k_idx] = np.isfinite(hdg)
+
+    # Quaternion observer over the WHOLE grid (sequential propagation with dt_k)
+    qw,qx,qy,qz, wex,wey,wez = run_quat_observer(
+        t_grid, ax_g, ay_g, az_g, gx_g, gy_g, gz_g,
+        yaw_meas, fresh,
+        k1=params["k1"], k2=params["k2"], Ki=params["Ki"], accel_min_norm=params["accel_min_norm"]
+    )
+
+    # Optional q sign-fix like old script
+    if params.get("fix_q_sign", False):
+        Q = np.column_stack([qw,qx,qy,qz])
+        Q = fix_quaternion_sign_continuity(Q)
+        qw,qx,qy,qz = Q.T
+
+    # ALOG → ZOH, then τ every grid step
+    N1_g = zoh_series(t_a, N1, t_grid)
+    N2_g = zoh_series(t_a, N2, t_grid)
+    a1_g = zoh_series(t_a, a1, t_grid)
+    a2_g = zoh_series(t_a, a2, t_grid)
+
+    tau_x = np.empty_like(t_grid); tau_y = np.empty_like(t_grid); tau_n = np.empty_like(t_grid)
+    for i in range(len(t_grid)):
+        tx,ty,tn = tau_from_thrusters(
+            N1_g[i], N2_g[i], a1_g[i], a2_g[i],
+            params["tau_coeffs"], params["lx_o"], params["ly1_o"], params["ly2_o"], params["pod_radius"]
+        )
+        tau_x[i], tau_y[i], tau_n[i] = tx,ty,tn
+
+    # GT velocities at 100 Hz by LINEAR interpolation (no extrapolation)
+    vE = linear_series(t_s, vE_s, t_grid)
+    vN = linear_series(t_s, vN_s, t_grid)
+    vD = linear_series(t_s, vD_s, t_grid)
+
+    # Trim head and tail to valid GT region
+    valid = np.isfinite(vE) & np.isfinite(vN) & np.isfinite(vD)
+    if not valid.any():
+        raise RuntimeError(f"No valid SeaPath in overlap for idx={idx}")
+    first = int(np.argmax(valid))
+    last  = len(valid) - int(np.argmax(valid[::-1]))  # index after last True
+    sl = slice(first, last)
+
+    df = pd.DataFrame({
+        "ax": ax_g[sl], "ay": ay_g[sl], "az": az_g[sl],
+        "qw": qw[sl], "qx": qx[sl], "qy": qy[sl], "qz": qz[sl],
+        "tau_x": tau_x[sl], "tau_y": tau_y[sl], "tau_n": tau_n[sl],
+        "vE": vE[sl], "vN": vN[sl], "vD": vD[sl],
+        "w_est_x": wex[sl], "w_est_y": wey[sl], "w_est_z": wez[sl],
+    })[IN_COLS + OUT_COLS + AUX_W_COLS]
+
+    df = df.replace([np.inf, -np.inf], np.nan).dropna().reset_index(drop=True)
+    return df
+
+# ---------------- CLI / main ----------------
+
+def main():
+    ap = argparse.ArgumentParser(description="Build v9 dataset (real logs) with C++-aligned quaternion observer and linear GT interpolation.")
+    ap.add_argument("--root", required=True, help="Folder with parsedIMU_X.csv, parsedSeapath_X.csv, parsedAlog_X.csv")
+    ap.add_argument("--indices", nargs="+", type=int, required=True, help="Which X to include (e.g., 1 2 3)")
+    ap.add_argument("--out_dir", required=True, help="Output dir for train/val/test + stats")
+    ap.add_argument("--val_frac", type=float, default=0.15)
+    ap.add_argument("--test_frac", type=float, default=0.15)
+    ap.add_argument("--dt", type=float, default=0.01, help="Target grid period (s), keep 0.01 for trainer")
+    # observer params (mirror your C++)
+    ap.add_argument("--k1", type=float, default=1.0)
+    ap.add_argument("--k2", type=float, default=0.5)
+    ap.add_argument("--Ki", type=float, default=1e-3)
+    ap.add_argument("--accel_min_norm", type=float, default=1e-3)
+    ap.add_argument("--fix_q_sign", action="store_true", help="Flip q when dot<0 like old script")
+    # tau params
+    ap.add_argument("--alpha_units", choices=["rad","deg"], default="rad")
+    ap.add_argument("--lx_o", type=float, default=-1.17)
+    ap.add_argument("--ly1_o", type=float, default=-0.79)
+    ap.add_argument("--ly2_o", type=float, default=0.79)
+    ap.add_argument("--pod_radius", type=float, default=0.2)
+    ap.add_argument("--tau_coeffs", nargs="+", type=float,
+                    default=[-312.547, 8.87016, 413.598, 46.922, 45.6015],
+                    help="Descending powers (c5..c1), no constant")
+    # windows
+    ap.add_argument("--seq", type=int, default=0, help="Window length (e.g., 200). 0=disable windowing.")
+    ap.add_argument("--shuffle_windows", action="store_true", help="Shuffle windows (not samples) before split")
+    ap.add_argument("--seed", type=int, default=42)
+    args = ap.parse_args()
+
+    os.makedirs(args.out_dir, exist_ok=True)
+
+    params = {
+        "k1": args.k1, "k2": args.k2, "Ki": args.Ki, "accel_min_norm": args.accel_min_norm,
+        "alpha_units": args.alpha_units,
+        "lx_o": args.lx_o, "ly1_o": args.ly1_o, "ly2_o": args.ly2_o, "pod_radius": args.pod_radius,
+        "tau_coeffs": list(args.tau_coeffs),
+        "fix_q_sign": bool(args.fix_q_sign),
+    }
+
+    # Build each set (observer runs sequentially within each set)
+    dfs = []
+    for idx in args.indices:
+        print(f"[build] set {idx}…")
+        df = build_from_set(args.root, idx, args.dt, params)
+        if len(df) == 0:
+            print(f"[warn] set {idx} produced 0 rows (skipped)")
+            continue
+        dfs.append(df)
+    if not dfs:
+        raise RuntimeError("No data produced. Check inputs/indices.")
+    all_df = pd.concat(dfs, axis=0, ignore_index=True)
+
+    # Window-aware split (optional), otherwise chronological by rows
+    if args.seq > 0 and args.shuffle_windows:
+        ws = windows(all_df, args.seq)
+        W = len(ws)
+        n_trW, n_vaW, n_teW = three_way_indices(W, args.val_frac, args.test_frac)
+        rng = np.random.default_rng(args.seed)
+        perm = rng.permutation(W)
+        train_idx = perm[:n_trW]
+        val_idx   = perm[n_trW:n_trW+n_vaW]
+        test_idx  = perm[n_trW+n_vaW:]
+        train_df = pd.concat([ws[i] for i in train_idx], axis=0, ignore_index=True)
+        val_df   = pd.concat([ws[i] for i in val_idx],   axis=0, ignore_index=True)
+        test_df  = pd.concat([ws[i] for i in test_idx],  axis=0, ignore_index=True)
+    else:
+        N = len(all_df)
+        n_tr, n_va, n_te = three_way_indices(N, args.val_frac, args.test_frac)
+        train_df = all_df.iloc[:n_tr].reset_index(drop=True)
+        val_df   = all_df.iloc[n_tr:n_tr+n_va].reset_index(drop=True)
+        test_df  = all_df.iloc[n_tr+n_va:].reset_index(drop=True)
+
+    # Save CSVs
+    train_csv = os.path.join(args.out_dir, "train.csv")
+    val_csv   = os.path.join(args.out_dir, "val.csv")
+    test_csv  = os.path.join(args.out_dir, "test.csv")
+    train_df.to_csv(train_csv, index=False)
+    val_df.to_csv(val_csv, index=False)
+    test_df.to_csv(test_csv, index=False)
+
+    # Norm stats from TRAIN only
+    stats = compute_norm_stats(train_df)
+    with open(os.path.join(args.out_dir, "norm_stats.json"), "w") as f:
+        json.dump(stats, f, indent=2)
+
+    # Split summary
+    with open(os.path.join(args.out_dir, "split_summary.json"), "w") as f:
+        json.dump({
+            "counts": {"train": len(train_df), "val": len(val_df), "test": len(test_df)},
+            "fractions": {"val_frac": args.val_frac, "test_frac": args.test_frac,
+                          "train_frac": 1.0 - args.val_frac - args.test_frac},
+            "dt": args.dt, "indices": args.indices,
+            "seq": args.seq, "shuffle_windows": bool(args.seq > 0 and args.shuffle_windows),
+            "fix_q_sign": bool(args.fix_q_sign),
+            "observer": {"k1": args.k1, "k2": args.k2, "Ki": args.Ki, "accel_min_norm": args.accel_min_norm},
+            "tau_coeffs_desc": list(args.tau_coeffs),
+        }, f, indent=2)
+
+    print(f"[done] wrote:\n  {train_csv} ({len(train_df)} rows)\n  {val_csv} ({len(val_df)} rows)\n  {test_csv} ({len(test_df)} rows)")
+    print(f"[done] wrote: {os.path.join(args.out_dir, 'norm_stats.json')}")
+    if args.seq > 0:
+        print(f"[note] windowing enabled: seq={args.seq}, shuffle_windows={args.shuffle_windows}")
+    print("[note] SeaPath GT vE/vN/vD via linear interpolation at 100 Hz (no extrapolation).")
+    print("[note] Quaternion observer integrated with per-step dt_k and C++-matched signs. IMU scaling preserved.")
+if __name__ == "__main__":
+    main()
+
+
+
+# #!/usr/bin/env python3
+# # -*- coding: utf-8 -*-
+# """
+# make_nn_dataset_v9_real.py — build v9 dataset from real logs (IMU+SeaPath+ALOG)
+
+# Key points
+# ----------
+# • Quaternion observer mirrors your C++ (frames, signs, injection) and propagates
+#   its internal state at each step with the actual dt_k = t[k]-t[k-1].
+# • SeaPath velocities → 100 Hz targets via linear interpolation (no extrapolation).
+# • τ calculation matches RAN::tau_pods and thrust poly (descending, no constant).
+# • Optional quaternion sign continuity fix (--fix_q_sign).
+# • Sequence windows (--seq, --shuffle_windows) for NN training without breaking time order inside windows.
+
+# Typical usage
+# -------------
+# python3 MarineVesselSimulator/scripts/make_nn_dataset_v9_real.py \
+#   --root MarineVesselSimulator/data/nn_dataset_v9_TestData3 \
+#   --indices 1 2 3 4 5 6 7 \
+#   --out_dir MarineVesselSimulator/data/nn_dataset_v9_real \
+#   --val_frac 0.15 --test_frac 0.15 \
+#   --k1 1.0 --k2 0.5 --Ki 0.001 --accel_min_norm 1e-3 \
+#   --alpha_units rad \
+#   --lx_o -1.17 --ly1_o -0.79 --ly2_o 0.79 --pod_radius 0.2 \
+#   --tau_coeffs -312.547 8.87016 413.598 46.922 45.6015 \
+#   --seq 200 --shuffle_windows --fix_q_sign
+# """
+
+# import os
+# import json
+# import argparse
+# from typing import List, Tuple
+
+# import numpy as np
+# import pandas as pd
+
+# # ---------------- Expected columns for nn_observer_v9 ----------------
+# IN_COLS     = ["ax","ay","az","qw","qx","qy","qz","tau_x","tau_y","tau_n"]
+# OUT_COLS    = ["vE","vN","vD"]
+# AUX_W_COLS  = ["w_est_x","w_est_y","w_est_z"]  # provided for aux/physics loss
+
+# # ---------------- Time helpers ----------------
+
+# def parse_iso_to_epoch(s: str) -> float:
+#     if not isinstance(s, str): return np.nan
+#     ss = s.strip()
+#     if ss.endswith("Z"):
+#         ss = ss[:-1] + "+00:00"
+#     try:  # pandas handles ns precision & offsets
+#         return pd.Timestamp(ss).timestamp()
+#     except Exception:
+#         return np.nan
+
+# def zoh_series(t_src: np.ndarray, y_src: np.ndarray, t_grid: np.ndarray) -> np.ndarray:
+#     if len(t_src) == 0:
+#         return np.full_like(t_grid, np.nan, dtype=float)
+#     idx = np.searchsorted(t_src, t_grid, side='right') - 1
+#     idx = np.clip(idx, 0, len(t_src)-1)
+#     y = y_src[idx].astype(float, copy=False)
+#     y = y.copy()
+#     y[t_grid < t_src[0]] = np.nan
+#     return y
+
+# def linear_series(t_src: np.ndarray, y_src: np.ndarray, t_grid: np.ndarray) -> np.ndarray:
+#     if len(t_src) < 2:
+#         return np.full_like(t_grid, np.nan, dtype=float)
+#     mask = np.isfinite(t_src) & np.isfinite(y_src)
+#     if mask.sum() < 2:
+#         return np.full_like(t_grid, np.nan, dtype=float)
+#     return np.interp(t_grid, t_src[mask], y_src[mask], left=np.nan, right=np.nan)
+
+# # ---------------- File loaders ----------------
+
+# def load_parsed_imu(path: str):
+#     # expected header: time,acc_x,acc_y,acc_z,gyro_x,gyro_y,gyro_z
+#     df = pd.read_csv(path)
+#     cols = {str(c).strip().lower(): c for c in df.columns}
+
+#     def pick(*names):
+#         for n in names:
+#             if n in cols: return cols[n]
+#         return None
+
+#     t_name  = pick("time","timestamp") or df.columns[0]
+#     ax_name = pick("ax","acc_x","accx","accel_x")
+#     ay_name = pick("ay","acc_y","accy","accel_y")
+#     az_name = pick("az","acc_z","accz","accel_z")
+#     gx_name = pick("gx","gyro_x","wx","omega_x")
+#     gy_name = pick("gy","gyro_y","wy","omega_y")
+#     gz_name = pick("gz","gyro_z","wz","omega_z")
+
+#     if None in (ax_name,ay_name,az_name,gx_name,gy_name,gz_name):
+#         raise KeyError(f"{path}: IMU header mismatch. Got {list(df.columns)}")
+
+#     t  = df[t_name].astype(str).map(parse_iso_to_epoch).to_numpy()
+#     ax = pd.to_numeric(df[ax_name], errors="coerce").to_numpy()
+#     ay = pd.to_numeric(df[ay_name], errors="coerce").to_numpy()
+#     az = pd.to_numeric(df[az_name], errors="coerce").to_numpy()
+#     gx = pd.to_numeric(df[gx_name], errors="coerce").to_numpy()
+#     gy = pd.to_numeric(df[gy_name], errors="coerce").to_numpy()
+#     gz = pd.to_numeric(df[gz_name], errors="coerce").to_numpy()
+#     return t, ax, ay, az, gx, gy, gz
+
+# def load_parsed_seapath(path: str):
+#     # expected header (your example):
+#     # timestamp, roll, pitch, heading, heave, roll_rate, pitch_rate, yaw_rate,
+#     # velocity_north, velocity_east, velocity_down
+#     df = pd.read_csv(path)
+#     cols = {str(c).strip().lower(): c for c in df.columns}
+
+#     t  = df[cols.get("timestamp", df.columns[0])].astype(str).map(parse_iso_to_epoch).to_numpy()
+#     hd = pd.to_numeric(df[cols["heading"]], errors="coerce").to_numpy() if "heading" in cols \
+#          else np.full_like(t, np.nan, dtype=float)
+#     vN = pd.to_numeric(df[cols["velocity_north"]], errors="coerce").to_numpy() if "velocity_north" in cols \
+#          else np.full_like(t, np.nan, dtype=float)
+#     vE = pd.to_numeric(df[cols["velocity_east"]],  errors="coerce").to_numpy() if "velocity_east"  in cols \
+#          else np.full_like(t, np.nan, dtype=float)
+#     vD = pd.to_numeric(df[cols["velocity_down"]],  errors="coerce").to_numpy() if "velocity_down"  in cols \
+#          else np.full_like(t, np.nan, dtype=float)
+#     return t, np.deg2rad(hd), vE, vN, vD
+
+# def load_parsed_alog(path: str, alpha_units: str):
+#     # expected header: timestamp,N1,N2,alpha1,alpha2
+#     df = pd.read_csv(path)
+#     cols = {str(c).strip().lower(): c for c in df.columns}
+
+#     t  = df[cols.get("timestamp", df.columns[0])].astype(str).map(parse_iso_to_epoch).to_numpy()
+#     N1 = pd.to_numeric(df[cols["n1"]], errors="coerce").to_numpy()
+#     N2 = pd.to_numeric(df[cols["n2"]], errors="coerce").to_numpy()
+#     a1 = pd.to_numeric(df[cols["alpha1"]], errors="coerce").to_numpy()
+#     a2 = pd.to_numeric(df[cols["alpha2"]], errors="coerce").to_numpy()
+#     if alpha_units.lower().startswith("deg"):
+#         a1 = np.deg2rad(a1); a2 = np.deg2rad(a2)
+#     return t, N1, N2, a1, a2
+
+# # ---------------- END rotation (exact match to your custom mapping) ----------------
+
+# def rnb_from_quat(q: np.ndarray) -> np.ndarray:
+#     """
+#     Map quaternion (w,x,y,z) to END DCM R_nb.
+#     Row E: [ 2(xy+wz),  1-2(xx+zz),  2(yz-wx) ]
+#     Row N: [ 1-2(yy+zz), 2(xy-wz),   2(xz+wy) ]
+#     Row D: [ 2(xz-wy),   2(yz+wx),   1-2(xx+yy)]
+#     """
+#     q = q / (np.linalg.norm(q, axis=-1, keepdims=True) + 1e-12)
+#     w, x, y, z = np.moveaxis(q, -1, 0)
+#     xx, yy, zz = x*x, y*y, z*z
+#     wx, wy, wz = w*x, w*y, w*z
+#     xy, xz, yz = x*y, x*z, y*z
+#     R = np.empty((q.shape[0], 3, 3), dtype=q.dtype)
+#     # East
+#     R[:,0,0] =  2.0*(xy + wz)
+#     R[:,0,1] =  1.0 - 2.0*(xx + zz)
+#     R[:,0,2] =  2.0*(yz - wx)
+#     # North
+#     R[:,1,0] =  1.0 - 2.0*(yy + zz)
+#     R[:,1,1] =  2.0*(xy - wz)
+#     R[:,1,2] =  2.0*(xz + wy)
+#     # Down
+#     R[:,2,0] =  2.0*(xz - wy)
+#     R[:,2,1] =  2.0*(yz + wx)
+#     R[:,2,2] =  1.0 - 2.0*(xx + yy)
+#     return R
+
+# # ---------------- Quaternion math & observer (C++-aligned signs) ----------------
+
+# def quat_mul(q, r):
+#     w1,x1,y1,z1 = q; w2,x2,y2,z2 = r
+#     return np.array([
+#         w1*w2 - x1*x2 - y1*y2 - z1*z2,
+#         w1*x2 + x1*w2 + y1*z2 - z1*y2,
+#         w1*y2 - x1*z2 + y1*w2 + z1*x2,
+#         w1*z2 + x1*y2 - y1*x2 + z1*w2,
+#     ], dtype=float)
+
+# def quat_exp(phi: np.ndarray):
+#     th = np.linalg.norm(phi)
+#     if th < 1e-12:
+#         return np.array([1.0, 0.5*phi[0], 0.5*phi[1], 0.5*phi[2]], dtype=float) / np.linalg.norm([1.0, 0.5*phi[0], 0.5*phi[1], 0.5*phi[2]])
+#     half = 0.5 * th
+#     s = np.sin(half) / th
+#     return np.array([np.cos(half), s*phi[0], s*phi[1], s*phi[2]], dtype=float)
+
+# def accel_sigma_body(q: np.ndarray, f_b: np.ndarray, k1: float, accel_min_norm: float) -> np.ndarray:
+#     """
+#     sigma1 = k1 * (v1 × (R_bn * v01)), v01 = [0,0,-1]
+#     with v1 = f_b / max(|f_b|, accel_min_norm)
+#     """
+#     if k1 <= 0.0 or not np.isfinite(f_b).all(): return np.zeros(3)
+#     n = np.linalg.norm(f_b)
+#     if n < accel_min_norm: return np.zeros(3)
+#     v1 = f_b / n
+#     Rnb = rnb_from_quat(q[np.newaxis,:])[0]
+#     R_bn = Rnb.T
+#     v01 = np.array([0.0, 0.0, -1.0], dtype=float)  # NAV
+#     return k1 * np.cross(v1, R_bn @ v01)
+
+# def heading_sigma_body(q: np.ndarray, yaw_meas: float, k2: float) -> np.ndarray:
+#     """
+#     sigma2 = k2 * (v2_body × (R_bn * v02)), v2_body=[1,0,0], v02=[sinψ, cosψ, 0]
+#     0° = North, +CW.
+#     """
+#     if k2 <= 0.0 or not np.isfinite(yaw_meas):
+#         return np.zeros(3, dtype=float)
+#     Rnb = rnb_from_quat(q[np.newaxis,:])[0]
+#     R_bn = Rnb.T
+#     v02 = np.array([np.sin(yaw_meas), np.cos(yaw_meas), 0.0], dtype=float)  # NAV
+#     v2b = np.array([1.0, 0.0, 0.0], dtype=float)                            # BODY
+#     return k2 * np.cross(v2b, R_bn @ v02)
+
+# def run_quat_observer(t_grid, ax, ay, az, gx, gy, gz, yaw_meas, fresh_yaw, k1, k2, Ki, accel_min_norm):
+#     """
+#     Propagate like C++:
+#       w_est = w_imu - b + sigma
+#       q_{k+1} = exp(w_est * dt_k) ⊗ q_k
+#       b_{k+1} = b_k - dt_k * Ki * sigma
+#     - accel sigma every step (if |f| >= accel_min_norm)
+#     - heading sigma when fresh SeaPath sample available
+#     """
+#     q = np.array([1.0,0.0,0.0,0.0], dtype=float)  # BODY→NAV
+#     b = np.zeros(3, dtype=float)
+#     qw = np.empty_like(t_grid); qx = np.empty_like(t_grid); qy = np.empty_like(t_grid); qz = np.empty_like(t_grid)
+#     wx = np.empty_like(t_grid); wy = np.empty_like(t_grid); wz = np.empty_like(t_grid)
+
+#     for k in range(len(t_grid)):
+#         if k == 0:
+#             dt_k = 0.0
+#         else:
+#             dt_k = max(0.0, float(t_grid[k] - t_grid[k-1]))
+
+#         omega = np.array([gx[k], gy[k], gz[k]], dtype=float)  # rad/s
+#         sig = accel_sigma_body(q, np.array([ax[k],ay[k],az[k]]), k1, accel_min_norm)
+
+#         if fresh_yaw[k] and np.isfinite(yaw_meas[k]):
+#             sig = sig + heading_sigma_body(q, float(yaw_meas[k]), k2)
+
+#         w_est = omega - b + sig
+#         if dt_k > 0.0:
+#             dq = quat_exp(w_est * dt_k)
+#             q = quat_mul(dq, q)
+#             q = q / (np.linalg.norm(q) + 1e-12)
+#             b = b - Ki * sig * dt_k
+
+#         qw[k], qx[k], qy[k], qz[k] = q
+#         wx[k], wy[k], wz[k] = w_est
+
+#     return qw,qx,qy,qz, wx,wy,wz
+
+# def fix_quaternion_sign_continuity(q: np.ndarray) -> np.ndarray:
+#     if len(q) == 0: return q
+#     out = q.copy()
+#     for i in range(1, len(out)):
+#         if np.dot(out[i-1], out[i]) < 0.0:
+#             out[i] = -out[i]
+#     return out
+
+# # ---------------- τ model (exact RAN::tau_pods port) ----------------
+
+# def thrusts_from_relative_n(n1: float, n2: float, coeffs: List[float]) -> Tuple[float,float]:
+#     """
+#     T(N) = c5*N^5 + c4*N^4 + c3*N^3 + c2*N^2 + c1*N   (descending coeffs, NO constant term)
+#     coeffs = [c5, c4, c3, c2, c1]
+#     """
+#     def poly_no_const(N, cs):
+#         # map [c5..c1] to N^5..N^1
+#         return sum(cs[len(cs)-p] * (N**p) for p in range(1, len(cs)+1))
+#     return poly_no_const(float(n1), coeffs), poly_no_const(float(n2), coeffs)
+
+# def tau_from_thrusters(n1,n2,a1,a2, coeffs, lx_o, ly1_o, ly2_o, pod_radius, n1_fail=False, n2_fail=False):
+#     if n1_fail: n1 = 0.0
+#     if n2_fail: n2 = 0.0
+#     lx1 = lx_o  - pod_radius*np.cos(a1)
+#     lx2 = lx_o  - pod_radius*np.cos(a2)
+#     ly1 = ly1_o - pod_radius*np.sin(a1)
+#     ly2 = ly2_o - pod_radius*np.sin(a2)
+#     T1,T2 = thrusts_from_relative_n(n1,n2,coeffs)
+#     c1,s1 = np.cos(a1),np.sin(a1)
+#     c2,s2 = np.cos(a2),np.sin(a2)
+#     tau_x = T1*c1 + T2*c2
+#     tau_y = T1*s1 + T2*s2
+#     tau_n = lx1*T1*s1 + lx2*T2*s2 + ly1*T1*c1 + ly2*T2*c2
+#     return float(tau_x), float(tau_y), float(tau_n)
+
+# # ---------------- Window helpers (like old script) ----------------
+
+# def windows(df: pd.DataFrame, seq: int) -> List[pd.DataFrame]:
+#     if seq <= 0:
+#         raise ValueError("--seq must be > 0 to use --shuffle_windows")
+#     N = len(df); B = N // seq
+#     if B == 0:
+#         raise ValueError(f"Sequence length {seq} longer than data ({N}).")
+#     if N % seq != 0:
+#         print(f"[make_nn_dataset_v9_real] Dropping {N - B*seq} tail rows to fit {B} full windows of {seq}.")
+#     return [df.iloc[i*seq:(i+1)*seq].copy().reset_index(drop=True) for i in range(B)]
+
+# def three_way_indices(total: int, val_frac: float, test_frac: float):
+#     v = int(round(val_frac * total))
+#     t = int(round(test_frac * total))
+#     v = max(0, min(total, v))
+#     t = max(0, min(total - v, t))
+#     tr = total - v - t
+#     if tr <= 0: raise ValueError("Fractions leave no room for training data.")
+#     return tr, v, t
+
+# def compute_norm_stats(train_df: pd.DataFrame) -> dict:
+#     x = train_df[IN_COLS].to_numpy(np.float64)
+#     y = train_df[OUT_COLS].to_numpy(np.float64)
+#     return {
+#         "x_mean": x.mean(axis=0).tolist(),
+#         "x_std":  (x.std(axis=0, ddof=0) + 1e-12).tolist(),
+#         "y_mean": y.mean(axis=0).tolist(),
+#         "y_std":  (y.std(axis=0, ddof=0) + 1e-12).tolist(),
+#     }
+
+# def _avg_over_window(t_src: np.ndarray, y_src: np.ndarray, a: float, b: float) -> float:
+#     """
+#     Time-weighted mean of y(t) over [a,b] using trapezoidal integration
+#     on a piecewise-linear interpolation through (t_src, y_src). Assumes a<b.
+#     Returns NaN if it cannot compute.
+#     """
+#     if not np.isfinite(a) or not np.isfinite(b) or b <= a:
+#         return np.nan
+#     # Find samples that fall inside (a,b)
+#     i0 = np.searchsorted(t_src, a, side="right")
+#     i1 = np.searchsorted(t_src, b, side="left")
+#     # Build breakpoints: [a], t_src[i0:i1], [b]
+#     ts = [a]
+#     ys = [np.interp(a, t_src, y_src)]
+#     if i1 > i0:
+#         ts.extend(t_src[i0:i1])
+#         ys.extend(y_src[i0:i1])
+#     ts.append(b)
+#     ys.append(np.interp(b, t_src, y_src))
+#     ts = np.asarray(ts, dtype=float)
+#     ys = np.asarray(ys, dtype=float)
+#     if not np.all(np.isfinite(ys)):
+#         return np.nan
+#     area = np.trapz(ys, ts)  # ∫ y dt
+#     return area / (b - a)
+
+# def average_series_centered(t_src: np.ndarray, y_src: np.ndarray,
+#                             centers: np.ndarray, half: float) -> np.ndarray:
+#     """
+#     For each center c, compute time-weighted average over [c-half, c+half].
+#     If the window exceeds the source range, it is clipped to [tmin,tmax].
+#     If no valid evaluation is possible, returns NaN at that index.
+#     """
+#     out = np.full_like(centers, np.nan, dtype=float)
+#     if len(t_src) == 0 or len(centers) == 0 or not np.isfinite(half) or half <= 0:
+#         return out
+#     tmin, tmax = np.nanmin(t_src), np.nanmax(t_src)
+#     if not np.isfinite(tmin) or not np.isfinite(tmax) or tmax <= tmin:
+#         return out
+#     for k, c in enumerate(centers):
+#         a = max(c - half, tmin)
+#         b = min(c + half, tmax)
+#         if b <= a:
+#             # fall back to a point sample at center (if possible)
+#             out[k] = np.interp(c, t_src, y_src, left=np.nan, right=np.nan)
+#         else:
+#             out[k] = _avg_over_window(t_src, y_src, a, b)
+#             if not np.isfinite(out[k]):
+#                 out[k] = np.interp(c, t_src, y_src, left=np.nan, right=np.nan)
+#     return out
+
+# # ---------------- Build one set ----------------
+
+# def build_from_set(root: str, idx: int, dt: float, params: dict) -> pd.DataFrame:
+#     imu_path = os.path.join(root, f"parsedIMU_{idx}.csv")
+#     sp_path  = os.path.join(root, f"parsedSeapath_{idx}.csv")
+#     al_path  = os.path.join(root, f"parsedAlog_{idx}.csv")
+#     if not (os.path.isfile(imu_path) and os.path.isfile(sp_path) and os.path.isfile(al_path)):
+#         raise FileNotFoundError(f"Missing one of: {imu_path} | {sp_path} | {al_path}")
+
+#     # Load
+#     t_i, ax, ay, az, gx, gy, gz = load_parsed_imu(imu_path)
+#     t_s, hdg, vE_s, vN_s, vD_s = load_parsed_seapath(sp_path)
+#     t_a, N1, N2, a1, a2        = load_parsed_alog(al_path, alpha_units=params["alpha_units"])
+
+#     # Time overlap → 100 Hz grid
+#     t0 = max(np.nanmin(t_i), np.nanmin(t_s), np.nanmin(t_a))
+#     t1 = min(np.nanmax(t_i), np.nanmax(t_s), np.nanmax(t_a))
+#     if not np.isfinite(t0) or not np.isfinite(t1) or (t1 - t0) < 2*dt:
+#         raise RuntimeError(f"Insufficient overlap for idx={idx}")
+#     steps = int(np.floor((t1 - t0)/dt)) + 1
+#     t_grid = (t0 + np.arange(steps)*dt).astype(float)
+
+#     # Resample IMU with time-weighted moving average over each 10 ms window
+#     half = 0.5 * dt
+#     ax_g = average_series_centered(t_i, ax, t_grid, half)
+#     ay_g = average_series_centered(t_i, ay, t_grid, half)
+#     az_g = average_series_centered(t_i, az, t_grid, half)
+#     gx_g = average_series_centered(t_i, gx, t_grid, half)
+#     gy_g = average_series_centered(t_i, gy, t_grid, half)
+#     gz_g = average_series_centered(t_i, gz, t_grid, half)
+
+
+#     # SeaPath heading → nearest grid index (±dt/2)
+#     yaw_meas = np.full_like(t_grid, np.nan, dtype=float)
+#     fresh    = np.zeros_like(t_grid, dtype=bool)
+#     if len(t_s):
+#         k_idx = np.clip(np.round((t_s - t0)/dt).astype(int), 0, len(t_grid)-1)
+#         yaw_meas[k_idx] = hdg
+#         fresh[k_idx] = np.isfinite(hdg)
+
+#     # Quaternion observer over the WHOLE grid (sequential propagation with dt_k)
+#     qw,qx,qy,qz, wex,wey,wez = run_quat_observer(
+#         t_grid, ax_g, ay_g, az_g, gx_g, gy_g, gz_g,
+#         yaw_meas, fresh,
+#         k1=params["k1"], k2=params["k2"], Ki=params["Ki"], accel_min_norm=params["accel_min_norm"]
+#     )
+
+#     # Optional q sign-fix like old script
+#     if params.get("fix_q_sign", False):
+#         Q = np.column_stack([qw,qx,qy,qz])
+#         Q = fix_quaternion_sign_continuity(Q)
+#         qw,qx,qy,qz = Q.T
+
+#     # ALOG → ZOH, then τ every grid step
+#     N1_g = zoh_series(t_a, N1, t_grid)
+#     N2_g = zoh_series(t_a, N2, t_grid)
+#     a1_g = zoh_series(t_a, a1, t_grid)
+#     a2_g = zoh_series(t_a, a2, t_grid)
+
+#     tau_x = np.empty_like(t_grid); tau_y = np.empty_like(t_grid); tau_n = np.empty_like(t_grid)
+#     for i in range(len(t_grid)):
+#         tx,ty,tn = tau_from_thrusters(
+#             N1_g[i], N2_g[i], a1_g[i], a2_g[i],
+#             params["tau_coeffs"], params["lx_o"], params["ly1_o"], params["ly2_o"], params["pod_radius"]
+#         )
+#         tau_x[i], tau_y[i], tau_n[i] = tx,ty,tn
+
+#     # GT velocities at 100 Hz by LINEAR interpolation (no extrapolation)
+#     vE = linear_series(t_s, vE_s, t_grid)
+#     vN = linear_series(t_s, vN_s, t_grid)
+#     vD = linear_series(t_s, vD_s, t_grid)
+
+#     # Trim head until GT valid
+#     first_ok = np.where(np.isfinite(vE) & np.isfinite(vN) & np.isfinite(vD))[0]
+#     if len(first_ok) == 0:
+#         raise RuntimeError(f"No valid SeaPath in overlap for idx={idx}")
+#     start = first_ok[0]
+#     sl = slice(start, None)
+
+#     df = pd.DataFrame({
+#         "ax": ax_g[sl], "ay": ay_g[sl], "az": az_g[sl],
+#         "qw": qw[sl], "qx": qx[sl], "qy": qy[sl], "qz": qz[sl],
+#         "tau_x": tau_x[sl], "tau_y": tau_y[sl], "tau_n": tau_n[sl],
+#         "vE": vE[sl], "vN": vN[sl], "vD": vD[sl],
+#         "w_est_x": wex[sl], "w_est_y": wey[sl], "w_est_z": wez[sl],
+#     })[IN_COLS + OUT_COLS + AUX_W_COLS]
+
+#     df = df.replace([np.inf, -np.inf], np.nan).dropna().reset_index(drop=True)
+#     return df
+
+# # ---------------- CLI / main ----------------
+
+# def main():
+#     ap = argparse.ArgumentParser(description="Build v9 dataset (real logs) with C++-aligned quaternion observer and linear GT interpolation.")
+#     ap.add_argument("--root", required=True, help="Folder with parsedIMU_X.csv, parsedSeapath_X.csv, parsedAlog_X.csv")
+#     ap.add_argument("--indices", nargs="+", type=int, required=True, help="Which X to include (e.g., 1 2 3)")
+#     ap.add_argument("--out_dir", required=True, help="Output dir for train/val/test + stats")
+#     ap.add_argument("--val_frac", type=float, default=0.15)
+#     ap.add_argument("--test_frac", type=float, default=0.15)
+#     ap.add_argument("--dt", type=float, default=0.01, help="Target grid period (s), keep 0.01 for trainer")
+#     # observer params (mirror your C++)
+#     ap.add_argument("--k1", type=float, default=1.0)
+#     ap.add_argument("--k2", type=float, default=0.5)
+#     ap.add_argument("--Ki", type=float, default=1e-3)
+#     ap.add_argument("--accel_min_norm", type=float, default=1e-3)
+#     ap.add_argument("--fix_q_sign", action="store_true", help="Flip q when dot<0 like old script")
+#     # tau params
+#     ap.add_argument("--alpha_units", choices=["rad","deg"], default="rad")
+#     ap.add_argument("--lx_o", type=float, default=-1.17)
+#     ap.add_argument("--ly1_o", type=float, default=-0.79)
+#     ap.add_argument("--ly2_o", type=float, default=0.79)
+#     ap.add_argument("--pod_radius", type=float, default=0.2)
+#     ap.add_argument("--tau_coeffs", nargs="+", type=float,
+#                     default=[-312.547, 8.87016, 413.598, 46.922, 45.6015],
+#                     help="Descending powers (c5..c1), no constant")
+#     # windows
+#     ap.add_argument("--seq", type=int, default=0, help="Window length (e.g., 200). 0=disable windowing.")
+#     ap.add_argument("--shuffle_windows", action="store_true", help="Shuffle windows (not samples) before split")
+#     ap.add_argument("--seed", type=int, default=42)
+#     args = ap.parse_args()
+
+#     os.makedirs(args.out_dir, exist_ok=True)
+
+#     params = {
+#         "k1": args.k1, "k2": args.k2, "Ki": args.Ki, "accel_min_norm": args.accel_min_norm,
+#         "alpha_units": args.alpha_units,
+#         "lx_o": args.lx_o, "ly1_o": args.ly1_o, "ly2_o": args.ly2_o, "pod_radius": args.pod_radius,
+#         "tau_coeffs": list(args.tau_coeffs),
+#         "fix_q_sign": bool(args.fix_q_sign),
+#     }
+
+#     # Build each set (observer runs sequentially within each set)
+#     dfs = []
+#     for idx in args.indices:
+#         print(f"[build] set {idx}…")
+#         df = build_from_set(args.root, idx, args.dt, params)
+#         if len(df) == 0:
+#             print(f"[warn] set {idx} produced 0 rows (skipped)")
+#             continue
+#         dfs.append(df)
+#     if not dfs:
+#         raise RuntimeError("No data produced. Check inputs/indices.")
+#     all_df = pd.concat(dfs, axis=0, ignore_index=True)
+
+#     # Window-aware split (optional), otherwise chronological by rows
+#     if args.seq > 0 and args.shuffle_windows:
+#         ws = windows(all_df, args.seq)
+#         W = len(ws)
+#         n_trW, n_vaW, n_teW = three_way_indices(W, args.val_frac, args.test_frac)
+#         rng = np.random.default_rng(args.seed)
+#         perm = rng.permutation(W)
+#         train_idx = perm[:n_trW]
+#         val_idx   = perm[n_trW:n_trW+n_vaW]
+#         test_idx  = perm[n_trW+n_vaW:]
+#         train_df = pd.concat([ws[i] for i in train_idx], axis=0, ignore_index=True)
+#         val_df   = pd.concat([ws[i] for i in val_idx],   axis=0, ignore_index=True)
+#         test_df  = pd.concat([ws[i] for i in test_idx],  axis=0, ignore_index=True)
+#     else:
+#         N = len(all_df)
+#         n_tr, n_va, n_te = three_way_indices(N, args.val_frac, args.test_frac)
+#         train_df = all_df.iloc[:n_tr].reset_index(drop=True)
+#         val_df   = all_df.iloc[n_tr:n_tr+n_va].reset_index(drop=True)
+#         test_df  = all_df.iloc[n_tr+n_va:].reset_index(drop=True)
+
+#     # Save CSVs
+#     train_csv = os.path.join(args.out_dir, "train.csv")
+#     val_csv   = os.path.join(args.out_dir, "val.csv")
+#     test_csv  = os.path.join(args.out_dir, "test.csv")
+#     train_df.to_csv(train_csv, index=False)
+#     val_df.to_csv(val_csv, index=False)
+#     test_df.to_csv(test_csv, index=False)
+
+#     # Norm stats from TRAIN only
+#     stats = compute_norm_stats(train_df)
+#     with open(os.path.join(args.out_dir, "norm_stats.json"), "w") as f:
+#         json.dump(stats, f, indent=2)
+
+#     # Split summary
+#     with open(os.path.join(args.out_dir, "split_summary.json"), "w") as f:
+#         json.dump({
+#             "counts": {"train": len(train_df), "val": len(val_df), "test": len(test_df)},
+#             "fractions": {"val_frac": args.val_frac, "test_frac": args.test_frac,
+#                           "train_frac": 1.0 - args.val_frac - args.test_frac},
+#             "dt": args.dt, "indices": args.indices,
+#             "seq": args.seq, "shuffle_windows": bool(args.seq > 0 and args.shuffle_windows),
+#             "fix_q_sign": bool(args.fix_q_sign),
+#             "observer": {"k1": args.k1, "k2": args.k2, "Ki": args.Ki, "accel_min_norm": args.accel_min_norm},
+#             "tau_coeffs_desc": list(args.tau_coeffs),
+#         }, f, indent=2)
+
+#     print(f"[done] wrote:\n  {train_csv} ({len(train_df)} rows)\n  {val_csv} ({len(val_df)} rows)\n  {test_csv} ({len(test_df)} rows)")
+#     print(f"[done] wrote: {os.path.join(args.out_dir, 'norm_stats.json')}")
+#     if args.seq > 0:
+#         print(f"[note] windowing enabled: seq={args.seq}, shuffle_windows={args.shuffle_windows}")
+#     print("[note] SeaPath GT vE/vN/vD via linear interpolation at 100 Hz (no extrapolation).")
+#     print("[note] Quaternion observer integrated with per-step dt_k and C++-matched signs.")
+
+# if __name__ == "__main__":
+#     main()
+
+
+# #!/usr/bin/env python3
+# # -*- coding: utf-8 -*-
+# """
+# make_nn_dataset_v9_real.py  — real logs → v9 dataset (trainer-compatible)
+
+# Key points:
+#  • Targets vE,vN,vD are written at 100 Hz via **linear interpolation** between SeaPath samples
+#    (no ZOH bias; no gaps; no extrapolation beyond overlap).
+#  • Inputs exactly as nn_observer_v9.py expects:
+#      IN_COLS  = [ax, ay, az, qw, qx, qy, qz, tau_x, tau_y, tau_n]
+#      OUT_COLS = [vE, vN, vD]
+#      AUX      = [w_est_x, w_est_y, w_est_z]  (from quaternion observer)
+#  • Quaternion observer:
+#      - step6DOF (IMU-only) every tick
+#      - step7DOF heading injection when a fresh SeaPath heading sample is available
+#      - Gains mirror your C++ Config: k1 (acc), k2 (heading), Ki (bias diag), accel_min_norm
+#  • τ model matches RAN::tau_pods exactly with descending thrust polynomial (no constant term).
+
+# Typical usage:
+# python3 scripts/make_nn_dataset_v9_real.py \
+#   --root MarineVesselSimulator/data/nn_dataset_v9_TestData3 \
+#   --indices 1 2 3 4 5 6 7 \
+#   --out_dir MarineVesselSimulator/data/nn_dataset_v9_real \
+#   --val_frac 0.15 --test_frac 0.15 \
+#   --k1 1.0 --k2 0.5 --Ki 0.001 --accel_min_norm 1e-3 \
+#   --alpha_units rad \
+#   --lx_o -1.17 --ly1_o -0.79 --ly2_o 0.79 --pod_radius 0.2 \
+#   --tau_coeffs -312.547 8.87016 413.598 46.922 45.6015
+# """
+
+# import os
+# import json
+# import argparse
+# from typing import List, Tuple
+
+# import numpy as np
+# import pandas as pd
+
+# # ===================== Columns expected by nn_observer_v9.py =====================
+# IN_COLS     = ["ax","ay","az","qw","qx","qy","qz","tau_x","tau_y","tau_n"]
+# OUT_COLS    = ["vE","vN","vD"]
+# AUX_W_COLS  = ["w_est_x","w_est_y","w_est_z"]  # optional but we provide them
+
+# # ===================== Time helpers =====================
+
+# def parse_iso_to_epoch(s: str) -> float:
+#     if not isinstance(s, str): return np.nan
+#     ss = s.strip()
+#     if ss.endswith("Z"):
+#         ss = ss[:-1] + "+00:00"
+#     try:
+#         return pd.Timestamp(ss).timestamp()
+#     except Exception:
+#         return np.nan
+
+# def zoh_series(t_src: np.ndarray, y_src: np.ndarray, t_grid: np.ndarray) -> np.ndarray:
+#     """Zero-Order Hold. NaN before first sample."""
+#     if len(t_src) == 0:
+#         return np.full_like(t_grid, np.nan, dtype=float)
+#     idx = np.searchsorted(t_src, t_grid, side='right') - 1
+#     idx = np.clip(idx, 0, len(t_src)-1)
+#     y = y_src[idx].astype(float, copy=False)
+#     y = y.copy()
+#     y[t_grid < t_src[0]] = np.nan
+#     return y
+
+# def linear_series(t_src: np.ndarray, y_src: np.ndarray, t_grid: np.ndarray) -> np.ndarray:
+#     """Linear interpolation with NaN outside the source span."""
+#     if len(t_src) < 2:
+#         return np.full_like(t_grid, np.nan, dtype=float)
+#     mask = np.isfinite(t_src) & np.isfinite(y_src)
+#     if mask.sum() < 2:
+#         return np.full_like(t_grid, np.nan, dtype=float)
+#     return np.interp(t_grid, t_src[mask], y_src[mask], left=np.nan, right=np.nan)
+
+# # ===================== Files I/O =====================
+
+# def load_parsed_imu(path: str):
+#     """
+#     Headers (example):
+#       time,acc_x,acc_y,acc_z,gyro_x,gyro_y,gyro_z
+#     Returns epoch time and numeric arrays. gyro is rad/s (no deg conv).
+#     """
+#     df = pd.read_csv(path)
+#     cols = {str(c).strip().lower(): c for c in df.columns}
+
+#     def pick(*names):
+#         for n in names:
+#             if n in cols: return cols[n]
+#         return None
+
+#     t_name  = pick("time","timestamp") or df.columns[0]
+#     ax_name = pick("ax","acc_x","accx","accel_x")
+#     ay_name = pick("ay","acc_y","accy","accel_y")
+#     az_name = pick("az","acc_z","accz","accel_z")
+#     gx_name = pick("gx","gyro_x","wx","omega_x")
+#     gy_name = pick("gy","gyro_y","wy","omega_y")
+#     gz_name = pick("gz","gyro_z","wz","omega_z")
+
+#     if None in (ax_name,ay_name,az_name,gx_name,gy_name,gz_name):
+#         raise KeyError(f"{path}: IMU header mismatch. Got {list(df.columns)}")
+
+#     t  = df[t_name].astype(str).map(parse_iso_to_epoch).to_numpy()
+#     ax = pd.to_numeric(df[ax_name], errors="coerce").to_numpy()
+#     ay = pd.to_numeric(df[ay_name], errors="coerce").to_numpy()
+#     az = pd.to_numeric(df[az_name], errors="coerce").to_numpy()
+#     gx = pd.to_numeric(df[gx_name], errors="coerce").to_numpy()
+#     gy = pd.to_numeric(df[gy_name], errors="coerce").to_numpy()
+#     gz = pd.to_numeric(df[gz_name], errors="coerce").to_numpy()
+#     return t, ax, ay, az, gx, gy, gz
+
+# def load_parsed_seapath(path: str):
+#     """
+#     Headers (from your example):
+#       timestamp, roll, pitch, heading, heave, roll_rate, pitch_rate, yaw_rate,
+#       velocity_north, velocity_east, velocity_down
+#     Returns: t, heading(rad), vE, vN, vD
+#     """
+#     df = pd.read_csv(path)
+#     cols = {str(c).strip().lower(): c for c in df.columns}
+
+#     t  = df[cols.get("timestamp", df.columns[0])].astype(str).map(parse_iso_to_epoch).to_numpy()
+#     hd = pd.to_numeric(df[cols["heading"]], errors="coerce").to_numpy() if "heading" in cols \
+#          else np.full_like(t, np.nan, dtype=float)
+#     vN = pd.to_numeric(df[cols["velocity_north"]], errors="coerce").to_numpy() if "velocity_north" in cols \
+#          else np.full_like(t, np.nan, dtype=float)
+#     vE = pd.to_numeric(df[cols["velocity_east"]],  errors="coerce").to_numpy() if "velocity_east"  in cols \
+#          else np.full_like(t, np.nan, dtype=float)
+#     vD = pd.to_numeric(df[cols["velocity_down"]],  errors="coerce").to_numpy() if "velocity_down"  in cols \
+#          else np.full_like(t, np.nan, dtype=float)
+#     return t, np.deg2rad(hd), vE, vN, vD
+
+# def load_parsed_alog(path: str, alpha_units: str):
+#     """
+#     Headers:
+#       timestamp,N1,N2,alpha1,alpha2
+#     Returns: t_epoch, N1, N2, alpha1(rad), alpha2(rad)
+#     """
+#     df = pd.read_csv(path)
+#     cols = {str(c).strip().lower(): c for c in df.columns}
+
+#     t  = df[cols.get("timestamp", df.columns[0])].astype(str).map(parse_iso_to_epoch).to_numpy()
+#     N1 = pd.to_numeric(df[cols["n1"]], errors="coerce").to_numpy()
+#     N2 = pd.to_numeric(df[cols["n2"]], errors="coerce").to_numpy()
+#     a1 = pd.to_numeric(df[cols["alpha1"]], errors="coerce").to_numpy()
+#     a2 = pd.to_numeric(df[cols["alpha2"]], errors="coerce").to_numpy()
+#     if alpha_units.lower().startswith("deg"):
+#         a1 = np.deg2rad(a1); a2 = np.deg2rad(a2)
+#     return t, N1, N2, a1, a2
+
+# # ===================== BODY→END rotation (your convention) =====================
+
+# def rnb_from_quat(q: np.ndarray) -> np.ndarray:
+#     """Custom END rotation used across your codebase."""
+#     q = q / (np.linalg.norm(q, axis=-1, keepdims=True) + 1e-12)
+#     w, x, y, z = np.moveaxis(q, -1, 0)
+#     xx, yy, zz = x*x, y*y, z*z
+#     wx, wy, wz = w*x, w*y, w*z
+#     xy, xz, yz = x*y, x*z, y*z
+#     R = np.empty((q.shape[0], 3, 3), dtype=q.dtype)
+#     # Row East
+#     R[:,0,0] =  2.0*(xy + wz)
+#     R[:,0,1] =  1.0 - 2.0*(xx + zz)
+#     R[:,0,2] =  2.0*(yz - wx)
+#     # Row North
+#     R[:,1,0] =  1.0 - 2.0*(yy + zz)
+#     R[:,1,1] =  2.0*(xy - wz)
+#     R[:,1,2] =  2.0*(xz + wy)
+#     # Row Down
+#     R[:,2,0] =  2.0*(xz - wy)
+#     R[:,2,1] =  2.0*(yz + wx)
+#     R[:,2,2] =  1.0 - 2.0*(xx + yy)
+#     return R
+
+# # ===================== Quaternion math & observer =====================
+
+# def quat_mul(q, r):
+#     w1,x1,y1,z1 = q; w2,x2,y2,z2 = r
+#     return np.array([
+#         w1*w2 - x1*x2 - y1*y2 - z1*z2,
+#         w1*x2 + x1*w2 + y1*z2 - z1*y2,
+#         w1*y2 - x1*z2 + y1*w2 + z1*x2,
+#         w1*z2 + x1*y2 - y1*x2 + z1*w2,
+#     ], dtype=float)
+
+# def heading_sigma_body(q: np.ndarray, yaw_meas: float, k_yaw: float) -> np.ndarray:
+#     """Yaw correction sigma in BODY using heading ψ (0=N, +CW).
+#     Mirrors C++ step7DOF: sigma2 = k2 * (v2_body × (R_bn * v02))
+#     with v2_body = [1,0,0], v02 = [sinψ, cosψ, 0].
+#     """
+#     if not np.isfinite(yaw_meas) or k_yaw <= 0.0:
+#         return np.zeros(3, dtype=float)
+#     Rnb = rnb_from_quat(q[np.newaxis, :])[0]
+#     R_bn = Rnb.T
+#     v02  = np.array([np.sin(yaw_meas), np.cos(yaw_meas), 0.0], dtype=float)  # NAV
+#     v2b  = np.array([1.0, 0.0, 0.0], dtype=float)                             # BODY
+#     return k_yaw * np.cross(v2b, R_bn @ v02)
+
+
+# def accel_sigma_body(q: np.ndarray, acc_b: np.ndarray, k_acc: float, accel_min_norm: float) -> np.ndarray:
+#     """Accelerometer (gravity direction) injection in BODY."""
+#     if k_acc <= 0.0 or not np.isfinite(acc_b).all(): return np.zeros(3)
+#     n = np.linalg.norm(acc_b)
+#     if n < accel_min_norm: return np.zeros(3)
+#     a_hat = acc_b / n
+#     Rnb = rnb_from_quat(q[np.newaxis,:])[0]
+#     d_b = Rnb[2,:]  # Down axis in BODY
+#     return k_acc * np.cross(a_hat, d_b)
+
+# def run_quat_observer(t_grid, ax, ay, az, gx, gy, gz, yaw_meas, fresh_yaw, k1, k2, Ki, accel_min_norm):
+#     """step6DOF each tick + step7DOF yaw correction when fresh."""
+#     q = np.array([1.0,0.0,0.0,0.0], dtype=float)
+#     b = np.zeros(3, dtype=float)
+#     dt = float(t_grid[1]-t_grid[0]) if len(t_grid) > 1 else 0.01
+#     qw = np.empty_like(t_grid); qx = np.empty_like(t_grid); qy = np.empty_like(t_grid); qz = np.empty_like(t_grid)
+#     wx = np.empty_like(t_grid); wy = np.empty_like(t_grid); wz = np.empty_like(t_grid)
+#     for k in range(len(t_grid)):
+#         omega = np.array([gx[k], gy[k], gz[k]], dtype=float)  # rad/s
+#         # IMU step (accel-based)
+#         sig = accel_sigma_body(q, np.array([ax[k],ay[k],az[k]]), k1, accel_min_norm)
+#         # yaw correction when fresh SeaPath heading is available
+#         if fresh_yaw[k] and np.isfinite(yaw_meas[k]):
+#             sig = sig + heading_sigma_body(q, float(yaw_meas[k]), k2)
+#         # integrate quaternion with bias correction
+#         w_est = omega - b + sig
+#         dq = 0.5 * quat_mul(q, np.array([0.0, *w_est]))
+#         q = q + dq * dt
+#         q = q / (np.linalg.norm(q) + 1e-12)
+#         b = b - Ki * sig * dt
+#         # outputs
+#         qw[k],qx[k],qy[k],qz[k] = q
+#         wx[k],wy[k],wz[k] = w_est
+#     return qw,qx,qy,qz, wx,wy,wz
+
+# # ===================== τ model (exact port of RAN::tau_pods) =====================
+
+# def thrusts_from_relative_n(n1: float, n2: float, coeffs: List[float]) -> Tuple[float,float]:
+#     """T(N) = c5*N^5 + c4*N^4 + c3*N^3 + c2*N^2 + c1*N   (descending, NO constant)"""
+#     def poly_no_const(N, cs):
+#         s = 0.0; deg = len(cs)
+#         # cs is descending: [c5, c4, c3, c2, c1]
+#         for p in range(1, deg+1):            # N^1..N^deg
+#             s += cs[deg - p] * (N ** p)      # maps c1..c5 to N^1..N^5
+#         return s
+#     return poly_no_const(float(n1), coeffs), poly_no_const(float(n2), coeffs)
+
+# def tau_from_thrusters(n1,n2,a1,a2, coeffs, lx_o, ly1_o, ly2_o, pod_radius, n1_fail=False, n2_fail=False):
+#     if n1_fail: n1 = 0.0
+#     if n2_fail: n2 = 0.0
+#     lx1 = lx_o  - pod_radius*np.cos(a1)
+#     lx2 = lx_o  - pod_radius*np.cos(a2)
+#     ly1 = ly1_o - pod_radius*np.sin(a1)
+#     ly2 = ly2_o - pod_radius*np.sin(a2)
+#     T1,T2 = thrusts_from_relative_n(n1,n2,coeffs)
+#     c1,s1 = np.cos(a1),np.sin(a1)
+#     c2,s2 = np.cos(a2),np.sin(a2)
+#     tau_x = T1*c1 + T2*c2
+#     tau_y = T1*s1 + T2*s2
+#     tau_n = lx1*T1*s1 + lx2*T2*s2 + ly1*T1*c1 + ly2*T2*c2
+#     return float(tau_x), float(tau_y), float(tau_n)
+
+# # ===================== Set builder =====================
+
+# def build_from_set(root: str, idx: int, dt: float, params: dict) -> pd.DataFrame:
+#     imu_path = os.path.join(root, f"parsedIMU_{idx}.csv")
+#     sp_path  = os.path.join(root, f"parsedSeapath_{idx}.csv")
+#     al_path  = os.path.join(root, f"parsedAlog_{idx}.csv")
+#     if not (os.path.isfile(imu_path) and os.path.isfile(sp_path) and os.path.isfile(al_path)):
+#         raise FileNotFoundError(f"Missing one of: {imu_path} | {sp_path} | {al_path}")
+
+#     # Load raw series
+#     t_i, ax, ay, az, gx, gy, gz = load_parsed_imu(imu_path)
+#     t_s, hdg, vE_s, vN_s, vD_s = load_parsed_seapath(sp_path)
+#     t_a, N1, N2, a1, a2        = load_parsed_alog(al_path, alpha_units=params["alpha_units"])
+
+#     # Time grid over the intersection of ALL THREE sources
+#     t0 = max(np.nanmin(t_i), np.nanmin(t_s), np.nanmin(t_a))
+#     t1 = min(np.nanmax(t_i), np.nanmax(t_s), np.nanmax(t_a))
+#     if not np.isfinite(t0) or not np.isfinite(t1) or (t1 - t0) < 2*dt:
+#         raise RuntimeError(f"Insufficient overlap for idx={idx}")
+#     steps = int(np.floor((t1 - t0)/dt)) + 1  # closed interval [t0, t1]
+#     t_grid = (t0 + np.arange(steps)*dt).astype(float)
+
+#     # Resample IMU to grid (linear)
+#     ax_g = linear_series(t_i, ax, t_grid)
+#     ay_g = linear_series(t_i, ay, t_grid)
+#     az_g = linear_series(t_i, az, t_grid)
+#     gx_g = linear_series(t_i, gx, t_grid)
+#     gy_g = linear_series(t_i, gy, t_grid)
+#     gz_g = linear_series(t_i, gz, t_grid)
+
+#     # Map SeaPath heading samples to nearest grid slot within ±dt/2
+#     yaw_meas = np.full_like(t_grid, np.nan, dtype=float)
+#     fresh    = np.zeros_like(t_grid, dtype=bool)
+#     if len(t_s):
+#         k_idx = np.clip(np.round((t_s - t0)/dt).astype(int), 0, len(t_grid)-1)
+#         yaw_meas[k_idx] = hdg
+#         fresh[k_idx] = np.isfinite(hdg)
+
+#     # Quaternion observer (step6DOF each tick, yaw correction on fresh SeaPath)
+#     qw,qx,qy,qz, wex,wey,wez = run_quat_observer(
+#         t_grid, ax_g, ay_g, az_g, gx_g, gy_g, gz_g,
+#         yaw_meas, fresh,
+#         k1=params["k1"], k2=params["k2"], Ki=params["Ki"], accel_min_norm=params["accel_min_norm"]
+#     )
+
+#     # Resample ALOG (ZOH), compute τ each grid step
+#     N1_g = zoh_series(t_a, N1, t_grid)
+#     N2_g = zoh_series(t_a, N2, t_grid)
+#     a1_g = zoh_series(t_a, a1, t_grid)
+#     a2_g = zoh_series(t_a, a2, t_grid)
+
+#     tau_x = np.empty_like(t_grid); tau_y = np.empty_like(t_grid); tau_n = np.empty_like(t_grid)
+#     for i in range(len(t_grid)):
+#         tx,ty,tn = tau_from_thrusters(
+#             N1_g[i], N2_g[i], a1_g[i], a2_g[i],
+#             params["tau_coeffs"], params["lx_o"], params["ly1_o"], params["ly2_o"], params["pod_radius"]
+#         )
+#         tau_x[i], tau_y[i], tau_n[i] = tx,ty,tn
+
+#     # Ground-truth velocity at 100 Hz: **LINEAR interpolation** from SeaPath
+#     vE = linear_series(t_s, vE_s, t_grid)
+#     vN = linear_series(t_s, vN_s, t_grid)
+#     vD = linear_series(t_s, vD_s, t_grid)
+
+#     # Trim off any head rows before first valid interpolation
+#     first_ok = np.where(np.isfinite(vE) & np.isfinite(vN) & np.isfinite(vD))[0]
+#     if len(first_ok) == 0:
+#         raise RuntimeError(f"No valid SeaPath in overlap for idx={idx}")
+#     start = first_ok[0]
+#     sl = slice(start, None)
+
+#     df = pd.DataFrame({
+#         "ax": ax_g[sl], "ay": ay_g[sl], "az": az_g[sl],
+#         "qw": qw[sl], "qx": qx[sl], "qy": qy[sl], "qz": qz[sl],
+#         "tau_x": tau_x[sl], "tau_y": tau_y[sl], "tau_n": tau_n[sl],
+#         "vE": vE[sl], "vN": vN[sl], "vD": vD[sl],
+#         "w_est_x": wex[sl], "w_est_y": wey[sl], "w_est_z": wez[sl],
+#     })[IN_COLS + OUT_COLS + AUX_W_COLS]
+
+#     # Clean any residual NaNs (should be none after trimming)
+#     df = df.replace([np.inf, -np.inf], np.nan).dropna().reset_index(drop=True)
+#     return df
+
+# # ===================== Split & stats =====================
+
+# def three_way_indices(total: int, val_frac: float, test_frac: float):
+#     v = int(round(val_frac * total))
+#     t = int(round(test_frac * total))
+#     v = max(0, min(total, v))
+#     t = max(0, min(total - v, t))
+#     tr = total - v - t
+#     if tr <= 0:
+#         raise ValueError("Fractions leave no room for training data.")
+#     return tr, v, t
+
+# def compute_norm_stats(train_df: pd.DataFrame) -> dict:
+#     x = train_df[IN_COLS].to_numpy(np.float64)
+#     y = train_df[OUT_COLS].to_numpy(np.float64)
+#     return {
+#         "x_mean": x.mean(axis=0).tolist(),
+#         "x_std":  (x.std(axis=0, ddof=0) + 1e-12).tolist(),
+#         "y_mean": y.mean(axis=0).tolist(),
+#         "y_std":  (y.std(axis=0, ddof=0) + 1e-12).tolist(),
+#     }
+
+# # ===================== CLI =====================
+
+# def main():
+#     ap = argparse.ArgumentParser(description="Build v9-ready dataset (real logs, 100 Hz, SeaPath GT via linear interpolation).")
+#     ap.add_argument("--root", required=True, help="Folder containing parsedIMU_X.csv, parsedSeapath_X.csv, parsedAlog_X.csv")
+#     ap.add_argument("--indices", nargs="+", type=int, required=True, help="Which X indices to include (e.g., 1 2 3)")
+#     ap.add_argument("--out_dir", required=True, help="Where to write train/val/test + stats")
+#     ap.add_argument("--val_frac", type=float, default=0.15)
+#     ap.add_argument("--test_frac", type=float, default=0.15)
+#     ap.add_argument("--dt", type=float, default=0.01, help="Grid period (s) — keep 0.01 for trainer")
+#     # quat observer params (mirror your Config)
+#     ap.add_argument("--k1", type=float, default=1.0, help="Accel injection gain")
+#     ap.add_argument("--k2", type=float, default=0.5, help="Heading injection gain")
+#     ap.add_argument("--Ki", type=float, default=1e-3, help="Gyro-bias integral (diag)")
+#     ap.add_argument("--accel_min_norm", type=float, default=1e-3)
+#     # tau model params
+#     ap.add_argument("--alpha_units", choices=["rad","deg"], default="rad")
+#     ap.add_argument("--lx_o", type=float, default=-1.17)
+#     ap.add_argument("--ly1_o", type=float, default=-0.79)
+#     ap.add_argument("--ly2_o", type=float, default=0.79)
+#     ap.add_argument("--pod_radius", type=float, default=0.2)
+#     ap.add_argument("--tau_coeffs", nargs="+", type=float,
+#                     default=[-312.547, 8.87016, 413.598, 46.922, 45.6015],
+#                     help="Descending powers (no constant term)")
+#     args = ap.parse_args()
+
+#     os.makedirs(args.out_dir, exist_ok=True)
+
+#     params = {
+#         "k1": args.k1, "k2": args.k2, "Ki": args.Ki, "accel_min_norm": args.accel_min_norm,
+#         "alpha_units": args.alpha_units,
+#         "lx_o": args.lx_o, "ly1_o": args.ly1_o, "ly2_o": args.ly2_o, "pod_radius": args.pod_radius,
+#         "tau_coeffs": list(args.tau_coeffs),
+#     }
+
+#     # Build each set, concat chronologically
+#     dfs = []
+#     for idx in args.indices:
+#         print(f"[build] set {idx}…")
+#         df = build_from_set(args.root, idx, args.dt, params)
+#         if len(df) == 0:
+#             print(f"[warn] set {idx} produced 0 rows (skipped)")
+#             continue
+#         dfs.append(df)
+
+#     if not dfs:
+#         raise RuntimeError("No data produced. Check inputs/indices.")
+#     all_df = pd.concat(dfs, axis=0, ignore_index=True)
+
+#     # Chronological split by rows
+#     N = len(all_df)
+#     n_tr, n_va, n_te = three_way_indices(N, args.val_frac, args.test_frac)
+#     train_df = all_df.iloc[:n_tr].reset_index(drop=True)
+#     val_df   = all_df.iloc[n_tr:n_tr+n_va].reset_index(drop=True)
+#     test_df  = all_df.iloc[n_tr+n_va:].reset_index(drop=True)
+
+#     # Save CSVs
+#     train_csv = os.path.join(args.out_dir, "train.csv")
+#     val_csv   = os.path.join(args.out_dir, "val.csv")
+#     test_csv  = os.path.join(args.out_dir, "test.csv")
+#     train_df.to_csv(train_csv, index=False)
+#     val_df.to_csv(val_csv, index=False)
+#     test_df.to_csv(test_csv, index=False)
+
+#     # Norm stats from TRAIN only
+#     stats = compute_norm_stats(train_df)
+#     with open(os.path.join(args.out_dir, "norm_stats.json"), "w") as f:
+#         json.dump(stats, f, indent=2)
+
+#     # Split summary
+#     with open(os.path.join(args.out_dir, "split_summary.json"), "w") as f:
+#         json.dump({
+#             "counts": {"train": len(train_df), "val": len(val_df), "test": len(test_df)},
+#             "fractions": {"val_frac": args.val_frac, "test_frac": args.test_frac,
+#                           "train_frac": 1.0 - args.val_frac - args.test_frac},
+#             "dt": args.dt, "indices": args.indices
+#         }, f, indent=2)
+
+#     print(f"[done] wrote:\n  {train_csv} ({len(train_df)} rows)\n  {val_csv} ({len(val_df)} rows)\n  {test_csv} ({len(test_df)} rows)")
+#     print(f"[done] wrote: {os.path.join(args.out_dir, 'norm_stats.json')}")
+#     print("[note] Ground truth vE/vN/vD is linear-interpolated at 100 Hz (no ZOH).")
+
+# if __name__ == "__main__":
+#     main()

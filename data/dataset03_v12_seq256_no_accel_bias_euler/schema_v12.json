@@ -1,0 +1,38 @@
+{
+  "version": "v12_euler_wrapped",
+  "columns_order": [
+    "ax",
+    "ay",
+    "az",
+    "phi",
+    "theta",
+    "psi",
+    "tau_x",
+    "tau_y",
+    "tau_n",
+    "vE",
+    "vN",
+    "vD",
+    "w_est_x",
+    "w_est_y",
+    "w_est_z"
+  ],
+  "dtypes": {
+    "ax": "float32",
+    "ay": "float32",
+    "az": "float32",
+    "phi": "float32",
+    "theta": "float32",
+    "psi": "float32",
+    "tau_x": "float32",
+    "tau_y": "float32",
+    "tau_n": "float32",
+    "vE": "float32",
+    "vN": "float32",
+    "vD": "float32",
+    "w_est_x": "float32",
+    "w_est_y": "float32",
+    "w_est_z": "float32"
+  },
+  "notes": "Euler-only inputs. Angles wrapped to [-pi, +pi) per-sample (\u00b1180\u00b0). Tail trimming removes repeated final-state rows (raw + feature space)."
+}
