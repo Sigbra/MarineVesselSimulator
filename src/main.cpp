@@ -666,7 +666,7 @@ int main() {
                 break;
             }
             case ObserverKind::nn_EKF_v11: {
-                ekf_v11.setRotationFromQuat(q_nb);     // BODY->END (custom END conv)
+                ekf_v11.setRotationFromQuat(q_nb);          
 
                 // 2) Propagate using IMU (acceleration and gyro)
                 ekf_v11.propagate(imu.gyro, imu.accel, h);
@@ -682,9 +682,10 @@ int main() {
                 // 4) GNSS position giving position and velocity corrections:  t[i] for testing 
                 if (have_gnss_now || (t[i]<0)) {
                     Eigen::Matrix3d Rpos_port = Eigen::Matrix3d::Identity() * std::pow(0.5, 2); 
-                    Eigen::Matrix3d Rpos_stbd = Eigen::Matrix3d::Identity() * std::pow(0.5, 2); //0.5
-                    ekf_v11.updateGnssPos(ant1_meas, Rpos_port, lever_arm_port_body, 300); //3000 with velnet, 300 when docking with velnet, 1 without
-                    ekf_v11.updateGnssPos(ant2_meas, Rpos_stbd, lever_arm_stbd_body, 300);
+                    Eigen::Matrix3d Rpos_stbd = Eigen::Matrix3d::Identity() * std::pow(0.5, 2); 
+                    //3000 when pf with velnet, 200 when docking with velnet, 1 without
+                    ekf_v11.updateGnssPos(ant1_meas, Rpos_port, lever_arm_port_body, 3000); 
+                    ekf_v11.updateGnssPos(ant2_meas, Rpos_stbd, lever_arm_stbd_body, 3000);
                 }
 
                 // 5) Read state
@@ -694,7 +695,7 @@ int main() {
                 x_est = ekf_v11.getState12(gyro_bias_est);   // [u v w p q r x y z phi theta psi]^T
                 break;
             }
-            case ObserverKind::nn_EKF_v12: {
+            case ObserverKind::nn_EKF_v12: { 
                 // 1) Attitude (BODY->END)
                 ekf_v12.setRotationFromQuat(q_nb);
 
@@ -778,7 +779,7 @@ int main() {
             switch (pathType) {
                 case 1: { // Dynamic Positioning.
                     if (R_switch > std::sqrt(std::pow(xn - wpt[wpt_index].x, 2) + std::pow(yn - wpt[wpt_index].y, 2))){
-                        if (std::abs(ssa(psi_d-psi)) < deg2rad(1) && U_est < 0.02) {
+                        if (std::abs(ssa(psi_d-psi)) < deg2rad(1) && U_est < 0.03) {
                             if (wpt_index < wpt.size()-1) {
                                 wpt_index += 1;
                                 MIMO_PID.reset();
@@ -919,7 +920,7 @@ int main() {
         // Marine Craft Model, update states: x
         ran_model.wave_step_drift(h);
         ran_model.rk4(x, mp, V_c, beta_c, h, n, alpha);
-        x(11) = ssa(x(11)); //makes plotting look bad    
+        x(11) = ssa(x(11));     
         
         // Pod model, update states: n and alpha
         ran_model.update_n(n, n_c, h);

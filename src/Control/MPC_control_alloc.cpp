@@ -128,7 +128,7 @@ std::vector<double> MPC_control_alloc(double tau_X, double tau_Y, double tau_N,
         MX tau_X_model = Thrust1 * cos(alpha1) + Thrust2 * cos(alpha2);
         MX tau_Y_model = Thrust1 * sin(alpha1) + Thrust2 * sin(alpha2);
         MX tau_N_model = lx1 * Thrust1 * sin(alpha1) + lx2 * Thrust2 * sin(alpha2)
-                       + ly1 * Thrust1 * cos(alpha1) + ly2 * Thrust2 * cos(alpha2);
+                       - ly1 * Thrust1 * cos(alpha1) - ly2 * Thrust2 * cos(alpha2);
         
         // Error cost
         J += 0.5 * (pow(tau_X - tau_X_model, 2) + 

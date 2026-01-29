@@ -138,7 +138,7 @@ void RAN::update(const Eigen::VectorXd x, double mp, double V_c, double beta_c,
     // Corrected center of gravity including payload:
     Eigen::Vector3d rg_corrected = (m * rg_hull + mp * rp) / (m + mp);
     
-    // Total inertia matrix at CG:
+    // Total inertia matrix at CO:
     Eigen::Matrix3d Ig = Ig_CG - m * (Smtrx(rg_hull) * Smtrx(rg_hull))
                                - mp * (Smtrx(rp) * Smtrx(rp));
 
@@ -461,7 +461,7 @@ Eigen::VectorXd RAN::tau_pods(Eigen::Vector2d n, Eigen::Vector2d alpha){
     tau(0) = Thrusts(0) * cos(alpha(0)) + Thrusts(1) * cos(alpha(1)); //X: Combined Surge 
     tau(1) = Thrusts(0) * sin(alpha(0)) + Thrusts(1) * sin(alpha(1)); //Y: Combined Sway 
     tau(5) = lx1 * Thrusts(0) * sin(alpha(0)) + lx2 * Thrusts(1) * sin(alpha(1))  //N: Yaw pod 
-           + ly1 * Thrusts(0) * cos(alpha(0)) + ly2 * Thrusts(1) * cos(alpha(1)); 
+           - ly1 * Thrusts(0) * cos(alpha(0)) - ly2 * Thrusts(1) * cos(alpha(1)); 
 
     return tau;
 }

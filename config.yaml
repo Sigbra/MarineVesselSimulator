@@ -17,9 +17,9 @@ waypoints:
 
 # Waypoint lists for DP simulation
 
-  x:      [0,  0, 15,  15,  0]
-  y:      [0, 15, 15,   0,  0] 
-  angles: [0,  0,  0, -45]
+  #x:      [0,  0, 15,  15,  0]
+  #y:      [0, 15, 15,   0,  0] 
+  #angles: [0,  0,  0, -45]
 
   #x:      [0,  0, 15,  15, 25, 35]
   #y:      [0, 15, 15,   0, 10,  0] 
@@ -28,8 +28,8 @@ waypoints:
 # Waypoint list for path following simulation
 
   # Left turn, right turn, right turn, left turn
-  #x: [ 0, 50, 50, 100, 100, 150]
-  #y: [ 0,  0, 50, 50,  0, 0] 
+  x: [ 0, 50, 50, 100, 100, 150]
+  y: [ 0,  0, 50, 50,  0, 0] 
 
 
   #Zig zag
@@ -52,7 +52,7 @@ waypoints:
 
 path_following:
   #Additional parameters for MPC DP mode
-  R_switch: 2  # Radius for wpt switching in DP[m] #ideal: 0.25
+  R_switch: 1    # Radius for wpt switching in DP[m] #ideal: 0.5
   K_f: 0.3       # LOS observer gain
 
   #LOS and ALOS parameters

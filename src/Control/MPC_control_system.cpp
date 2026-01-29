@@ -112,7 +112,7 @@ MX control_allocation(const MX& n, const MX& alpha, double lx_o, double ly1_o, d
     MX tau_X_model = Thrust1 * cos(alpha1) + Thrust2 * cos(alpha2);
     MX tau_Y_model = Thrust1 * sin(alpha1) + Thrust2 * sin(alpha2);
     MX tau_N_model = lx1 * Thrust1 * sin(alpha1) + lx2 * Thrust2 * sin(alpha2)
-                   + ly1 * Thrust1 * cos(alpha1) + ly2 * Thrust2 * cos(alpha2);
+                   - ly1 * Thrust1 * cos(alpha1) - ly2 * Thrust2 * cos(alpha2);
 
     return MX::vertcat({tau_X_model, tau_Y_model, tau_N_model});
 }
@@ -306,20 +306,20 @@ bool MPC_Control_System::solve(const std::vector<double>& x0, double x_s, double
         MX heading_error_sq = sqrt(heading_error * heading_error + 1e-4);
 
         if (failstate[0] || failstate[1]) { // Penalties when error state
-            cost +=  11   * crosstrack_error_sq; //                                 <- Fix this
+            cost +=  11   * crosstrack_error_sq; //                                 <- tune
             cost += 140   * position_error_sq;
             cost +=  11.5 * heading_error_sq;  
         } 
         else { // Penalties in normal operation
-            cost += 9  * crosstrack_error_sq;  //5
-            cost += 70 * position_error_sq;   //30
-            cost += 25 * heading_error_sq;     //8
+            cost +=  8 * crosstrack_error_sq; //9
+            cost += 45 * position_error_sq;   //70
+            cost += 25 * heading_error_sq;    //25
         }
 
        
         MX d_n = n_cmd(Slice(), i) - n_vars(Slice(), i);
         MX d_alpha = alpha_cmd(Slice(), i) - alpha_vars(Slice(), i);
-        cost += 5*dot(d_n, d_n) + 4*dot(d_alpha, d_alpha); // 5 and 1
+        cost += 5*dot(d_n, d_n) + 3*dot(d_alpha, d_alpha); // 5 and 1
 
         // Incentive to avoid +-90 if possible.
         // MX abs_angle = dot(alpha_cmd(Slice(), i), alpha_cmd(Slice(), i));
@@ -327,13 +327,13 @@ bool MPC_Control_System::solve(const std::vector<double>& x0, double x_s, double
 
         // Penalize large speed resulting in large discretization steps that the MPC can't handle
         MX U_i = sqrt(X(3,i)*X(3,i) + X(4,i)*X(4,i) + 1e-4);
-        cost += exp((U_i-0.2)/0.1); 
+        cost += exp((U_i-0.2)/0.1);  //U_i-0.2
 
         // Penalize deviation from preferred azimuths (this gives surge and sway control)
         double pref_a1 = 0; // M_PI/12;   // +15 degrees
         double pref_a2 = 0; //-M_PI/12;   // -15 degrees
-        cost += 0.2 * pow(alpha_cmd(0) - pref_a1, 2);  // thruster 1
-        cost += 0.2 * pow(alpha_cmd(1) - pref_a2, 2);  // thruster 2
+        cost += 0.1 * pow(alpha_cmd(0) - pref_a1, 2);  // thruster 1
+        cost += 0.1 * pow(alpha_cmd(1) - pref_a2, 2);  // thruster 2
 
     } 
     

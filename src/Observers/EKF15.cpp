@@ -80,41 +80,6 @@ void EKF15::predict(const Eigen::Vector3d& a_m,
 
 // ------------------------ updatePos ----------------------------
 
-// void EKF15::updatePos(const Eigen::Vector3d& y_pos, const Eigen::Vector3d& r_body)
-// {
-//   const double phi   = x_(6);
-//   const double theta = x_(7);
-//   const double psi   = x_(8);
-
-//   const Eigen::Matrix3d Rnb = Rzyx(phi, theta, psi);
-//   const Eigen::Vector3d y_pos_c = y_pos - Rnb * r_body;  // implied measurement of p^END
-
-//   // Measurement model: y = r^END + n, r^END at indices 3..5
-//   Eigen::Matrix<double,3,15> H = Eigen::Matrix<double,3,15>::Zero();
-//   H.block<3,3>(0,3) = Eigen::Matrix3d::Identity();
-
-//   Eigen::Vector3d yhat  = x_.segment<3>(3);
-//   Eigen::Vector3d innov = y_pos_c - yhat;
-
-//   Eigen::Matrix3d S = H * P_ * H.transpose() + R_pos_;
-
-//   Eigen::Matrix<double,15,3> K =
-//       P_ * H.transpose() * S.ldlt().solve(Eigen::Matrix3d::Identity());
-
-//   // State update
-//   x_ += K * innov;
-
-//   // Covariance update (Joseph form)
-//   MatN I   = MatN::Identity();
-//   MatN IKH = I - K * H;
-//   P_ = IKH * P_ * IKH.transpose() + K * R_pos_ * K.transpose();
-
-//   P_ = 0.5 * (P_ + P_.transpose());
-
-//   // wrap yaw (position update can couple into ψ via cross-covariance)
-//   x_(8) = ssa(x_(8));
-// }
-
 void EKF15::updatePos(const Eigen::Vector3d& y_pos,
                       const Eigen::Vector3d& r_body)
 {

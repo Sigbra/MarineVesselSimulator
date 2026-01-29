@@ -33,6 +33,19 @@ Eigen::Vector3d raw_GNSS(const Eigen::VectorXd &x,
     return ant_true_ned + noise;
 }
 
+double gnss_heading_from_two_antennas(const Eigen::Vector3d &ant_port_ned,
+                                      const Eigen::Vector3d &ant_stbd_ned)
+{
+    const Eigen::Vector3d b = ant_stbd_ned - ant_port_ned;
+
+    const double bE = b(0); 
+    const double bN = b(1); 
+
+    // Yaw measured in rad(NED): atan2(E,N) - 90deg
+    const double psi_meas = std::atan2(bE, bN) - M_PI/2;
+    return ssa(psi_meas);
+}
+
 // Compute body-origin position (NED) from a raw GNSS antenna measurement, using TRUE attitude (optimistic sim)
 Eigen::Vector3d origin_from_raw_GNSS(const Eigen::VectorXd &x,
                                      const Eigen::Vector3d &ant_meas_ned,
@@ -46,17 +59,4 @@ Eigen::Vector3d origin_from_raw_GNSS(const Eigen::VectorXd &x,
 
     // Back-project antenna to origin in NED
     return ant_meas_ned - R_b2n * lever_arm_body;
-}
-
-double gnss_heading_from_two_antennas(const Eigen::Vector3d &ant_port_ned,
-                                      const Eigen::Vector3d &ant_stbd_ned)
-{
-    const Eigen::Vector3d b = ant_stbd_ned - ant_port_ned;
-
-    const double bE = b(0); 
-    const double bN = b(1); 
-
-    // Yaw measured in rad(NED): atan2(E,N) - 90deg
-    const double psi_meas = std::atan2(bE, bN) - M_PI/2;
-    return ssa(psi_meas);
 }
