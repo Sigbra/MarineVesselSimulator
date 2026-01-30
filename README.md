@@ -2,7 +2,7 @@
 
 This repository contains c++ code for simulation of a USV, named RAN.
 
-The "Handbook of Marine Craft Hydrodynamics and Motion Control" by Thor I. Fossen was used actively for theoretical background material, as well other sources mentioned in dokuments in under the literature folder. 
+The "Handbook of Marine Craft Hydrodynamics and Motion Control" by Thor I. Fossen was used actively for theoretical background material, as well other sources mentioned in documents under the literature folder. 
 
 The repository is implemented using c++ for fast computations and open-source purposes. 
 
